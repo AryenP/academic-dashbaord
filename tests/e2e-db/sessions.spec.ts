@@ -49,8 +49,10 @@ test('the break nudge appears when a break is due and starts the break', async (
   await expect(page.getByText('Time for a 5-minute break.')).toBeVisible();
   await page.getByRole('button', { name: 'Start break' }).click();
   await expect(page.getByRole('button', { name: 'Back to work' })).toBeVisible();
-  const { data } = await admin.from('session_breaks').select('kind');
-  expect(data).toEqual([{ kind: 'short' }]);
+  // The screen updates before the save lands, so wait for the row.
+  await expect
+    .poll(async () => (await admin.from('session_breaks').select('kind')).data)
+    .toEqual([{ kind: 'short' }]);
 });
 
 test('ending a real session saves the rating and note, and the log shows it', async ({ page }) => {

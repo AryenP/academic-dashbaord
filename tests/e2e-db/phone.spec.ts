@@ -77,8 +77,11 @@ test('the focus screen shows live phone time, and ending freezes the metrics', a
   await page.getByRole('button', { name: 'End' }).click();
   await expect(page.getByRole('heading', { name: 'Session done.' })).toBeVisible();
   await expect(page.getByText('Pickups', { exact: true })).toBeVisible();
+  // The end screen shows before the frozen metrics are saved, so wait for them.
+  await expect
+    .poll(async () => (await admin.from('sessions').select('pickups').eq('id', s.id).single()).data?.pickups)
+    .toBe(2);
   const { data } = await admin.from('sessions').select('*').eq('id', s.id).single();
-  expect(data!.pickups).toBe(2);
   expect(data!.phone_seconds).toBeGreaterThanOrEqual(180);
   expect(Number(data!.focus_pct)).toBeGreaterThan(80);
   expect(Number(data!.focus_pct)).toBeLessThan(86);

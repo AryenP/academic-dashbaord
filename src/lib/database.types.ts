@@ -650,6 +650,7 @@ export type Database = {
         Args: { p_cached: number; p_cents: number; p_input: number; p_output: number; p_user: string };
         Returns: undefined;
       };
+      app_secret: { Args: { p_name: string }; Returns: string };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
       due_sources: {
         Args: { p_limit?: number };
@@ -829,6 +830,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      set_app_secret: { Args: { p_name: string; p_value: string }; Returns: undefined };
       share_plan: {
         Args: { p_handle: string };
         Returns: {

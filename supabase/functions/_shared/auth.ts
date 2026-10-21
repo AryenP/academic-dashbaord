@@ -34,3 +34,18 @@ export async function overLimit(service: SupabaseClient, key: string, limit: num
   const { data } = await service.rpc('phone_rate_hit', { p_token_hash: key });
   return typeof data === 'number' && data > limit;
 }
+
+/**
+ * A shared secret the functions need: from Vault (set_app_secret / app_secret in the database),
+ * else from the environment. The database wins because the hosted runtime's environment can lag
+ * behind `supabase secrets set` by hours.
+ */
+export async function appSecret(service: SupabaseClient, name: string): Promise<string | null> {
+  try {
+    const { data } = await service.rpc('app_secret', { p_name: name });
+    if (typeof data === 'string' && data.length > 0) return data;
+  } catch {
+    // fall through to the environment
+  }
+  return Deno.env.get(name) || null;
+}

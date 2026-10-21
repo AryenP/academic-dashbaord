@@ -6,7 +6,7 @@
 //        {source_id, ics} for an uploaded .ics file.
 //
 // The logic is in ../_shared/sync.ts; this file is the database store and the request handling.
-import { caller, CORS, json, overLimit, serviceClient } from '../_shared/auth.ts';
+import { appSecret, caller, CORS, json, overLimit, serviceClient } from '../_shared/auth.ts';
 import { rebuildPlan, syncSource, type Source } from '../_shared/sync.ts';
 import { dbStore } from './store.ts';
 
@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
   const store = dbStore(service);
 
   // The scheduled run.
-  const key = Deno.env.get('SYNC_KEY');
+  const key = await appSecret(service, 'SYNC_KEY');
   if (key && req.headers.get('x-sync-key') === key) {
     const started = Date.now();
     const due = must(await service.rpc('due_sources', { p_limit: 50 })) as Source[];

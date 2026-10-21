@@ -569,3 +569,16 @@ describe('AI reading and budget', () => {
     expect(other.data).toEqual([]);
   });
 });
+
+describe('app secrets', () => {
+  it('only the service role can set or read them, and they live in Vault', async () => {
+    expect((await a.db.rpc('set_app_secret', { p_name: 'SYNC_KEY', p_value: 'x' })).error).not.toBeNull();
+    expect((await anon.rpc('app_secret', { p_name: 'SYNC_KEY' })).error).not.toBeNull();
+    expect((await admin.rpc('set_app_secret', { p_name: 'TEST_KEY', p_value: 'first' })).error).toBeNull();
+    expect((await admin.rpc('app_secret', { p_name: 'TEST_KEY' })).data).toBe('first');
+    expect((await admin.rpc('set_app_secret', { p_name: 'TEST_KEY', p_value: 'second' })).error).toBeNull();
+    expect((await admin.rpc('app_secret', { p_name: 'TEST_KEY' })).data).toBe('second');
+    expect((await admin.rpc('app_secret', { p_name: 'NOPE' })).data).toBeNull();
+    expect((await admin.rpc('set_app_secret', { p_name: 'bad name', p_value: 'x' })).error).not.toBeNull();
+  });
+});

@@ -8,7 +8,7 @@
 // the model has answered. Readings go on the event row; override > AI > rules when the plan is built.
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2';
 import { classifyWithClaude, MAX_PER_CALL, type AiEvent } from '../_shared/ai.ts';
-import { caller, CORS, json, overLimit, serviceClient } from '../_shared/auth.ts';
+import { appSecret, caller, CORS, json, overLimit, serviceClient } from '../_shared/auth.ts';
 import { rebuildPlan, type EventRow, type Source } from '../_shared/sync.ts';
 import { dbStore } from '../sync-sources/store.ts';
 import { localIso } from '../../../src/lib/tz.ts';
@@ -63,7 +63,7 @@ async function readFor(db: SupabaseClient, userId: string, all: boolean, deadlin
       } | null
     )?.value ?? 'claude-opus-5-5',
   );
-  const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+  const apiKey = await appSecret(db, 'ANTHROPIC_API_KEY');
   if (!apiKey) return { read: 0, skipped: 'no_key' as const };
   const tz =
     (
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
   const service = serviceClient();
   const deadline = Date.now() + BUDGET_MS;
 
-  const key = Deno.env.get('SYNC_KEY');
+  const key = await appSecret(service, 'SYNC_KEY');
   if (key && req.headers.get('x-sync-key') === key) {
     // Everyone with something pending, until the time budget runs out.
     const users = must(

@@ -65,7 +65,7 @@ With the backend (needs Docker and the Supabase CLI):
 
 ```sh
 supabase start                          # local Postgres, Auth, Realtime
-echo 'SYNC_KEY=local' > supabase/functions/.env.local && supabase functions serve --no-verify-jwt --env-file supabase/functions/.env.local
+echo 'SYNC_KEY=local' > .env.functions.local && supabase functions serve --no-verify-jwt --env-file .env.functions.local
 # put the local URL and anon key in .env.local as VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 npm run test:db && npm run test:fn && npm run test:e2e:db
 ```

@@ -11,3 +11,4 @@ tests/e2e/__screenshots__/
 supabase/.temp/
 .DS_Store
 dist-db/
+.env.functions.local

@@ -27,6 +27,7 @@ v1 is one person's cockpit: the plan is a JSON file built from Aryen's calendar 
 | 7 | Money | **Free while small.** A per-user monthly AI budget with a hard stop, and a global monthly cap. No pricing page. Cost per student per term is measured in Phase 2 before any tier is promised. |
 | 8 | Gradescope | **The browser extension is the Gradescope route, and it's optional.** It ships in Phase 3 next to the planner. Without it, deadlines still come from the Canvas feed and the "Submitted" tick is manual. Paste/screenshot import is dropped from the plan: too much hassle for the student. |
 | 9 | Grades | **Tracked through the extension, private, optional, off by default.** The extension reads released scores on Gradescope and Canvas pages; the student turns "send my grades" on in the extension. The "how did the prep go" view is Phase 4. Never shown on share pages. |
+| 11 | Classmates | **Opt-in, course by course.** Runway already knows each student's school, course codes and term, so it can show who else in DSC 140A uses Runway without reading a roster. Visible only after you turn it on; stats compare only at the level each person shares. Phase 4. |
 | 10 | Life outside class | **Work, research, internships and other commitments are a first-class kind.** The classifier labels them, the runway shows them as neutral blocks, and the planner never schedules over them. They come from the same calendar sources, or are added by hand ("Research lab, Tue/Thu 2–5 PM, until Dec 12"). |
 
 ## Users
@@ -156,8 +157,9 @@ _Done when:_ a student with no study blocks gets a sensible plan in under a minu
 - **AI weekly review:** three sentences, what went to plan, what didn't, one change for next week.
 - **Grades feedback:** when scores exist (from the extension), the review shows prep hours next to the result for each exam, private.
 - **Share pages** polished: the demo runway's design with the student's real plan at their chosen level.
+- **Classmates.** A course card gains "3 classmates on Runway" once the student turns on *Show me to classmates* for that course (off by default, per course). Matching is school + course code + term from the student's own data; the extension can confirm the Canvas course id so sections match exactly, but it never reads a roster. Classmates see each other's first name, course and, at each person's chosen share level, hours this week, readiness and streak. A per-course board ("who's most ready for the midterm") and a friendly nudge ("4 classmates studied today"). Friends: add by handle or from a course; a friend sees your share-level stats across courses. Never notes, phone data or grades. Each setting is a row in `course_visibility(user_id, course_id, visible)` and `friends(user_id, friend_id, status)`, both under RLS, with a "user B can't see user A unless A opted in" test.
 
-_Done when:_ five classmates use it for a full exam cycle.
+_Done when:_ five classmates use it for a full exam cycle, and at least two of them find each other on a course card.
 
 ### Phase 5 · Signals (later, after five classmates have used Phases 0–4)
 

@@ -1929,3 +1929,109 @@ kbd {
 .pb-draft {
   background: transparent;
 }
+
+/* ── v2: classmates and friends ─────────────────────────────────────────── */
+.cm {
+  margin-top: var(--gap-md);
+  padding-top: var(--gap-sm);
+  border-top: 1px dashed var(--color-border-line);
+}
+.cm-switch {
+  margin: 0;
+}
+.cm-list {
+  margin-top: var(--gap-sm);
+}
+.cm-head {
+  margin: 0 0 4px;
+  font-size: var(--fs-body);
+}
+.cm-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-xs) var(--gap-md);
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border-line);
+}
+.cm-name {
+  flex: 1 1 14ch;
+  font-weight: 550;
+  display: grid;
+}
+.cm-courses {
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+  font-weight: 400;
+}
+.cm-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-md);
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+}
+.cm-ready {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.cm-ready i {
+  display: inline-block;
+  height: 6px;
+  width: 0;
+  max-width: 80px;
+  min-width: 2px;
+  border-radius: 3px;
+  background: var(--color-ok);
+  flex: 0 0 auto;
+}
+.pb-pulse {
+  border-style: dashed;
+}
+
+/* ── v2: syllabus upload, AI weekly review, graded work ─────────────────── */
+.cs-syllabus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm) var(--gap-md);
+  margin-top: var(--gap-md);
+}
+.cs-syllabus-btn {
+  cursor: pointer;
+}
+.cs-syllabus-btn:focus-within {
+  outline: 2px solid var(--color-fg);
+  outline-offset: 2px;
+}
+.cs-syllabus p {
+  flex-basis: 100%;
+  margin: 0;
+}
+.rv-ai-text {
+  font-size: clamp(1.1rem, 1.6vw, 1.3rem);
+  line-height: 1.5;
+  max-width: 58ch;
+  margin: 0 0 var(--gap-sm);
+}
+.rv-graded {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--gap-sm);
+}
+.rv-graded li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--gap-sm) var(--gap-md);
+  padding-top: var(--gap-sm);
+  border-top: 1px solid var(--color-border-line);
+}

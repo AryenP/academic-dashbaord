@@ -162,6 +162,8 @@ _Done when:_ a student with no study blocks gets a sensible plan in under a minu
 
 _Done when:_ five classmates use it for a full exam cycle, and at least two of them find each other on a course card.
 
+_Status 2026-10-21:_ classmates, friends, syllabus PDFs, the AI weekly review, grades next to hours and share-page titles shipped. Google Calendar OAuth waits on Aryen's Google Cloud project and the calendar-scope review.
+
 ### Phase 5 · Signals (later, after five classmates have used Phases 0–4)
 
 - **Health and activity from the phone, not a native app.** An iOS Shortcut ("Runway nightly") reads the day's workouts, exercise minutes, steps and sleep hours with *Find Health Samples* and POSTs one summary row to a `signals` Edge Function with the phone token. A workout-ended automation can post at once. Always coarse: minutes and hours, never heart-rate traces.

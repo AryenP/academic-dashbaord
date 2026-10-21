@@ -165,6 +165,7 @@ export type Database = {
           id: string;
           name: string | null;
           user_id: string;
+          visible: boolean;
         };
         ComputedFields: never;
         Insert: {
@@ -175,6 +176,7 @@ export type Database = {
           id?: string;
           name?: string | null;
           user_id?: string;
+          visible?: boolean;
         };
         Update: {
           code?: string;
@@ -184,6 +186,7 @@ export type Database = {
           id?: string;
           name?: string | null;
           user_id?: string;
+          visible?: boolean;
         };
         Relationships: [];
       };
@@ -298,6 +301,28 @@ export type Database = {
             referencedColumns: ['id'];
           },
         ];
+      };
+      friends: {
+        Row: {
+          created_at: string;
+          friend_id: string;
+          status: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          friend_id: string;
+          status: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          friend_id?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [];
       };
       phone_events: {
         Row: {
@@ -648,6 +673,31 @@ export type Database = {
           },
         ];
       };
+      weekly_reviews: {
+        Row: {
+          created_at: string;
+          model: string;
+          text: string;
+          user_id: string;
+          week: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          model: string;
+          text: string;
+          user_id: string;
+          week: string;
+        };
+        Update: {
+          created_at?: string;
+          model?: string;
+          text?: string;
+          user_id?: string;
+          week?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -692,6 +742,31 @@ export type Database = {
         Returns: undefined;
       };
       app_secret: { Args: { p_name: string }; Returns: string };
+      classmate_pulse: { Args: Record<PropertyKey, never>; Returns: number };
+      classmates: {
+        Args: { p_code: string };
+        Returns: {
+          display_name: string;
+          exam_at: string;
+          exam_title: string;
+          handle: string;
+          is_friend: boolean;
+          planned_min: number;
+          share_level: string;
+          streak: number;
+          studied_min: number;
+          week_minutes: number;
+        }[];
+      };
+      course_readiness: {
+        Args: { p_code: string; p_user: string };
+        Returns: {
+          exam_at: string;
+          exam_title: string;
+          planned_min: number;
+          studied_min: number;
+        }[];
+      };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
       due_sources: {
         Args: { p_limit?: number };
@@ -800,6 +875,19 @@ export type Database = {
         };
         Returns: undefined;
       };
+      friends_overview: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          courses: string[];
+          direction: string;
+          display_name: string;
+          handle: string;
+          share_level: string;
+          status: string;
+          streak: number;
+          week_minutes: number;
+        }[];
+      };
       is_feed_url: { Args: { u: string }; Returns: boolean };
       is_school_email: { Args: { e: string }; Returns: boolean };
       make_access_token: { Args: { p_purpose: string }; Returns: string };
@@ -864,7 +952,10 @@ export type Database = {
           minutes: number;
         }[];
       };
+      remove_friend: { Args: { p_handle: string }; Returns: undefined };
+      request_friend: { Args: { p_handle: string }; Returns: undefined };
       request_sync: { Args: { p_source: string }; Returns: undefined };
+      respond_friend: { Args: { p_accept: boolean; p_handle: string }; Returns: undefined };
       resume_session: {
         Args: { p_at?: string; p_session: string };
         Returns: {
@@ -936,7 +1027,9 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      streak_days: { Args: { p_user: string }; Returns: number };
       token_owner: { Args: { p_purpose: string; p_token_hash: string }; Returns: string };
+      week_minutes: { Args: { p_user: string }; Returns: number };
     };
     Enums: {
       [_ in never]: never;

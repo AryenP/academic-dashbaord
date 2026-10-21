@@ -217,3 +217,37 @@ export async function makeFeedUrl(): Promise<string> {
   const base = (import.meta.env.VITE_SUPABASE_URL as string).replace(/\/$/, '');
   return `${base}/functions/v1/plan-feed?t=${data as string}`;
 }
+
+export interface SyllabusResult {
+  ok: boolean;
+  course?: string | null;
+  course_name?: string | null;
+  term?: string | null;
+  proposed?: number;
+  undated?: number;
+  grading?: { component: string; weight: number }[];
+  message?: string;
+}
+
+/** Reads a syllabus PDF (as a File) and proposes its exams and deadlines. */
+export async function readSyllabusFile(file: File, course?: string): Promise<SyllabusResult> {
+  const buf = new Uint8Array(await file.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  return invoke<SyllabusResult>('read-syllabus', { pdf: btoa(bin), course: course ?? null });
+}
+
+export interface WeeklyResult {
+  ok: boolean;
+  week?: string;
+  text?: string;
+  model?: string;
+  created_at?: string;
+  cached?: boolean;
+  code?: string;
+  message?: string;
+}
+
+/** The AI's review of a week (a Monday); `again` rewrites it. */
+export const weeklyReview = (week: string, again = false) =>
+  invoke<WeeklyResult>('weekly-review', { week, again });

@@ -4,6 +4,7 @@ import { daysUntil, isPast, round1, type ExamPrep } from '../lib/plan';
 import { draftPlan, type DraftResult } from '../lib/sources';
 import { useNow, usePlan } from '../lib/usePlan';
 import { focusSeconds } from '../lib/history';
+import { usePulse } from '../lib/social';
 import { Icon } from './Icon';
 
 // Above the runway: draft a plan, decide on proposals, catch up when behind, and answer
@@ -16,6 +17,7 @@ export function PlanBar() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
+  const pulse = usePulse();
 
   const proposals = plan.plan.filter((r) => r.proposed);
   const proposedHours = round1(proposals.reduce((t, r) => t + r.hours, 0));
@@ -83,7 +85,8 @@ export function PlanBar() {
     }
   };
 
-  const nothingToShow = !proposals.length && !behind.length && !asks.length && !upcoming.length && !msg;
+  const nothingToShow =
+    !proposals.length && !behind.length && !asks.length && !upcoming.length && !msg && !pulse;
   if (nothingToShow) return null;
 
   return (
@@ -112,9 +115,20 @@ export function PlanBar() {
       {proposals.length > 0 ? (
         <div className="pb-row pb-proposal">
           <span>
-            Runway drafted <b>{proposals.length}</b> study {proposals.length === 1 ? 'block' : 'blocks'} (
-            <b>{proposedHours} h</b>) before your {upcoming.length === 1 ? 'exam' : 'exams'}. They're dashed
-            on the runway; each one says why.
+            {proposals.every((p) => p.kind === 'Study') ? (
+              <>
+                Runway drafted <b>{proposals.length}</b> study {proposals.length === 1 ? 'block' : 'blocks'} (
+                <b>{proposedHours} h</b>) before your {upcoming.length === 1 ? 'exam' : 'exams'}.
+              </>
+            ) : (
+              <>
+                Runway proposed <b>{proposals.length}</b> {proposals.length === 1 ? 'item' : 'items'}:{' '}
+                {proposals.filter((p) => p.kind === 'Exam').length} exams,{' '}
+                {proposals.filter((p) => p.kind === 'Deadline').length} deadlines,{' '}
+                {proposals.filter((p) => p.kind === 'Study').length} study blocks.
+              </>
+            )}{' '}
+            They're dashed on the runway; each one says where it came from.
           </span>
           <span className="row">
             <button className="btn btn-small btn-primary" onClick={() => plan.decide(true)}>
@@ -136,6 +150,13 @@ export function PlanBar() {
             </button>
           </div>
         ))
+      )}
+      {pulse > 0 && (
+        <div className="pb-row pb-pulse">
+          <span>
+            <b>{pulse}</b> {pulse === 1 ? 'classmate' : 'classmates'} studied today.
+          </span>
+        </div>
       )}
       {!proposals.length && upcoming.length > 0 && (
         <div className="pb-row pb-draft">

@@ -74,6 +74,13 @@ export function Share() {
   const readiness = profile?.share_level === 'totals' || profile?.share_level === 'readiness';
   const prep = usePublicPrep(readiness ? handle : null, data.exam_prep);
 
+  useEffect(() => {
+    if (profile) document.title = `${profile.display_name || profile.handle}'s runway · Runway`;
+    return () => {
+      document.title = 'Runway';
+    };
+  }, [profile]);
+
   if (state === 'loading') return <div className="fx fx-loading" aria-busy="true" />;
   if (state === 'missing')
     return (

@@ -5,6 +5,11 @@ import { admin, resetDb, seedPlan, seedSession, signIn } from './helpers';
 // runway, accepting them, ticking deadlines, and the plan as a calendar feed.
 
 let userId: string;
+test.afterEach(async () => {
+  // Whatever a test did to the AI switch, the next one starts with it on.
+  await admin.from('app_config').update({ value: true }).eq('key', 'ai_enabled');
+});
+
 test.beforeEach(async () => {
   userId = await resetDb();
   await seedPlan(userId);

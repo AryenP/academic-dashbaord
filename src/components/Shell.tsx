@@ -18,6 +18,7 @@ const NAV = [
   { to: '/log', label: 'Log' },
   { to: '/stats', label: 'Stats' },
   { to: '/review', label: 'Week' },
+  { to: '/friends', label: 'Friends' },
   { to: '/settings', label: 'Settings' },
 ];
 

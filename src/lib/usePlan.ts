@@ -58,12 +58,12 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       supabase
         .from('plan_items')
         .select(
-          'id, course_id, kind, title, start_at, end_at, location, weight, take_home, accepted, reason, for_item_id, status, submitted_at',
+          'id, course_id, kind, title, start_at, end_at, location, weight, take_home, accepted, reason, for_item_id, status, submitted_at, score, max_score',
         )
         .gte('end_at', new Date(Date.now() - 45 * 864e5).toISOString())
         .order('start_at')
         .limit(3000),
-      supabase.from('courses').select('id, code, name, color, hidden').order('created_at'),
+      supabase.from('courses').select('id, code, name, color, hidden, visible').order('created_at'),
     ]);
     return { items: must(items) ?? [], courses: must(courses) ?? [] };
   }, [user]);

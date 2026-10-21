@@ -529,6 +529,8 @@ describe('AI reading and budget', () => {
     expect(
       (await a.db.rpc('ai_record', { p_user: a.id, p_input: 1, p_cached: 0, p_output: 1, p_cents: 1 })).error,
     ).not.toBeNull();
+    // A browser test may have left the switch off in this shared local database.
+    await admin.from('app_config').update({ value: true }).eq('key', 'ai_enabled');
     const budget = (await admin.rpc('ai_budget', { p_user: a.id })).data![0];
     expect(budget).toMatchObject({ enabled: true });
     expect(Number(budget.user_left)).toBe(200);
@@ -711,5 +713,124 @@ describe('planning, feed tokens and submissions', () => {
     expect((await a.db.rpc('prep_hours_by_course', { p_user: a.id })).error).not.toBeNull();
     const r = (await admin.rpc('prep_hours_by_course', { p_user: a.id })).data!;
     expect(r.find((x) => x.course === 'DSC 140A')).toBeTruthy();
+  });
+});
+
+describe('classmates and friends', () => {
+  it('nobody sees classmates until both made the course visible; stats follow the share level', async () => {
+    // Both at ucsd.edu, both in CSE 12 with recent items.
+    const mk = async (who: { db: DB; id: string }, visible: boolean) => {
+      const c = await who.db
+        .from('courses')
+        .insert({ code: 'CSE 12', color: 2, visible })
+        .select('id')
+        .single();
+      await who.db.from('plan_items').insert({
+        course_id: c.data!.id,
+        kind: 'exam',
+        title: 'Midterm',
+        start_at: new Date(Date.now() + 5 * 864e5).toISOString(),
+        end_at: new Date(Date.now() + 5 * 864e5 + 3_600_000).toISOString(),
+      });
+      return c.data!.id;
+    };
+    await mk(a, false);
+    await mk(b, true);
+    // A isn't visible: sees nobody; B is visible but A isn't: sees nobody.
+    expect((await a.db.rpc('classmates', { p_code: 'CSE 12' })).data).toEqual([]);
+    expect((await b.db.rpc('classmates', { p_code: 'CSE 12' })).data).toEqual([]);
+    await a.db.from('courses').update({ visible: true }).eq('code', 'CSE 12');
+    // B is private (share_level off): A sees the name only.
+    const seen = (await a.db.rpc('classmates', { p_code: 'CSE 12' })).data!;
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatchObject({
+      handle: 'bobby',
+      share_level: 'off',
+      is_friend: false,
+      week_minutes: null,
+      streak: null,
+      studied_min: null,
+    });
+    expect(seen[0].exam_title).toBe('Midterm');
+    // B shares totals: hours, streak and readiness appear.
+    await b.db.from('profiles').update({ share_level: 'totals' }).eq('id', b.id);
+    await b.db.from('sessions').insert({
+      course: 'CSE 12',
+      mode: 'flow',
+      started_at: new Date(Date.now() - 3_600_000).toISOString(),
+      ended_at: new Date().toISOString(),
+    });
+    const more = (await a.db.rpc('classmates', { p_code: 'CSE 12' })).data![0];
+    expect(more.week_minutes).toBe(60);
+    expect(more.streak).toBe(1);
+    expect(more.studied_min).toBe(60);
+    expect(Number(more.planned_min)).toBe(0);
+    // Someone at another school never shows up, even with the same course.
+    const c = await signedIn('carl@berkeley.edu');
+    await mk(c, true);
+    expect((await a.db.rpc('classmates', { p_code: 'CSE 12' })).data).toHaveLength(1);
+    expect((await c.db.rpc('classmates', { p_code: 'CSE 12' })).data).toEqual([]);
+    expect((await anon.rpc('classmates', { p_code: 'CSE 12' })).error).not.toBeNull();
+    // The pulse counts classmates who studied today and share totals.
+    expect((await a.db.rpc('classmate_pulse')).data).toBe(1);
+    expect((await b.db.rpc('classmate_pulse')).data).toBe(0); // A shares nothing
+    await b.db.from('profiles').update({ share_level: 'off' }).eq('id', b.id);
+  });
+
+  it('friend requests go by handle, need accepting, and show share-level stats', async () => {
+    expect((await a.db.rpc('request_friend', { p_handle: 'nobody_here' })).error).not.toBeNull();
+    expect((await a.db.rpc('request_friend', { p_handle: 'alice' })).error).not.toBeNull();
+    expect((await a.db.rpc('request_friend', { p_handle: 'bobby' })).error).toBeNull();
+    const mine = (await a.db.rpc('friends_overview')).data!;
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({
+      handle: 'bobby',
+      status: 'requested',
+      direction: 'sent',
+      week_minutes: null,
+    });
+    const theirs = (await b.db.rpc('friends_overview')).data!;
+    expect(theirs[0]).toMatchObject({ handle: 'alice', status: 'requested', direction: 'received' });
+    // A third person sees none of it.
+    const c = await signedIn('carl@berkeley.edu');
+    expect((await c.db.rpc('friends_overview')).data).toEqual([]);
+    expect((await c.db.from('friends').select('*')).data).toEqual([]);
+    // Decline, ask again, accept.
+    await b.db.rpc('respond_friend', { p_handle: 'alice', p_accept: false });
+    expect((await a.db.rpc('friends_overview')).data).toEqual([]);
+    await a.db.rpc('request_friend', { p_handle: 'bobby' });
+    await b.db.rpc('respond_friend', { p_handle: 'alice', p_accept: true });
+    const ok = (await a.db.rpc('friends_overview')).data![0];
+    expect(ok.status).toBe('accepted');
+    expect(ok.courses).toEqual(['CSE 12']); // B's visible courses
+    expect(ok.week_minutes).toBeNull(); // B's share level is off
+    await b.db.from('profiles').update({ share_level: 'totals' }).eq('id', b.id);
+    expect((await a.db.rpc('friends_overview')).data![0].week_minutes).toBe(60);
+    expect((await a.db.rpc('classmates', { p_code: 'CSE 12' })).data![0].is_friend).toBe(true);
+    // Nobody writes the table directly; removing works from either side.
+    expect(
+      (await a.db.from('friends').insert({ user_id: a.id, friend_id: b.id, status: 'accepted' } as never))
+        .error,
+    ).not.toBeNull();
+    await b.db.rpc('remove_friend', { p_handle: 'alice' });
+    expect((await a.db.rpc('friends_overview')).data).toEqual([]);
+    await b.db.from('profiles').update({ share_level: 'off' }).eq('id', b.id);
+  });
+});
+
+describe('weekly reviews', () => {
+  it('are written by the function and read only by their owner', async () => {
+    await admin
+      .from('weekly_reviews')
+      .insert({ user_id: a.id, week: '2026-10-19', text: 'You studied 6 h.', model: 'claude-haiku-5-5' });
+    expect((await a.db.from('weekly_reviews').select('text')).data).toEqual([{ text: 'You studied 6 h.' }]);
+    expect((await b.db.from('weekly_reviews').select('text')).data).toEqual([]);
+    expect(
+      (
+        await a.db
+          .from('weekly_reviews')
+          .insert({ user_id: a.id, week: '2026-10-26', text: 'x', model: 'm' } as never)
+      ).error,
+    ).not.toBeNull();
   });
 });

@@ -25,6 +25,8 @@ export interface PlanItem {
   forId?: string | null;
   status?: 'open' | 'submitted' | 'missed';
   submittedAt?: string | null;
+  score?: number | null;
+  maxScore?: number | null;
 }
 
 export interface ExamPrep {

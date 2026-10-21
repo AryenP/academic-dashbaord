@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Icon } from '../components/Icon';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
@@ -9,6 +9,7 @@ import { weekReview } from '../lib/review';
 import type { Session } from '../lib/supabase';
 import { duration } from '../lib/timer';
 import { useNow, usePlan } from '../lib/usePlan';
+import { weeklyReview, type WeeklyResult } from '../lib/sources';
 
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const short = (k: string) => `${MO[Number(k.slice(5, 7)) - 1]} ${Number(k.slice(8, 10))}`;
@@ -25,6 +26,11 @@ export function Review() {
   const r = useMemo(
     () => weekReview(data.plan, data.exam_prep, sessions, anchor, now),
     [data, sessions, anchor, now],
+  );
+
+  const graded = useMemo(
+    () => data.plan.filter((i) => i.score != null && !i.proposed && i.day >= r.from && i.day <= r.to),
+    [data.plan, r.from, r.to],
   );
 
   if (!ready) return null;
@@ -96,6 +102,37 @@ export function Review() {
           <span className="tile-note">At the end of this week.</span>
         </div>
       </section>
+
+      <AiReview key={r.from} week={r.from} isThisWeek={isThisWeek} />
+
+      {graded.length > 0 && (
+        <section className="card-section" aria-labelledby="rv-graded">
+          <h2 id="rv-graded" className="mc-h2">
+            Graded this week
+          </h2>
+          <p className="mc-note">
+            Scores from the browser extension, next to the hours you put into that course this week.
+          </p>
+          <ul className="rv-graded">
+            {graded.map((g) => (
+              <li key={g.id} style={courseVars(g.course) as CSSProperties}>
+                <span className="rv-course">{g.course}</span>
+                <span>{g.title}</span>
+                <span className="rv-num">
+                  <b>
+                    {g.score}
+                    {g.maxScore ? ` / ${g.maxScore}` : ''}
+                  </b>
+                  {g.maxScore ? ` (${Math.round((g.score! / g.maxScore) * 100)}%)` : ''}
+                </span>
+                <span className="muted">
+                  {duration((r.byCourse.find((c) => c.course === g.course)?.actualMin ?? 0) * 60)} studied
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {r.byCourse.length > 0 && (
         <section className="card-section" aria-labelledby="rv-courses">
@@ -178,5 +215,53 @@ function SessionList({ title, list }: { title: string; list: Session[] }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+function AiReview({ week, isThisWeek }: { week: string; isThisWeek: boolean }) {
+  // Keyed by week by the parent, so a new week starts fresh.
+  const [state, setState] = useState<'idle' | 'loading' | 'writing'>('loading');
+  const [result, setResult] = useState<WeeklyResult | null>(null);
+  // Fetch what's written for this week; the function writes one if none exists.
+  useEffect(() => {
+    let alive = true;
+    weeklyReview(week)
+      .then((r) => alive && setResult(r))
+      .catch(() => alive && setResult(null))
+      .finally(() => alive && setState('idle'));
+    return () => {
+      alive = false;
+    };
+  }, [week]);
+  const again = async () => {
+    setState('writing');
+    try {
+      setResult(await weeklyReview(week, true));
+    } finally {
+      setState('idle');
+    }
+  };
+  return (
+    <section className="card-section rv-ai" aria-labelledby="rv-ai-h">
+      <h2 id="rv-ai-h" className="mc-h2">
+        In three sentences
+      </h2>
+      {state === 'loading' && <p className="muted">Writing…</p>}
+      {state !== 'loading' && result?.ok && result.text && <p className="rv-ai-text">{result.text}</p>}
+      {state !== 'loading' && result && !result.ok && (
+        <p className="field-hint">{result.message ?? "The review couldn't be written."}</p>
+      )}
+      {state !== 'loading' && result?.ok && (
+        <p className="row">
+          <button className="btn btn-link" onClick={again} disabled={state === 'writing'}>
+            {state === 'writing'
+              ? 'Writing…'
+              : isThisWeek
+                ? 'Write it again with this week so far'
+                : 'Write it again'}
+          </button>
+        </p>
+      )}
+    </section>
   );
 }

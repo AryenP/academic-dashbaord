@@ -9,6 +9,8 @@ export interface CourseInfo {
   name: string | null;
   color: number;
   hidden: boolean;
+  /** Shown to classmates in this course (opt-in). */
+  visible?: boolean;
 }
 
 export const SLOTS = 6;

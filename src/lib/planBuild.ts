@@ -24,6 +24,8 @@ export interface ItemRow {
   for_item_id?: string | null;
   status?: string | null;
   submitted_at?: string | null;
+  score?: number | string | null;
+  max_score?: number | string | null;
 }
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -78,6 +80,8 @@ export function toPlanItem(r: ItemRow, courses: Map<string, CourseInfo>, tz: str
     forId: r.for_item_id ?? null,
     status: (r.status as PlanItem['status']) ?? 'open',
     submittedAt: r.submitted_at ?? null,
+    score: r.score == null ? null : Number(r.score),
+    maxScore: r.max_score == null ? null : Number(r.max_score),
   };
 }
 

@@ -25,6 +25,11 @@ test.afterAll(async () => {
   await new Promise((r) => server.close(r));
 });
 
+test.afterEach(async () => {
+  // Whatever a test did to the AI switch, the next one starts with it on.
+  await admin.from('app_config').update({ value: true }).eq('key', 'ai_enabled');
+});
+
 test.beforeEach(async () => {
   await resetDb();
 });

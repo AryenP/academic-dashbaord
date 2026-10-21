@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Classmates } from '../components/Classmates';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
 import { courseVars, SLOTS, type CourseInfo } from '../lib/courses';
 import { effective, unsure, type Readable } from '../lib/reading';
-import { readWithAi, rebuildSource, type ReadResult } from '../lib/sources';
+import { readSyllabusFile, readWithAi, rebuildSource, type ReadResult } from '../lib/sources';
 import { supabase } from '../lib/supabase';
 import { usePlan } from '../lib/usePlan';
 import { localIso, whenLabel } from '../lib/planBuild';
@@ -154,10 +155,13 @@ export function Courses() {
       else if (!eff.course) noCourse.push(e);
       else byCourse.set(eff.course, [...(byCourse.get(eff.course) ?? []), e]);
     }
+    // One card per course the person has (from a calendar, the extension or by hand), with that
+    // course's calendar events attached; a course with no events still gets a card.
     const known = new Map(plan.courses.map((c) => [c.code, c]));
-    const cards = [...byCourse.entries()]
-      .map(([code, evs]) => ({ code, course: known.get(code) ?? null, events: evs }))
-      .sort((a, b) => b.events.length - a.events.length);
+    const codes = new Set([...plan.courses.map((c) => c.code), ...byCourse.keys()]);
+    const cards = [...codes]
+      .map((code) => ({ code, course: known.get(code) ?? null, events: byCourse.get(code) ?? [] }))
+      .sort((a, b) => b.events.length - a.events.length || a.code.localeCompare(b.code));
     return { cards, commitments, personal, noCourse };
   }, [events, plan.courses]);
 
@@ -179,7 +183,7 @@ export function Courses() {
 
       {events === null ? (
         <div className="fx fx-loading" aria-busy="true" />
-      ) : total === 0 ? (
+      ) : total === 0 && plan.courses.length === 0 ? (
         <section className="empty-runway">
           <p>
             No calendar events yet. <Link to="/connect">Connect a calendar</Link> and they show up here.
@@ -187,6 +191,12 @@ export function Courses() {
         </section>
       ) : (
         <>
+          {total === 0 && (
+            <p className="mc-note">
+              No calendar events yet: these courses come from what you added by hand.{' '}
+              <Link to="/connect">Connect a calendar</Link> to fill them in.
+            </p>
+          )}
           <div className="cs-summary" role="status" aria-live="polite">
             <span className="cs-chip">
               <b>{groups.cards.length}</b> {groups.cards.length === 1 ? 'course' : 'courses'}
@@ -321,6 +331,9 @@ function CourseCard({
   };
   const notACourse = async () => {
     for (const e of events) await onChange(e, { kind: 'personal' });
+    // The course itself goes too; its plan items cascade. Events keep their 'personal' override.
+    if (course && supabase) await supabase.from('courses').delete().eq('id', course.id);
+    await plan.refresh();
     setConfirmNot(false);
   };
   return (
@@ -383,6 +396,8 @@ function CourseCard({
           </div>
         ) : null,
       )}
+      {course && <SyllabusUpload code={code} />}
+      {course && <Classmates course={course} />}
       {classes.length > 0 && (
         <details className="cs-group cs-fold-inline">
           <summary>
@@ -483,5 +498,59 @@ function Row({
         )}
       </div>
     </li>
+  );
+}
+
+function SyllabusUpload({ code }: { code: string }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const onFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      setMsg('That PDF is larger than 10 MB.');
+      return;
+    }
+    setBusy(true);
+    setMsg(null);
+    try {
+      const r = await readSyllabusFile(file, code);
+      if (!r.ok) setMsg(r.message ?? "Runway couldn't read that syllabus.");
+      else if (!r.proposed)
+        setMsg(
+          r.undated
+            ? `Found ${r.undated} dated-later items but no dates to put on the runway yet.`
+            : 'No exams or dated deadlines found in that syllabus.',
+        );
+      else
+        setMsg(
+          `Proposed ${r.proposed} ${r.proposed === 1 ? 'item' : 'items'} from the syllabus${r.undated ? ` (${r.undated} without a date)` : ''}. They're waiting on your runway, each with the page it came from.`,
+        );
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Runway couldn't read that syllabus.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="cs-syllabus">
+      <label className="btn btn-quiet btn-small cs-syllabus-btn">
+        {busy ? 'Reading the syllabus…' : 'Upload the syllabus (PDF)'}
+        <input
+          type="file"
+          accept="application/pdf,.pdf"
+          className="sr-only"
+          disabled={busy}
+          onChange={(e) => onFile(e.target.files?.[0])}
+        />
+      </label>
+      <span className="field-hint">
+        Runway reads exam dates, weights and dated deadlines, and proposes them with the page they came from.
+      </span>
+      {msg && (
+        <p className="field-hint" role="status">
+          {msg} {msg.startsWith('Proposed') && <Link to="/">See the runway.</Link>}
+        </p>
+      )}
+    </div>
   );
 }

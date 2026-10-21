@@ -21,6 +21,7 @@ const Privacy = lazy(() => import('./views/Privacy').then((m) => ({ default: m.P
 const Share = lazy(() => import('./views/Share').then((m) => ({ default: m.Share })));
 const Connect = lazy(() => import('./views/Connect').then((m) => ({ default: m.Connect })));
 const Courses = lazy(() => import('./views/Courses').then((m) => ({ default: m.Courses })));
+const Friends = lazy(() => import('./views/Friends').then((m) => ({ default: m.Friends })));
 
 export function App() {
   return (
@@ -45,6 +46,7 @@ export function App() {
                       <Route path="/u/:handle" element={<Share />} />
                       <Route path="/connect" element={<Connect />} />
                       <Route path="/courses" element={<Courses />} />
+                      <Route path="/friends" element={<Friends />} />
                       <Route path="*" element={<Home />} />
                     </Routes>
                   </Suspense>

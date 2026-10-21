@@ -7,6 +7,8 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://127.0.0.1:4173/academic-dashbaord/',
+    // The plan is in Pacific time; pin the browser there so CI (UTC) sees the same day boundaries.
+    timezoneId: 'America/Los_Angeles',
     ...devices['Desktop Chrome'],
   },
   webServer: {

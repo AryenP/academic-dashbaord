@@ -1,4 +1,4 @@
-"""Rebuild data.json from Google Calendar's private iCal feed.
+"""Rebuild public/data.json from Google Calendar's private iCal feed.
 
 Reads the feed URL from the GCAL_ICS_URL environment variable (a GitHub
 Actions secret), expands recurring events in the plan window, keeps only
@@ -27,7 +27,7 @@ import recurring_ical_events
 TZ = ZoneInfo("America/Los_Angeles")
 WINDOW_START = os.environ.get("PLAN_START", "2026-10-20")
 WINDOW_END = os.environ.get("PLAN_END", "2026-11-05")  # exclusive
-OUT = os.environ.get("OUT", os.path.join(os.path.dirname(__file__), "..", "data.json"))
+OUT = os.environ.get("OUT", os.path.join(os.path.dirname(__file__), "..", "public", "data.json"))
 
 COURSE_RE = re.compile(r"\b(DSC|CSE)\s?(\d+[A-Z]?)\b")
 CLASS_MEETING_RE = re.compile(r"^(DSC|CSE)\s?\d+[A-Z]?(\s+(Lecture|Discussion|Section|Lab section))?$")

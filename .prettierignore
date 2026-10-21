@@ -1,0 +1,10 @@
+dist
+node_modules
+public/data.json
+package-lock.json
+playwright-report
+test-results
+docs
+*.md
+.venv
+.pytest_cache

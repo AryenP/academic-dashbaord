@@ -1,1 +1,12 @@
 __pycache__/
+.pytest_cache/
+.venv/
+node_modules/
+dist/
+playwright-report/
+test-results/
+tests/e2e/__screenshots__/
+.env
+.env.local
+supabase/.temp/
+.DS_Store

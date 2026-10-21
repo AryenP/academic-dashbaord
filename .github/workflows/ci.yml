@@ -48,3 +48,5 @@ jobs:
       - run: npm run test:fn
       - run: supabase start -x studio,imgproxy,vector,logflare,supavisor,storage-api,mailpit,edge-runtime
       - run: npm run test:db
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test -c playwright.db.config.ts sessions

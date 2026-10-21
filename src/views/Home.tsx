@@ -2,7 +2,12 @@ import { Agenda } from '../components/Agenda';
 import { Checkpoints } from '../components/Checkpoints';
 import { Runway } from '../components/Runway';
 import { Today } from '../components/Today';
+import { buildActuals, readiness } from '../lib/actuals';
+import { useAuth } from '../lib/auth';
+import { useHistory } from '../lib/history';
+import { useLiveSession } from '../lib/liveSession';
 import { COURSES, colorOf } from '../lib/courses';
+import { useMemo } from 'react';
 import { daysUntil, isNow, isPast, type ExamPrep } from '../lib/plan';
 import { useNow, usePlan } from '../lib/usePlan';
 
@@ -26,7 +31,7 @@ function Lede({ exams, now }: { exams: ExamPrep[]; now: number }) {
   );
 }
 
-function Key() {
+function Key({ actual }: { actual: boolean }) {
   return (
     <div className="mc-key">
       {COURSES.map((c) => (
@@ -47,6 +52,12 @@ function Key() {
         />
         Exam
       </span>
+      {actual && (
+        <span>
+          <i className="k-actual" />
+          Studied
+        </span>
+      )}
     </div>
   );
 }
@@ -67,6 +78,21 @@ export function Home() {
   const data = usePlan();
   const now = useNow();
   const t = data.totals[0];
+  const { user } = useAuth();
+  const history = useHistory();
+  const live = useLiveSession();
+  const actuals = useMemo(
+    () => buildActuals(history.sessions, history.totals, live.session, now),
+    [history.sessions, history.totals, live.session, now],
+  );
+  // Readiness shows for the owner (even at 0%) and for visitors when the owner shares totals.
+  const ready = useMemo(
+    () =>
+      user || history.totals.length
+        ? new Map(data.exam_prep.map((x) => [x.id, readiness(x, history.sessions, history.totals)]))
+        : undefined,
+    [user, history.sessions, history.totals, data.exam_prep],
+  );
   return (
     <>
       <div className="mc">
@@ -82,8 +108,8 @@ export function Home() {
         </header>
 
         <section className="mc-runway-wrap" id="runway">
-          <Runway plan={data.plan} now={now} />
-          <Key />
+          <Runway plan={data.plan} now={now} actuals={actuals} />
+          <Key actual={actuals.spans.size > 0 || actuals.dayMinutes.size > 0} />
         </section>
 
         <section className="mc-panels">
@@ -92,7 +118,7 @@ export function Home() {
             <p className="mc-note">
               Each bar is that course's study blocks. A segment fills in once its time has passed.
             </p>
-            <Checkpoints exams={data.exam_prep} plan={data.plan} now={now} />
+            <Checkpoints exams={data.exam_prep} plan={data.plan} now={now} ready={ready} />
           </div>
           <Today plan={data.plan} now={now} />
         </section>

@@ -1,4 +1,5 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import type { Actuals } from '../lib/actuals';
 import { colorOf } from '../lib/courses';
 import {
   H0,
@@ -21,7 +22,9 @@ const PX = 19;
 // Position of the hovered block relative to the runway box; the tooltip places itself beside it.
 type Tip = { r: PlanItem; left: number; right: number; top: number } | null;
 
-export function Runway({ plan, now }: { plan: PlanItem[]; now: number }) {
+const hours = (m: number) => `${Math.round((m / 60) * 10) / 10} h`;
+
+export function Runway({ plan, now, actuals }: { plan: PlanItem[]; now: number; actuals?: Actuals }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const todayRef = useRef<HTMLDivElement>(null);
@@ -111,11 +114,14 @@ export function Runway({ plan, now }: { plan: PlanItem[]; now: number }) {
             const dt = new Date(utc(day));
             const daySegs = segs.get(day) ?? [];
             const ex = daySegs.find((s) => s.r.kind === 'Exam');
+            const spans = actuals?.spans.get(day) ?? [];
+            const dayMin = actuals?.dayMinutes.get(day) ?? 0;
             const cls = [
               'rw-day',
               dt.getUTCDay() === 1 && 'is-mon',
               day === today && 'is-today',
               day < today && 'is-past',
+              (spans.length > 0 || dayMin > 0) && 'has-actual',
             ]
               .filter(Boolean)
               .join(' ');
@@ -163,6 +169,35 @@ export function Runway({ plan, now }: { plan: PlanItem[]; now: number }) {
                       </div>
                     );
                   })}
+                  {spans.length > 0
+                    ? spans.map((sp) => {
+                        const a = Math.max(H0, sp.a);
+                        const b = Math.min(H1, sp.b);
+                        if (b <= a) return null;
+                        return (
+                          <div
+                            key={sp.id}
+                            className={`rw-actual${sp.live ? ' is-live' : ''}`}
+                            style={
+                              {
+                                top: `${((a - H0) / 60) * PX}px`,
+                                height: `${Math.max(3, ((b - a) / 60) * PX)}px`,
+                                '--c': colorOf(sp.course),
+                              } as CSSProperties
+                            }
+                            title={`Studied ${sp.course}`}
+                          />
+                        );
+                      })
+                    : dayMin > 0 && (
+                        // Visitors only get daily totals, not times: a gauge filling up from the bottom.
+                        <div
+                          className="rw-actual is-total"
+                          style={{ height: `${Math.min(16, dayMin / 60) * PX}px` }}
+                          title={`${hours(dayMin)} studied`}
+                        />
+                      )}
+                  {dayMin > 0 && <span className="sr-only">{hours(dayMin)} studied this day.</span>}
                   {day === today && nowMin >= H0 && nowMin <= H1 && (
                     <div className="rw-now" style={{ top: `${((nowMin - H0) / 60) * PX}px` }} />
                   )}

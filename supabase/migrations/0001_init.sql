@@ -39,7 +39,8 @@ create table session_breaks (
   session_id uuid not null references sessions on delete cascade,
   kind text not null check (kind in ('short','long')),
   started_at timestamptz not null default now(),
-  ended_at timestamptz
+  ended_at timestamptz,
+  paused_before int not null default 0  -- the session's paused_seconds when this break began
 );
 
 create table phone_events (
@@ -177,7 +178,9 @@ begin
     select * into b from session_breaks where session_id = p_session and ended_at is null;
     return b;
   end if;
-  insert into session_breaks (session_id, kind, started_at) values (p_session, p_kind, p_at) returning * into b;
+  insert into session_breaks (session_id, kind, started_at, paused_before)
+    select p_session, p_kind, p_at, paused_seconds from sessions where id = p_session
+    returning * into b;
   return b;
 end $$;
 

@@ -13,5 +13,12 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["vite.config.ts", "vitest.db.config.ts", "playwright.config.ts", "tests", "supabase/tests"]
+  "include": [
+    "vite.config.ts",
+    "vitest.db.config.ts",
+    "playwright.config.ts",
+    "playwright.db.config.ts",
+    "tests",
+    "supabase/tests"
+  ]
 }

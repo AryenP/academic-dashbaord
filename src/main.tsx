@@ -5,6 +5,7 @@ import '@fontsource/big-shoulders-display/latin-600';
 import '@fontsource/big-shoulders-display/latin-800';
 import './styles/tokens.css';
 import './styles/runway.css';
+import './styles/app.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -8,3 +8,4 @@ docs
 *.md
 .venv
 .pytest_cache
+dist-db

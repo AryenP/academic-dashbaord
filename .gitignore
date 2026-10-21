@@ -10,3 +10,4 @@ tests/e2e/__screenshots__/
 .env.local
 supabase/.temp/
 .DS_Store
+dist-db/

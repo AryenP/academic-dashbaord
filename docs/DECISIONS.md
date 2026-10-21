@@ -14,3 +14,9 @@ Changes from `docs/SPEC.md` and `docs/BUILD_PROMPT.md`, with the reason for each
 - **2026-10-20 · Only one unfinished session per person** (partial unique index). A second "start" from the phone is a no-op.
 - **2026-10-20 · Rate limit uses a `phone_rate` table** (per token hash, per minute) behind a service-role-only function. Supabase has no built-in KV.
 - **2026-10-20 · Database and function tests.** `npm run test:db` runs the RLS tests against a local Supabase, and `npm run test:fn` runs the phone-event handler tests in Deno. CI runs both in a `backend` job.
+- **2026-10-20 · `session_breaks.paused_before`.** Each break stores how much pause time the session had when the break began, so "time to next break" is exact even when you pause and take breaks in the same session.
+- **2026-10-20 · The timer corrects for device clock skew.** It learns the server-minus-device offset from the timestamps the server writes on start and break, so a phone whose clock is off still shows the right time.
+- **2026-10-20 · On the public runway, visitors see a daily-total gauge, not time-accurate bars.** `public_daily_totals()` deliberately has no times of day. The owner sees each session at its real time.
+- **2026-10-20 · Readiness counts every session for that course before the exam,** not only sessions linked to a plan block. Studying off-plan still counts.
+- **2026-10-20 · Stats charts are CSS, not d3.** The bars and heatmap are simple enough that d3 would only add bundle weight.
+- **2026-10-20 · Signed-in browser tests** (`npm run test:e2e:db`) run against a local Supabase and sign in by placing a real session in the browser. CI runs them in the `backend` job.

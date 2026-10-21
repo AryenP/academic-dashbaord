@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', '.venv', 'playwright-report', 'test-results', 'supabase/functions'] },
+  { ignores: ['dist', 'dist-db', '.venv', 'playwright-report', 'test-results', 'supabase/functions'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -16,4 +16,6 @@ export default tseslint.config(
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  // Context modules export a provider and its hook together, on purpose.
+  { files: ['src/lib/**/*.tsx'], rules: { 'react-refresh/only-export-components': 'off' } },
 );

@@ -86,6 +86,7 @@ export type Database = {
           ended_at: string | null;
           id: string;
           kind: string;
+          paused_before: number;
           session_id: string;
           started_at: string;
         };
@@ -94,6 +95,7 @@ export type Database = {
           ended_at?: string | null;
           id?: string;
           kind: string;
+          paused_before?: number;
           session_id: string;
           started_at?: string;
         };
@@ -101,6 +103,7 @@ export type Database = {
           ended_at?: string | null;
           id?: string;
           kind?: string;
+          paused_before?: number;
           session_id?: string;
           started_at?: string;
         };
@@ -307,6 +310,7 @@ export type Database = {
           ended_at: string | null;
           id: string;
           kind: string;
+          paused_before: number;
           session_id: string;
           started_at: string;
         };

@@ -8,6 +8,8 @@ Paste this at https://supabase.com/dashboard/support/new (category: Edge Functio
 
 **Subject:** All Edge Function invocations return 503 "name resolution failed" from Kong since a function was deleted
 
+**Update, 10:10 UTC:** the gateway recovered on its own about 40 minutes after the restart, then went back to the same 503 immediately after three `supabase functions deploy` calls and a `supabase secrets set`. So it looks like every deploy or secret change re-provisions the project's Edge Functions service and Kong can't resolve the upstream for 20–40 minutes each time, rather than the delete being the cause.
+
 **What happened**
 
 At about 08:25 UTC on 2026-10-21 I deleted an Edge Function with `supabase functions delete env-probe` (CLI 2.121.0). Since then every `POST` to `https://uhqurcspebdxtkalbduc.supabase.co/functions/v1/<any-function>` returns:

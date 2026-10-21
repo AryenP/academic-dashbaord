@@ -35,7 +35,8 @@ jobs:
         run: python scripts/sync.py
 
       # Supabase pauses free projects after 7 days without requests. This run every 15 minutes keeps it
-      # awake. It reads only public totals, and never fails the sync.
+      # awake. It reads only public totals, and never fails the sync. The key goes in `apikey` only:
+      # the newer sb_publishable_ keys aren't JWTs, so they don't belong in Authorization.
       - name: Keep Supabase awake
         if: ${{ always() }}
         continue-on-error: true
@@ -49,7 +50,7 @@ jobs:
           fi
           curl -fsS -m 20 -o /dev/null -w "Supabase answered %{http_code}\n" \
             -X POST "$SUPABASE_URL/rest/v1/rpc/public_daily_totals" \
-            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
             -H "Content-Type: application/json" -d '{"days":1}'
 
       - name: Commit if the plan changed

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { localIso } from '../../src/lib/planBuild';
 import { admin, OWNER_HANDLE, resetDb, seedPlan, seedSession, signIn } from './helpers';
 
 let userId: string;
@@ -127,9 +128,10 @@ test('runway shows studied time and readiness for the owner, and totals for visi
   page,
   browser,
 }) => {
-  // A finished hour this morning, so it draws inside today's column whatever the time of day.
-  const nine = new Date();
-  nine.setHours(9, 0, 0, 0);
+  // A finished hour at 9 AM Pacific today, so it draws inside today's column whatever the time of
+  // day, and whatever the runner's timezone (CI is UTC; the browser is pinned to Pacific).
+  const now = localIso(Date.now(), 'America/Los_Angeles');
+  const nine = new Date(`${now.slice(0, 10)}T09:00:00${now.slice(19)}`);
   await seedSession(userId, {
     course: 'MATH 20C',
     started_at: nine.toISOString(),

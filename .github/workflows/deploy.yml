@@ -41,6 +41,8 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           VITE_SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
+          # 'true' once the Google provider is enabled in Supabase (repo variable, not a secret).
+          VITE_GOOGLE_SIGNIN: ${{ vars.GOOGLE_SIGNIN }}
 
       - uses: actions/upload-pages-artifact@v3
         with:

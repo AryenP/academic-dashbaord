@@ -18,6 +18,13 @@ export interface PlanItem {
   hours: number;
   location: string;
   weight: number | null;
+  /** A planner proposal the person hasn't accepted yet. Not counted in totals or prep hours. */
+  proposed?: boolean;
+  reason?: string | null;
+  /** The exam a study block prepares for. */
+  forId?: string | null;
+  status?: 'open' | 'submitted' | 'missed';
+  submittedAt?: string | null;
 }
 
 export interface ExamPrep {
@@ -121,10 +128,13 @@ export function planDays(plan: PlanItem[]): string[] {
 
 /** Study blocks for an exam's course that end before it starts: the exam's planned prep. */
 export const prepBlocks = (plan: PlanItem[], x: ExamPrep) =>
-  plan.filter((r) => r.kind === 'Study' && r.course === x.course && Date.parse(r.end) <= Date.parse(x.start));
+  plan.filter(
+    (r) =>
+      r.kind === 'Study' && !r.proposed && r.course === x.course && Date.parse(r.end) <= Date.parse(x.start),
+  );
 
 /** The block you should be doing now, else the next one today or later. Used to default a new session. */
 export function currentOrNextStudy(plan: PlanItem[], now = Date.now()): PlanItem | undefined {
-  const study = plan.filter((r) => r.kind === 'Study');
+  const study = plan.filter((r) => r.kind === 'Study' && !r.proposed);
   return study.find((r) => isNow(r, now)) ?? study.find((r) => Date.parse(r.start) > now);
 }

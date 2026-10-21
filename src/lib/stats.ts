@@ -40,7 +40,9 @@ export function plannedVsActual(
   return days.map((day) => ({
     day,
     plannedMin: Math.round(
-      plan.filter((r) => r.kind === 'Study' && r.day === day).reduce((s, r) => s + r.hours * 60, 0),
+      plan
+        .filter((r) => r.kind === 'Study' && !r.proposed && r.day === day)
+        .reduce((s, r) => s + r.hours * 60, 0),
     ),
     actualMin: totals.filter((t) => t.day === day).reduce((s, t) => s + t.minutes, 0),
   }));
@@ -132,4 +134,26 @@ export function bestHours(sessions: Session[], hours: number[]): HeatCell[] {
       });
     }
   return cells;
+}
+
+export interface KindHours {
+  study: number;
+  classes: number;
+  commitments: number;
+}
+
+/** Hours on the calendar by kind between two days (inclusive), proposals excluded. */
+export function hoursByKind(plan: PlanItem[], from: string, to: string): KindHours {
+  const out: KindHours = { study: 0, classes: 0, commitments: 0 };
+  for (const r of plan) {
+    if (r.proposed || r.day < from || r.day > to) continue;
+    if (r.kind === 'Study') out.study += r.hours;
+    else if (r.kind === 'Class') out.classes += r.hours;
+    else if (r.kind === 'Commitment') out.commitments += r.hours;
+  }
+  return {
+    study: Math.round(out.study * 10) / 10,
+    classes: Math.round(out.classes * 10) / 10,
+    commitments: Math.round(out.commitments * 10) / 10,
+  };
 }

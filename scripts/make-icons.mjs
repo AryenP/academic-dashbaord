@@ -17,6 +17,7 @@ const icons = [
   { file: 'icon-512.png', size: 512, pad: 3 },
   { file: 'icon-maskable-512.png', size: 512, pad: 7 }, // safe zone: the inner 80%
   { file: 'apple-touch-icon.png', size: 180, pad: 4 },
+  { file: '../../extension/icon-128.png', size: 128, pad: 4 }, // the browser extension
 ];
 
 const browser = await chromium.launch();

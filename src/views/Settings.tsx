@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { PhoneSettings } from '../components/PhoneSettings';
+import { ExtensionSettings, FeedSettings, PlanningSettings } from '../components/PlanningSettings';
 import { SourcesSettings } from '../components/SourcesSettings';
 import { SpotifySettings } from '../components/SpotifySettings';
 import { useAuth } from '../lib/auth';
@@ -21,6 +22,9 @@ export function Settings() {
         <>
           <Account />
           <SourcesSettings />
+          <PlanningSettings />
+          <FeedSettings />
+          <ExtensionSettings />
           <AiUsage />
           <Breaks />
           <Sharing />

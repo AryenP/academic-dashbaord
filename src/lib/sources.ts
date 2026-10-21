@@ -192,3 +192,28 @@ export const readWithAi = (all = false) => invoke<ReadResult>('classify-events',
 /** Rebuilds a source's plan items from its stored events and the person's overrides. */
 export const rebuildSource = (sourceId: string) =>
   invoke<SyncResult>('sync-sources', { source_id: sourceId, rebuild: true });
+
+export interface DraftResult {
+  ok: boolean;
+  draft_id?: string;
+  blocks?: number;
+  hours?: number;
+  by?: 'ai' | 'rules';
+  model?: string | null;
+  dropped?: number;
+  exams?: number;
+  message?: string;
+}
+
+/** Asks the planner for study blocks before every upcoming exam (or one). */
+export const draftPlan = (examId?: string) =>
+  invoke<DraftResult>('draft-plan', examId ? { exam_id: examId } : {});
+
+/** Makes (or replaces) the token behind the plan's calendar feed and returns the feed address. */
+export async function makeFeedUrl(): Promise<string> {
+  if (!supabase) throw new Error('The backend is not set up.');
+  const { data, error } = await supabase.rpc('make_access_token', { p_purpose: 'feed' });
+  if (error) throw new Error(error.message);
+  const base = (import.meta.env.VITE_SUPABASE_URL as string).replace(/\/$/, '');
+  return `${base}/functions/v1/plan-feed?t=${data as string}`;
+}

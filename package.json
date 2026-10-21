@@ -14,10 +14,11 @@
     "test:e2e": "playwright test",
     "check": "npm run lint && npm run format:check && npm run test && npm run build && npm run test:e2e",
     "test:db": "vitest run -c vitest.db.config.ts",
-    "test:fn": "deno test --allow-read --allow-env --allow-net supabase/functions",
+    "test:fn": "deno test --allow-read --allow-env --allow-net supabase/functions extension/test",
     "test:e2e:db": "playwright test -c playwright.db.config.ts",
     "types": "supabase gen types typescript --local > src/lib/database.types.ts && prettier --write src/lib/database.types.ts",
-    "eval:classify": "deno run --allow-read --allow-env --allow-net scripts/eval-classify.ts"
+    "eval:classify": "deno run --allow-read --allow-env --allow-net scripts/eval-classify.ts",
+    "test:ext": "deno test --allow-read --allow-env --allow-net extension/test"
   },
   "dependencies": {
     "@fontsource/big-shoulders-display": "^5.3.0",
@@ -42,6 +43,7 @@
     "globals": "^17.13.0",
     "ical.js": "^2.1.0",
     "jsdom": "^29.1.1",
+    "linkedom": "^0.18.12",
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",

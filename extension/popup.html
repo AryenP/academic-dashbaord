@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Runway</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 14px;
+      }
+      body {
+        width: 320px;
+        margin: 0;
+        padding: 16px;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 18px;
+        margin: 0 0 4px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      label {
+        display: block;
+        margin: 10px 0;
+      }
+      input[type='text'] {
+        width: 100%;
+        box-sizing: border-box;
+        font: inherit;
+        padding: 8px;
+        border: 1px solid #8884;
+        border-radius: 6px;
+        font-family: ui-monospace, monospace;
+      }
+      button {
+        font: inherit;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 1px solid #8886;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        min-height: 40px;
+      }
+      button.primary {
+        background: #1b1d22;
+        color: #fff;
+        border-color: #1b1d22;
+      }
+      .muted {
+        opacity: 0.75;
+        font-size: 13px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      #status {
+        margin-top: 12px;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Runway</h1>
+    <p class="muted">
+      When you open a Gradescope course or a Canvas assignments page, the deadlines and whether you've
+      submitted go to your runway. Nothing else on the page is read.
+    </p>
+    <label>
+      Runway token
+      <input
+        id="token"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="from Settings → Extension"
+      />
+    </label>
+    <label class="row">
+      <input id="grades" type="checkbox" />
+      <span>Also send released scores (private, off by default)</span>
+    </label>
+    <div class="row">
+      <button id="save" class="primary">Save</button>
+      <span id="saved" class="muted"></span>
+    </div>
+    <div id="status" class="muted"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

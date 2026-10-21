@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { courseVars } from '../lib/courses';
 import { isNow, isPast, type Kind, type PlanItem } from '../lib/plan';
+import { usePlan } from '../lib/usePlan';
 
 const FILTERS: { kind: Kind | 'All'; label: string }[] = [
   { kind: 'All', label: 'All' },
@@ -12,7 +13,8 @@ const FILTERS: { kind: Kind | 'All'; label: string }[] = [
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const shortDate = (k: string) => `${MO[Number(k.slice(5, 7)) - 1]} ${Number(k.slice(8, 10))}`;
 
-export function Agenda({ plan, now }: { plan: PlanItem[]; now: number }) {
+export function Agenda({ plan, now, self }: { plan: PlanItem[]; now: number; self?: boolean }) {
+  const { decide, setStatus } = usePlan();
   const [filter, setFilter] = useState<Kind | 'All'>('All');
   const wrapRef = useRef<HTMLDivElement>(null);
   const scrolled = useRef(false);
@@ -57,20 +59,47 @@ export function Agenda({ plan, now }: { plan: PlanItem[]; now: number }) {
               <th>What</th>
               <th>Type</th>
               <th>Hours</th>
+              {self && <th className="sr-only">Actions</th>}
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr
                 key={r.id}
-                className={`k-${r.kind.toLowerCase()}${isPast(r, now) ? ' is-past' : ''}${isNow(r, now) ? ' is-now' : ''}`}
+                className={`k-${r.kind.toLowerCase()}${isPast(r, now) ? ' is-past' : ''}${isNow(r, now) ? ' is-now' : ''}${r.proposed ? ' is-proposed' : ''}${r.status === 'submitted' ? ' is-submitted' : ''}`}
                 style={{ ...courseVars(r.course) } as CSSProperties}
               >
                 <td>{r.when}</td>
                 <td>{r.course}</td>
-                <td>{r.title}</td>
-                <td>{r.kind}</td>
+                <td>
+                  {r.title}
+                  {r.proposed && r.reason && <span className="mc-why">{r.reason}</span>}
+                </td>
+                <td>{r.proposed ? 'Proposed' : r.status === 'submitted' ? 'Submitted' : r.kind}</td>
                 <td>{r.hours}</td>
+                {self && (
+                  <td className="mc-act">
+                    {r.proposed ? (
+                      <>
+                        <button className="btn btn-small btn-primary" onClick={() => decide(true, [r.id])}>
+                          Accept
+                        </button>
+                        <button className="btn btn-small btn-quiet" onClick={() => decide(false, [r.id])}>
+                          Drop
+                        </button>
+                      </>
+                    ) : r.kind === 'Deadline' ? (
+                      <label className="td-tick">
+                        <input
+                          type="checkbox"
+                          checked={r.status === 'submitted'}
+                          onChange={(e) => setStatus(r.id, e.target.checked ? 'submitted' : 'open')}
+                        />
+                        <span>Submitted</span>
+                      </label>
+                    ) : null}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

@@ -32,6 +32,8 @@ test.beforeEach(async () => {
 test('after connecting, the courses screen shows what was read, and a fix changes the runway', async ({
   page,
 }) => {
+  // The title rules alone, so the readings are deterministic whether or not a key is set locally.
+  await admin.from('app_config').update({ value: false }).eq('key', 'ai_enabled');
   await signIn(page);
   await page.goto('./#/connect');
   await page.getByRole('radio', { name: /Google Calendar/ }).click();
@@ -44,7 +46,7 @@ test('after connecting, the courses screen shows what was read, and a fix change
   // Lands on the courses screen, which tries the AI once and says it isn't set up here.
   await expect(page).toHaveURL(/#\/courses/, { timeout: 15_000 });
   await expect(page.getByRole('heading', { name: 'Your courses' })).toBeVisible();
-  await expect(page.getByText(/isn't set up on this server yet/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/turned off right now/)).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.cs-card[aria-label="DSC 102"]')).toBeVisible();
   await expect(page.locator('.cs-card[aria-label="DSC 140A"]')).toContainText('Midterm 1');
   // The 📚 block with no department is flagged, under "Which course?".
@@ -117,4 +119,5 @@ test('after connecting, the courses screen shows what was read, and a fix change
     });
   await page.getByRole('link', { name: 'Show my runway' }).click();
   await expect(page.getByRole('heading', { name: 'Your runway' })).toBeVisible();
+  await admin.from('app_config').update({ value: true }).eq('key', 'ai_enabled');
 });

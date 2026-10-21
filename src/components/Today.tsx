@@ -1,8 +1,10 @@
 import type { CSSProperties } from 'react';
 import { courseVars } from '../lib/courses';
 import { dayKey, dayName, isNow, isPast, timePart, type PlanItem } from '../lib/plan';
+import { usePlan } from '../lib/usePlan';
 
-export function Today({ plan, now }: { plan: PlanItem[]; now: number }) {
+export function Today({ plan, now, self }: { plan: PlanItem[]; now: number; self?: boolean }) {
+  const { setStatus } = usePlan();
   const today = dayKey(new Date(now));
   let day = today;
   let items = plan.filter((r) => r.day === today);
@@ -34,7 +36,7 @@ export function Today({ plan, now }: { plan: PlanItem[]; now: number }) {
           return (
             <li
               key={r.id}
-              className={`td-item k-${r.kind.toLowerCase()}${past ? ' is-past' : ''}${live ? ' is-now' : ''}`}
+              className={`td-item k-${r.kind.toLowerCase()}${past ? ' is-past' : ''}${live ? ' is-now' : ''}${r.proposed ? ' is-proposed' : ''}${r.status === 'submitted' ? ' is-submitted' : ''}`}
               style={{ ...courseVars(r.course) } as CSSProperties}
             >
               <span className="td-time">{timePart(r)}</span>
@@ -42,6 +44,8 @@ export function Today({ plan, now }: { plan: PlanItem[]; now: number }) {
                 <span className="w1">{r.title}</span>
                 <span className="w2">
                   {r.course} {r.kind.toLowerCase()}
+                  {r.proposed && ', proposed'}
+                  {r.status === 'submitted' && ', submitted'}
                   {live && (
                     <>
                       , <span className="td-state">happening now</span>
@@ -49,6 +53,16 @@ export function Today({ plan, now }: { plan: PlanItem[]; now: number }) {
                   )}
                 </span>
               </div>
+              {self && r.kind === 'Deadline' && !r.proposed && (
+                <label className="td-tick">
+                  <input
+                    type="checkbox"
+                    checked={r.status === 'submitted'}
+                    onChange={(e) => setStatus(r.id, e.target.checked ? 'submitted' : 'open')}
+                  />
+                  <span>Submitted</span>
+                </label>
+              )}
             </li>
           );
         })}

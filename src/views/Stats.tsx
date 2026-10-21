@@ -5,7 +5,7 @@ import { useAuth } from '../lib/auth';
 import { courseVars } from '../lib/courses';
 import { useHistory } from '../lib/history';
 import { WD, dayKey, planDays, utc } from '../lib/plan';
-import { lastNDays, minutesByCourse, plannedVsActual, streak, weekStart } from '../lib/stats';
+import { hoursByKind, lastNDays, minutesByCourse, plannedVsActual, streak, weekStart } from '../lib/stats';
 import { duration } from '../lib/timer';
 import { useNow, usePlan } from '../lib/usePlan';
 
@@ -25,6 +25,7 @@ export function Stats() {
   }, [plan, today]);
   const pva = useMemo(() => plannedVsActual(plan, h.totals, days), [plan, h.totals, days]);
   const run = streak(h.sessions, today);
+  const kinds = useMemo(() => hoursByKind(plan, weekStart(today), today), [plan, today]);
 
   if (!ready) return null;
   if (!user) return <SignInNeeded what="see your stats" />;
@@ -39,6 +40,14 @@ export function Stats() {
       <section className="stat-tiles" aria-label="Totals">
         <Tile label="Today" value={duration(sum(todayBy) * 60)} by={todayBy} />
         <Tile label="This week" value={duration(sum(weekBy) * 60)} by={weekBy} />
+        <div className="tile">
+          <span className="tile-label">On the calendar this week</span>
+          <span className="tile-n">{kinds.study} h</span>
+          <span className="tile-note">
+            of study, with {kinds.classes} h of classes and {kinds.commitments} h of work and other
+            commitments.
+          </span>
+        </div>
         <div className="tile">
           <span className="tile-label">Streak</span>
           <span className="tile-n">

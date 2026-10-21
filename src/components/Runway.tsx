@@ -154,11 +154,11 @@ export function Runway({ plan, now, actuals }: { plan: PlanItem[]; now: number; 
                     return (
                       <div
                         key={`${r.id}-${s.day}`}
-                        className={`rw-block k-${r.kind.toLowerCase()}${past ? ' is-past' : ''}${isNow(r, now) ? ' is-now' : ''}`}
+                        className={`rw-block k-${r.kind.toLowerCase()}${past ? ' is-past' : ''}${isNow(r, now) ? ' is-now' : ''}${r.proposed ? ' is-proposed' : ''}${r.status === 'submitted' ? ' is-submitted' : r.status === 'missed' || (r.kind === 'Deadline' && past && r.status === 'open') ? ' is-missed' : ''}`}
                         style={style}
                         tabIndex={0}
                         role="img"
-                        aria-label={`${r.course} ${r.kind}: ${r.title}, ${r.when}`}
+                        aria-label={`${r.course} ${r.kind}${r.proposed ? ' (proposed)' : ''}${r.status === 'submitted' ? ' (submitted)' : ''}: ${r.title}, ${r.when}`}
                         onPointerEnter={(e) => showTip(e.currentTarget, r)}
                         onPointerLeave={() => setTip(null)}
                         onFocus={(e) => showTip(e.currentTarget, r)}
@@ -211,11 +211,14 @@ export function Runway({ plan, now, actuals }: { plan: PlanItem[]; now: number; 
         <div className="mc-tip" ref={tipRef}>
           <div className="t1">
             {tip.r.course} {tip.r.kind.toLowerCase()}
+            {tip.r.proposed ? ' · proposed' : ''}
+            {tip.r.status === 'submitted' ? ' · submitted' : ''}
           </div>
           <div className="t2">{tip.r.title}</div>
           <div>
             {tip.r.when} ({tip.r.hours} h)
           </div>
+          {tip.r.proposed && tip.r.reason && <div className="t3">{tip.r.reason}</div>}
         </div>
       )}
     </div>

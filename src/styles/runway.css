@@ -596,3 +596,78 @@ body {
     opacity: 1;
   }
 }
+
+/* ── v2: proposals and submissions ─────────────────────────────────────── */
+.rw-block.is-proposed {
+  background: color-mix(in srgb, var(--c) 18%, var(--color-bg));
+  border: 1.5px dashed var(--c-ink, var(--c));
+  color: var(--color-fg);
+}
+.rw-block.k-deadline.is-submitted {
+  border-style: solid;
+  border-color: var(--color-ok);
+  background: color-mix(in srgb, var(--color-ok) 14%, var(--color-bg));
+}
+.rw-block.k-deadline.is-missed {
+  border-style: solid;
+  border-color: var(--color-bad);
+  background: color-mix(in srgb, var(--color-bad) 12%, var(--color-bg));
+}
+.mc-tip .t3 {
+  margin-top: 4px;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+.td-item.is-proposed .w1::after,
+.mc-table tr.is-proposed td:nth-child(3)::after {
+  content: '';
+}
+.td-item.is-proposed {
+  opacity: 0.8;
+}
+.td-item.is-proposed::before {
+  background: transparent;
+  border: 1.5px dashed var(--c);
+}
+.td-tick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+  cursor: pointer;
+}
+.td-tick input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-ok);
+}
+.td-item .td-tick {
+  margin-left: auto;
+  padding-left: var(--gap-sm);
+}
+.td-item.is-submitted .w1 {
+  text-decoration: line-through;
+  text-decoration-color: var(--color-ok);
+}
+.mc-why {
+  display: block;
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+.mc-act {
+  white-space: nowrap;
+}
+.mc-act .btn + .btn {
+  margin-left: 6px;
+}
+.mc-table tr.is-proposed td:nth-child(4) {
+  color: var(--color-warn);
+  font-weight: 600;
+}
+.mc-table tr.is-submitted td:nth-child(4) {
+  color: var(--color-ok);
+  font-weight: 600;
+}

@@ -19,6 +19,13 @@ export interface Settings {
     break_action?: 'playlist' | 'pause';
   };
   embed_playlist?: string | null;
+  planning?: {
+    hours_per_day?: number;
+    earliest?: string;
+    latest?: string;
+    block_min?: number;
+    days_off?: number[];
+  };
 }
 
 interface AuthValue {

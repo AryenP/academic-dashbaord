@@ -34,6 +34,10 @@ interface PlanValue extends PlanData {
   refresh(): Promise<void>;
   addItem(item: NewItem): Promise<void>;
   removeItem(id: string): Promise<void>;
+  /** Accepts (or discards) planner proposals: all of them, or the given ids. */
+  decide(accept: boolean, ids?: string[]): Promise<void>;
+  /** Marks a deadline submitted (or open again), or missed. */
+  setStatus(id: string, status: 'open' | 'submitted' | 'missed'): Promise<void>;
 }
 
 const PlanContext = createContext<PlanValue | null>(null);
@@ -53,8 +57,9 @@ export function PlanProvider({ children }: { children: ReactNode }) {
     const [items, courses] = await Promise.all([
       supabase
         .from('plan_items')
-        .select('id, course_id, kind, title, start_at, end_at, location, weight, take_home')
-        .eq('accepted', true)
+        .select(
+          'id, course_id, kind, title, start_at, end_at, location, weight, take_home, accepted, reason, for_item_id, status, submitted_at',
+        )
         .gte('end_at', new Date(Date.now() - 45 * 864e5).toISOString())
         .order('start_at')
         .limit(3000),
@@ -150,6 +155,54 @@ export function PlanProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
+  const decide = useCallback(
+    async (accept: boolean, ids?: string[]) => {
+      if (!supabase || !user) return;
+      // Optimistic: the runway answers at once, the server confirms.
+      setRows(
+        (r) =>
+          r && {
+            ...r,
+            items: r.items
+              .filter((i) => accept || i.accepted !== false || (ids && !ids.includes(i.id)))
+              .map((i) =>
+                i.accepted === false && (!ids || ids.includes(i.id)) ? { ...i, accepted: true } : i,
+              ),
+          },
+      );
+      let q = accept
+        ? supabase.from('plan_items').update({ accepted: true }).eq('accepted', false)
+        : supabase.from('plan_items').delete().eq('accepted', false);
+      if (ids?.length) q = q.in('id', ids);
+      must(await q);
+      await refresh();
+    },
+    [user, refresh],
+  );
+
+  const setStatus = useCallback(
+    async (id: string, status: 'open' | 'submitted' | 'missed') => {
+      if (!supabase) return;
+      const at = status === 'submitted' ? new Date().toISOString() : null;
+      setRows(
+        (r) =>
+          r && { ...r, items: r.items.map((i) => (i.id === id ? { ...i, status, submitted_at: at } : i)) },
+      );
+      must(
+        await supabase
+          .from('plan_items')
+          .update({
+            status,
+            submitted_at: status === 'submitted' ? new Date().toISOString() : null,
+            submitted_by: status === 'submitted' ? 'me' : null,
+          })
+          .eq('id', id),
+      );
+      await refresh();
+    },
+    [refresh],
+  );
+
   const value: PlanValue = {
     ...data,
     loading: !!user && current === null,
@@ -157,6 +210,8 @@ export function PlanProvider({ children }: { children: ReactNode }) {
     refresh,
     addItem,
     removeItem,
+    decide,
+    setStatus,
   };
   return createElement(PlanContext.Provider, { value }, children);
 }

@@ -22,6 +22,8 @@ export interface WeekReview {
   readiness: { exam: ExamPrep; before: Readiness; after: Readiness }[];
   streak: number;
   sessions: number;
+  /** Deadlines due this week: ticked on time, ticked late, missed (past and still open). */
+  deadlines: { onTime: number; late: number; missed: number; open: number };
 }
 
 export function weekReview(
@@ -39,7 +41,7 @@ export function weekReview(
 
   const planned = new Map<string, number>();
   for (const r of plan)
-    if (r.kind === 'Study' && inWeek(r.day))
+    if (r.kind === 'Study' && !r.proposed && inWeek(r.day))
       planned.set(r.course, (planned.get(r.course) ?? 0) + r.hours * 60);
   const actual = new Map<string, number>();
   for (const t of totalsFromSessions(sessions)) actual.set(t.course, (actual.get(t.course) ?? 0) + t.minutes);
@@ -70,6 +72,17 @@ export function weekReview(
     after: readiness(exam, until(weekEndMs), []),
   }));
 
+  const deadlines = { onTime: 0, late: 0, missed: 0, open: 0 };
+  for (const r of plan) {
+    if (r.kind !== 'Deadline' || r.proposed || !inWeek(r.day)) continue;
+    const due = Date.parse(r.end);
+    if (r.status === 'submitted') {
+      if (r.submittedAt && Date.parse(r.submittedAt) > due) deadlines.late++;
+      else deadlines.onTime++;
+    } else if (r.status === 'missed' || due < now) deadlines.missed++;
+    else deadlines.open++;
+  }
+
   const sum = (xs: CourseWeek[], k: 'plannedMin' | 'actualMin') => xs.reduce((s, x) => s + x[k], 0);
   return {
     from,
@@ -82,5 +95,6 @@ export function weekReview(
     readiness: readinessRows,
     streak: streak(allSessions, to < today ? to : today),
     sessions: sessions.length,
+    deadlines,
   };
 }

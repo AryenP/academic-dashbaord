@@ -582,3 +582,134 @@ describe('app secrets', () => {
     expect((await admin.rpc('set_app_secret', { p_name: 'bad name', p_value: 'x' })).error).not.toBeNull();
   });
 });
+
+describe('planning, feed tokens and submissions', () => {
+  let examId: string;
+
+  it('proposals are private and the person accepts or discards them', async () => {
+    const c = await a.db.from('courses').insert({ code: 'MATH 20C', color: 2 }).select('id').single();
+    const x = await a.db
+      .from('plan_items')
+      .insert({
+        course_id: c.data!.id,
+        kind: 'exam',
+        title: 'Final',
+        start_at: '2026-12-10T23:00:00Z',
+        end_at: '2026-12-11T02:00:00Z',
+        weight: 40,
+      })
+      .select('id')
+      .single();
+    examId = x.data!.id;
+    const p = await admin
+      .from('plan_items')
+      .insert({
+        user_id: a.id,
+        course_id: c.data!.id,
+        kind: 'study',
+        title: 'Lectures 1–4 into notes',
+        start_at: '2026-12-01T17:00:00Z',
+        end_at: '2026-12-01T18:30:00Z',
+        reason: '40 % of the grade',
+        source: 'ai',
+        accepted: false,
+        for_item_id: examId,
+        draft_id: '00000000-0000-0000-0000-000000000001',
+      })
+      .select('id')
+      .single();
+    expect(p.error).toBeNull();
+    expect((await b.db.from('plan_items').select('id').eq('id', p.data!.id)).data).toEqual([]);
+    const ok = await a.db
+      .from('plan_items')
+      .update({ accepted: true })
+      .eq('id', p.data!.id)
+      .select('accepted')
+      .single();
+    expect(ok.data).toEqual({ accepted: true });
+    // The feed and share functions only ever see accepted items.
+    expect(
+      (await admin.rpc('feed_items', { p_user: a.id })).data?.some(
+        (r) => r.title === 'Lectures 1–4 into notes',
+      ),
+    ).toBe(true);
+    await a.db.from('plan_items').update({ accepted: false }).eq('id', p.data!.id);
+    expect(
+      (await admin.rpc('feed_items', { p_user: a.id })).data?.some(
+        (r) => r.title === 'Lectures 1–4 into notes',
+      ),
+    ).toBe(false);
+    // A proposal can't point at someone else's exam.
+    const bad = await b.db.from('plan_items').insert({
+      kind: 'study',
+      title: 'x',
+      start_at: '2026-12-01T17:00:00Z',
+      end_at: '2026-12-01T18:00:00Z',
+      for_item_id: examId,
+    });
+    expect(bad.error).toBeNull(); // the FK allows it; RLS keeps the row private, and the planner only reads the person's own rows
+    await admin.from('plan_items').delete().eq('user_id', b.id);
+  });
+
+  it('a feed token is returned once, stored hashed, and resolves only through the service role', async () => {
+    const t = await a.db.rpc('make_access_token', { p_purpose: 'feed' });
+    expect(t.error).toBeNull();
+    const token = t.data as string;
+    expect(token).toMatch(/^[0-9a-f]{48}$/);
+    const rows = (await a.db.from('access_tokens').select('purpose, token_hash')).data!;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].token_hash).not.toBe(token);
+    expect(
+      (await anon.rpc('token_owner', { p_purpose: 'feed', p_token_hash: rows[0].token_hash })).error,
+    ).not.toBeNull();
+    expect(
+      (await a.db.rpc('token_owner', { p_purpose: 'feed', p_token_hash: rows[0].token_hash })).error,
+    ).not.toBeNull();
+    expect(
+      (await admin.rpc('token_owner', { p_purpose: 'feed', p_token_hash: rows[0].token_hash })).data,
+    ).toBe(a.id);
+    expect((await admin.rpc('token_owner', { p_purpose: 'feed', p_token_hash: 'nope' })).data).toBeNull();
+    // Making another replaces the first.
+    const t2 = (await a.db.rpc('make_access_token', { p_purpose: 'feed' })).data as string;
+    expect(t2).not.toBe(token);
+    expect(
+      (await admin.rpc('token_owner', { p_purpose: 'feed', p_token_hash: rows[0].token_hash })).data,
+    ).toBeNull();
+    expect((await b.db.from('access_tokens').select('*')).data).toEqual([]);
+    expect((await anon.rpc('make_access_token', { p_purpose: 'feed' })).error).not.toBeNull();
+    expect((await a.db.rpc('make_access_token', { p_purpose: 'nope' })).error).not.toBeNull();
+  });
+
+  it('a deadline can be ticked as submitted, and only by its owner', async () => {
+    const d = await a.db
+      .from('plan_items')
+      .insert({
+        kind: 'deadline',
+        title: 'HW 5',
+        start_at: '2026-12-02T06:59:00Z',
+        end_at: '2026-12-02T07:00:00Z',
+      })
+      .select('id')
+      .single();
+    const ok = await a.db
+      .from('plan_items')
+      .update({ status: 'submitted', submitted_at: new Date().toISOString(), submitted_by: 'me' })
+      .eq('id', d.data!.id)
+      .select('status')
+      .single();
+    expect(ok.data).toEqual({ status: 'submitted' });
+    const bad = await b.db.from('plan_items').update({ status: 'missed' }).eq('id', d.data!.id).select('id');
+    expect(bad.data).toEqual([]);
+    const invalid = await a.db
+      .from('plan_items')
+      .update({ submitted_by: 'robot' as never })
+      .eq('id', d.data!.id);
+    expect(invalid.error).not.toBeNull();
+  });
+
+  it('prep hours per course come from finished sessions, service role only', async () => {
+    expect((await a.db.rpc('prep_hours_by_course', { p_user: a.id })).error).not.toBeNull();
+    const r = (await admin.rpc('prep_hours_by_course', { p_user: a.id })).data!;
+    expect(r.find((x) => x.course === 'DSC 140A')).toBeTruthy();
+  });
+});

@@ -75,6 +75,20 @@ export function Review() {
           <span className="tile-note">Finished sessions, including time added by hand.</span>
         </div>
         <div className="tile">
+          <span className="tile-label">Deadlines</span>
+          <span className="tile-n">
+            {r.deadlines.onTime + r.deadlines.late + r.deadlines.missed + r.deadlines.open === 0
+              ? '—'
+              : `${r.deadlines.onTime} on time`}
+          </span>
+          <span className="tile-note">
+            {r.deadlines.late ? `${r.deadlines.late} late, ` : ''}
+            {r.deadlines.missed ? `${r.deadlines.missed} missed, ` : ''}
+            {r.deadlines.open ? `${r.deadlines.open} still open. ` : ''}
+            Tick deadlines off on the runway as you submit.
+          </span>
+        </div>
+        <div className="tile">
           <span className="tile-label">Streak</span>
           <span className="tile-n">
             {r.streak} {r.streak === 1 ? 'day' : 'days'}

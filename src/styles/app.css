@@ -1899,3 +1899,33 @@ kbd {
     align-items: center;
   }
 }
+
+/* ── v2: plan bar ────────────────────────────────────────────────────────── */
+.pb {
+  display: grid;
+  gap: var(--gap-sm);
+}
+.pb-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm) var(--gap-md);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border-line);
+  background: var(--color-panel);
+  font-size: var(--fs-body);
+}
+.pb-proposal {
+  border-color: var(--course-1);
+}
+.pb-behind {
+  border-color: var(--color-warn);
+}
+.pb-ask {
+  border-color: var(--color-ok);
+}
+.pb-draft {
+  background: transparent;
+}

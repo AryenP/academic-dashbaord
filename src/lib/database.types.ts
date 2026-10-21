@@ -23,6 +23,31 @@ export type Database = {
   };
   public: {
     Tables: {
+      access_tokens: {
+        Row: {
+          created_at: string;
+          last_used_at: string | null;
+          purpose: string;
+          token_hash: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          last_used_at?: string | null;
+          purpose: string;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          last_used_at?: string | null;
+          purpose?: string;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       ai_usage: {
         Row: {
           cached_tokens: number;
@@ -326,7 +351,9 @@ export type Database = {
           accepted: boolean;
           course_id: string | null;
           created_at: string;
+          draft_id: string | null;
           end_at: string;
+          for_item_id: string | null;
           id: string;
           kind: string;
           location: string;
@@ -338,6 +365,7 @@ export type Database = {
           start_at: string;
           status: string;
           submitted_at: string | null;
+          submitted_by: string | null;
           take_home: boolean;
           title: string;
           updated_at: string;
@@ -349,7 +377,9 @@ export type Database = {
           accepted?: boolean;
           course_id?: string | null;
           created_at?: string;
+          draft_id?: string | null;
           end_at: string;
+          for_item_id?: string | null;
           id?: string;
           kind: string;
           location?: string;
@@ -361,6 +391,7 @@ export type Database = {
           start_at: string;
           status?: string;
           submitted_at?: string | null;
+          submitted_by?: string | null;
           take_home?: boolean;
           title: string;
           updated_at?: string;
@@ -371,7 +402,9 @@ export type Database = {
           accepted?: boolean;
           course_id?: string | null;
           created_at?: string;
+          draft_id?: string | null;
           end_at?: string;
+          for_item_id?: string | null;
           id?: string;
           kind?: string;
           location?: string;
@@ -383,6 +416,7 @@ export type Database = {
           start_at?: string;
           status?: string;
           submitted_at?: string | null;
+          submitted_by?: string | null;
           take_home?: boolean;
           title?: string;
           updated_at?: string;
@@ -395,6 +429,13 @@ export type Database = {
             columns: ['course_id'];
             isOneToOne: false;
             referencedRelation: 'courses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'plan_items_for_item_id_fkey';
+            columns: ['for_item_id'];
+            isOneToOne: false;
+            referencedRelation: 'plan_items';
             referencedColumns: ['id'];
           },
           {
@@ -734,6 +775,20 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      feed_items: {
+        Args: { p_user: string };
+        Returns: {
+          course: string;
+          end_at: string;
+          id: string;
+          kind: string;
+          location: string;
+          start_at: string;
+          status: string;
+          title: string;
+          updated_at: string;
+        }[];
+      };
       finish_sync: {
         Args: {
           p_count: number;
@@ -747,6 +802,7 @@ export type Database = {
       };
       is_feed_url: { Args: { u: string }; Returns: boolean };
       is_school_email: { Args: { e: string }; Returns: boolean };
+      make_access_token: { Args: { p_purpose: string }; Returns: string };
       make_handle: { Args: { email: string }; Returns: string };
       my_ai_usage: {
         Args: Record<PropertyKey, never>;
@@ -785,6 +841,13 @@ export type Database = {
         };
       };
       phone_rate_hit: { Args: { p_token_hash: string }; Returns: number };
+      prep_hours_by_course: {
+        Args: { p_user: string };
+        Returns: {
+          course: string;
+          hours: number;
+        }[];
+      };
       public_daily_totals: {
         Args: { days?: number; p_handle: string };
         Returns: {
@@ -873,6 +936,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      token_owner: { Args: { p_purpose: string; p_token_hash: string }; Returns: string };
     };
     Enums: {
       [_ in never]: never;

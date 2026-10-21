@@ -19,6 +19,11 @@ export interface ItemRow {
   location: string;
   weight: number | string | null;
   take_home?: boolean;
+  accepted?: boolean;
+  reason?: string | null;
+  for_item_id?: string | null;
+  status?: string | null;
+  submitted_at?: string | null;
 }
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -68,6 +73,11 @@ export function toPlanItem(r: ItemRow, courses: Map<string, CourseInfo>, tz: str
     hours: round1((Date.parse(r.end_at) - Date.parse(r.start_at)) / 3_600_000),
     location: r.location ?? '',
     weight: r.weight == null ? null : Number(r.weight),
+    proposed: r.accepted === false,
+    reason: r.reason ?? null,
+    forId: r.for_item_id ?? null,
+    status: (r.status as PlanItem['status']) ?? 'open',
+    submittedAt: r.submitted_at ?? null,
   };
 }
 
@@ -82,8 +92,8 @@ export function buildPlan(
   const plan = rows
     .map((r) => toPlanItem(r, byId, tz))
     .sort((a, b) => Date.parse(a.start) - Date.parse(b.start) || a.course.localeCompare(b.course));
-  const study = plan.filter((r) => r.kind === 'Study');
-  const exams = plan.filter((r) => r.kind === 'Exam');
+  const study = plan.filter((r) => r.kind === 'Study' && !r.proposed);
+  const exams = plan.filter((r) => r.kind === 'Exam' && !r.proposed);
   const exam_prep: ExamPrep[] = exams.map((x) => ({
     id: x.id,
     course: x.course,
@@ -108,7 +118,7 @@ export function buildPlan(
         study_hours: round1(study.reduce((t, s) => t + s.hours, 0)),
         study_blocks: study.length,
         exams: exams.length,
-        deadlines: plan.filter((r) => r.kind === 'Deadline').length,
+        deadlines: plan.filter((r) => r.kind === 'Deadline' && !r.proposed).length,
       },
     ],
     exam_prep,

@@ -106,8 +106,11 @@ Deno.test('input validation', () => {
   assertEquals('at' in timed && timed.at.toISOString(), '2026-10-22T17:59:30.000Z');
 });
 
-Deno.test('only POST is accepted', async () => {
+Deno.test('only POST is accepted (and the browser preflight)', async () => {
   const f = fakeStore();
+  const pre = await handle(new Request('http://x/', { method: 'OPTIONS' }), f.store, NOW);
+  assertEquals(pre.status, 204);
+  assertEquals(pre.headers.get('access-control-allow-origin'), '*');
   assertEquals((await handle(new Request('http://x/', { method: 'GET' }), f.store, NOW)).status, 405);
   const bad = new Request('http://x/', { method: 'POST', body: '{not json' });
   assertEquals((await handle(bad, f.store, NOW)).status, 400);

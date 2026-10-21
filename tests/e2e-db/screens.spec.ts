@@ -20,11 +20,23 @@ async function seedWeek(userId: string) {
         ended_at: new Date(Date.now() - (start - 55 - k * 30) * 60_000).toISOString(),
         break_seconds: 300,
         rating: 3 + ((d + k) % 3),
+        focus_pct: 70 + ((d * 7 + k * 11) % 29),
+        pickups: (d + k * 2) % 5,
+        phone_seconds: ((d + k * 2) % 5) * 90,
         note: k ? null : 'Practice set, then cheat sheet',
       });
     }
   await admin.from('sessions').insert(rows);
   await seedSession(userId, { startedMinAgo: 150, lengthMin: 50, course: 'DSC 140A' });
+  await admin
+    .from('profiles')
+    .update({ phone_token_hash: 'x'.repeat(64) })
+    .eq('id', userId);
+  const ago = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+  await admin.from('phone_events').insert([
+    { user_id: userId, app: 'Instagram', kind: 'open', at: ago(9), received_at: ago(9) },
+    { user_id: userId, app: 'Instagram', kind: 'close', at: ago(7), received_at: ago(7) },
+  ]);
 }
 
 const VIEWS = [
@@ -32,6 +44,7 @@ const VIEWS = [
   { name: 'log', path: './#/log' },
   { name: 'stats', path: './#/stats' },
   { name: 'settings', path: './#/settings' },
+  { name: 'setup-phone', path: './#/setup/phone' },
   { name: 'focus-start', path: './#/focus' },
 ];
 

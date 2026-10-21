@@ -1,4 +1,5 @@
-import { useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, type CSSProperties } from 'react';
+import { FocusStats } from '../components/FocusStats';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
 import { colorOf } from '../lib/courses';
@@ -8,7 +9,7 @@ import { lastNDays, minutesByCourse, plannedVsActual, streak, weekStart } from '
 import { duration } from '../lib/timer';
 import { useNow, usePlan } from '../lib/usePlan';
 
-export function Stats({ children }: { children?: ReactNode }) {
+export function Stats() {
   const { user, ready } = useAuth();
   const h = useHistory();
   const { plan } = usePlan();
@@ -75,7 +76,7 @@ export function Stats({ children }: { children?: ReactNode }) {
           })}
         </div>
       </section>
-      {children}
+      <FocusStats today={today} />
     </div>
   );
 }

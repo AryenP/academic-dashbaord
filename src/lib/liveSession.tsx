@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useAuth } from './auth';
+import { freezeSession } from './freeze';
 import { supabase, type Session, type SessionBreak } from './supabase';
 import type { BreakKind, Mode } from './timer';
 
@@ -48,7 +49,8 @@ const store = {
 };
 
 export function LiveSessionProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+  const tracked = !!profile?.phone_token_hash;
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [breaks, setBreaks] = useState<SessionBreak[]>([]);
@@ -177,7 +179,8 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
       void (await act(async () => must(await supabase!.rpc('end_break', { p_session: session!.id })))),
     end: async () =>
       act(async () => {
-        const s = mustRow(await supabase!.rpc('end_session', { p_session: session!.id }));
+        const ended = mustRow(await supabase!.rpc('end_session', { p_session: session!.id }));
+        const s = await freezeSession(supabase!, ended, tracked);
         setEnded(s);
         store.set(ENDED_KEY, s.id);
         return s;

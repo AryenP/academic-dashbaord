@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { FocusFormula, PhoneMeter } from '../components/PhoneMeter';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
 import { COURSES, colorOf } from '../lib/courses';
@@ -183,6 +184,8 @@ function Running() {
         )}
       </p>
 
+      <PhoneMeter session={s} breaks={live.breaks} now={now} />
+
       {showNudge && (
         <div className="fx-nudge" role="status">
           <p>
@@ -270,7 +273,31 @@ function EndScreen({ session }: { session: Session }) {
           <dt>Course</dt>
           <dd style={{ color: colorOf(session.course) }}>{session.course}</dd>
         </div>
+        {session.focus_pct != null && (
+          <>
+            <div>
+              <dt>Focus</dt>
+              <dd>{Math.round(Number(session.focus_pct))}%</dd>
+            </div>
+            <div>
+              <dt>Pickups</dt>
+              <dd>{session.pickups ?? 0}</dd>
+            </div>
+          </>
+        )}
+        {session.longest_stretch_seconds != null && session.longest_stretch_seconds >= 60 && (
+          <div>
+            <dt>Longest unbroken</dt>
+            <dd>{duration(session.longest_stretch_seconds)}</dd>
+          </div>
+        )}
       </dl>
+      {session.focus_pct != null && (
+        <details className="formula-details">
+          <summary>How focus is measured</summary>
+          <FocusFormula />
+        </details>
+      )}
       {short && (
         <div className="fx-nudge" role="status">
           <p>Under 2 minutes. Started by mistake?</p>

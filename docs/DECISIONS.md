@@ -20,3 +20,8 @@ Changes from `docs/SPEC.md` and `docs/BUILD_PROMPT.md`, with the reason for each
 - **2026-10-20 · Readiness counts every session for that course before the exam,** not only sessions linked to a plan block. Studying off-plan still counts.
 - **2026-10-20 · Stats charts are CSS, not d3.** The bars and heatmap are simple enough that d3 would only add bundle weight.
 - **2026-10-20 · Signed-in browser tests** (`npm run test:e2e:db`) run against a local Supabase and sign in by placing a real session in the browser. CI runs them in the `backend` job.
+- **2026-10-20 · A pickup is opening a listed app while none is already open.** Switching straight from Instagram to TikTok is one pickup, not two. That matches what "picking up your phone" means. Overlapping app intervals are merged, so phone time is never double-counted.
+- **2026-10-20 · Pauses count as focus time in focus %.** Pauses aren't timestamped individually, so the denominator is the session minus breaks, as in the spec. Phone use during a pause counts like any other.
+- **2026-10-20 · `src/lib/focus.ts` has no imports**, so the Edge Function imports the same file. Metrics are frozen identically whether a session ends on the web or from the phone.
+- **2026-10-20 · The phone-event function answers CORS preflights.** The setup page's "send a test from this browser" needs it. No cookies are involved and every request needs the token, so this exposes nothing.
+- **2026-10-20 · The phone token is shown once and held only in memory** for that tab, so the setup guide can fill it in. The database stores its sha256. Losing it means replacing it.

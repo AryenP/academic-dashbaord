@@ -44,7 +44,14 @@ export async function sha256Hex(s: string): Promise<string> {
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-const status = (code: number) => new Response(null, { status: code });
+// Shortcuts doesn't need CORS, but the setup page's "send a test from this browser" does. Nothing here
+// uses cookies, and every request needs the token, so allowing any origin exposes nothing.
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'content-type, authorization, apikey, x-client-info',
+};
+const status = (code: number) => new Response(null, { status: code, headers: CORS });
 
 type Parsed = { token: string; app: string; kind: Kind; at: Date } | { error: number };
 
@@ -75,6 +82,7 @@ export function currentBlock(plan: PlanBlock[], now: Date): PlanBlock | undefine
 }
 
 export async function handle(req: Request, store: Store, now = new Date()): Promise<Response> {
+  if (req.method === 'OPTIONS') return status(204);
   if (req.method !== 'POST') return status(405);
   let body: unknown;
   try {

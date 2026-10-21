@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { PlanItem } from './plan';
-import { lastNDays, minutesByCourse, plannedVsActual, streak, weekStart } from './stats';
+import {
+  bestHours,
+  focusTrend,
+  lastNDays,
+  minutesByCourse,
+  pickupsPerHour,
+  plannedVsActual,
+  streak,
+  weekStart,
+} from './stats';
 import type { Session } from './supabase';
 
 const sess = (start: string, min: number): Session =>
@@ -52,5 +61,43 @@ describe('stats', () => {
 
   it('lastNDays ends today', () => {
     expect(lastNDays('2026-10-22', 3)).toEqual(['2026-10-20', '2026-10-21', '2026-10-22']);
+  });
+});
+
+describe('focus stats', () => {
+  const tracked = (start: string, min: number, pct: number, pickups: number): Session =>
+    ({ ...sess(start, min), focus_pct: pct, pickups }) as Session;
+
+  it('pickups per focused hour, from a day on', () => {
+    const s = [
+      tracked('2026-10-20T10:00:00-07:00', 60, 90, 4),
+      tracked('2026-10-21T10:00:00-07:00', 30, 80, 2),
+    ];
+    expect(pickupsPerHour(s, '2026-10-20')).toBe(4);
+    expect(pickupsPerHour(s, '2026-10-21')).toBe(4);
+    expect(pickupsPerHour(s, '2026-10-22')).toBeNull();
+  });
+
+  it('best hours weights by minutes in each hour', () => {
+    // Thu Oct 22: 10:30–11:30 at 80%, 11:00–12:00 at 100%
+    const s = [
+      tracked('2026-10-22T10:30:00-07:00', 60, 80, 0),
+      tracked('2026-10-22T11:00:00-07:00', 60, 100, 0),
+    ];
+    const cells = bestHours(s, [10, 11, 12]);
+    const thu = (h: number) => cells.find((c) => c.weekday === 3 && c.hour === h)!;
+    expect(thu(10)).toMatchObject({ pct: 80, minutes: 30 });
+    expect(thu(11)).toMatchObject({ pct: 93, minutes: 90 }); // (30×80 + 60×100) / 90
+    expect(thu(12)).toMatchObject({ pct: null, minutes: 0 });
+    expect(cells).toHaveLength(21);
+  });
+
+  it('trend keeps only tracked sessions, oldest first', () => {
+    const s = [
+      tracked('2026-10-21T10:00:00-07:00', 30, 70, 1),
+      sess('2026-10-20T10:00:00-07:00', 30),
+      tracked('2026-10-20T09:00:00-07:00', 30, 90, 0),
+    ];
+    expect(focusTrend(s).map((p) => p.pct)).toEqual([90, 70]);
   });
 });

@@ -1,9 +1,11 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type FormEvent } from 'react';
+import { PhoneSettings } from '../components/PhoneSettings';
+import { SpotifySettings } from '../components/SpotifySettings';
 import { useAuth } from '../lib/auth';
 import { hasBackend } from '../lib/supabase';
 import { MODES, type Mode } from '../lib/timer';
 
-export function Settings({ children }: { children?: ReactNode }) {
+export function Settings() {
   const { user, ready } = useAuth();
   if (!ready) return null;
   return (
@@ -16,7 +18,8 @@ export function Settings({ children }: { children?: ReactNode }) {
           <Account />
           <Breaks />
           <Privacy />
-          {children}
+          <PhoneSettings />
+          <SpotifySettings />
         </>
       )}
     </div>
@@ -157,12 +160,61 @@ function Breaks() {
           <span className="field-hint"> Off by default, so a break never cuts you off mid-thought.</span>
         </span>
       </label>
+      <BreakNotify />
     </section>
+  );
+}
+
+const LEVELS = [
+  {
+    id: 'totals',
+    label: 'Daily totals and exam readiness',
+    hint: 'How long you studied each day, per course.',
+  },
+  { id: 'readiness', label: 'Exam readiness only', hint: 'Prep hours per exam, no daily totals.' },
+  { id: 'runway', label: 'Just the runway', hint: 'Your plan and nothing else.' },
+];
+
+function BreakNotify() {
+  const { settings, updateSettings } = useAuth();
+  const supported = typeof Notification !== 'undefined';
+  const [denied, setDenied] = useState(supported && Notification.permission === 'denied');
+  const toggle = async (on: boolean) => {
+    if (on && supported && Notification.permission !== 'granted') {
+      const p = await Notification.requestPermission();
+      if (p !== 'granted') {
+        setDenied(true);
+        return;
+      }
+    }
+    await updateSettings({ break_notify: on });
+  };
+  return (
+    <label className="check">
+      <input
+        type="checkbox"
+        checked={!!settings.break_notify && !denied}
+        disabled={!supported || denied}
+        onChange={(e) => toggle(e.target.checked)}
+      />
+      <span>
+        Notify me when a break ends
+        <span className="field-hint">
+          {' '}
+          {!supported
+            ? 'This browser has no notifications. On iPhone, add Runway to your Home Screen first (Share → Add to Home Screen).'
+            : denied
+              ? 'Notifications are blocked for this site in your browser settings.'
+              : 'On iPhone this works once Runway is on your Home Screen.'}
+        </span>
+      </span>
+    </label>
   );
 }
 
 function Privacy() {
   const { profile, updateProfile } = useAuth();
+  const level = profile?.public_level ?? 'totals';
   return (
     <section className="card-section" aria-labelledby="priv-h">
       <h2 id="priv-h" className="mc-h2">
@@ -172,14 +224,23 @@ function Privacy() {
         Anyone with the link sees the runway (your plan). Session notes, phone data and app names are never
         public.
       </p>
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={profile?.public_totals ?? true}
-          onChange={(e) => updateProfile({ public_totals: e.target.checked })}
-        />
-        <span>Show my daily study totals per course on the public runway</span>
-      </label>
+      <fieldset className="field">
+        <legend className="sr-only">Also show visitors</legend>
+        {LEVELS.map((l) => (
+          <label key={l.id} className="check">
+            <input
+              type="radio"
+              name="public-level"
+              checked={level === l.id}
+              onChange={() => updateProfile({ public_level: l.id })}
+            />
+            <span>
+              {l.label}
+              <span className="field-hint"> {l.hint}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
     </section>
   );
 }

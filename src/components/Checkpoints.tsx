@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { Readiness } from '../lib/actuals';
-import { colorOf } from '../lib/courses';
+import { courseVars } from '../lib/courses';
 import { daysUntil, isNow, isPast, prepBlocks, round1, type ExamPrep, type PlanItem } from '../lib/plan';
 
 interface Props {
@@ -20,7 +20,7 @@ export function Checkpoints({ exams, plan, now, ready }: Props) {
         const done = round1(blocks.filter((r) => isPast(r, now)).reduce((s, r) => s + r.hours, 0));
         const rd = ready?.get(x.id);
         return (
-          <div key={x.id} className="cp" style={{ '--c': colorOf(x.course) } as CSSProperties}>
+          <div key={x.id} className="cp" style={{ ...courseVars(x.course) } as CSSProperties}>
             <div className="cp-count">
               {isPast(x, now) ? (
                 <span className="cp-n is-word">Done</span>

@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { colorOf } from '../lib/courses';
+import { courseVars } from '../lib/courses';
 import { dayKey, dayName, isNow, isPast, timePart, type PlanItem } from '../lib/plan';
 
 export function Today({ plan, now }: { plan: PlanItem[]; now: number }) {
@@ -35,7 +35,7 @@ export function Today({ plan, now }: { plan: PlanItem[]; now: number }) {
             <li
               key={r.id}
               className={`td-item k-${r.kind.toLowerCase()}${past ? ' is-past' : ''}${live ? ' is-now' : ''}`}
-              style={{ '--c': colorOf(r.course) } as CSSProperties}
+              style={{ ...courseVars(r.course) } as CSSProperties}
             >
               <span className="td-time">{timePart(r)}</span>
               <div className="td-what">

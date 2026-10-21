@@ -9,3 +9,4 @@ docs
 .venv
 .pytest_cache
 dist-db
+src/sw

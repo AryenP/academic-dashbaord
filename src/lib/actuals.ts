@@ -63,13 +63,19 @@ export interface Readiness {
 
 /**
  * Exam readiness = actual prep hours for that course before the exam ÷ planned prep hours.
- * With sessions (owner), "before" is exact; with daily totals (visitors), it's days up to and
- * including the exam day.
+ * With sessions (owner) or the public prep minutes (visitors), "before" is exact; with only daily
+ * totals, it's days up to and including the exam day.
  */
-export function readiness(exam: ExamPrep, sessions: Session[], totals: DayCourseMinutes[]): Readiness {
+export function readiness(
+  exam: ExamPrep,
+  sessions: Session[],
+  totals: DayCourseMinutes[],
+  prepMinutes?: number,
+): Readiness {
   const examStart = Date.parse(exam.start);
   let minutes = 0;
-  if (sessions.length) {
+  if (prepMinutes != null) minutes = prepMinutes;
+  else if (sessions.length) {
     for (const s of sessions)
       if (s.course === exam.course && Date.parse(s.started_at) < examStart) minutes += focusSeconds(s) / 60;
   } else {

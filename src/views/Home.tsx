@@ -4,7 +4,7 @@ import { Runway } from '../components/Runway';
 import { Today } from '../components/Today';
 import { buildActuals, readiness } from '../lib/actuals';
 import { useAuth } from '../lib/auth';
-import { useHistory } from '../lib/history';
+import { useHistory, usePublicPrep } from '../lib/history';
 import { useLiveSession } from '../lib/liveSession';
 import { COURSES, colorOf } from '../lib/courses';
 import { useMemo } from 'react';
@@ -85,13 +85,19 @@ export function Home() {
     () => buildActuals(history.sessions, history.totals, live.session, now),
     [history.sessions, history.totals, live.session, now],
   );
-  // Readiness shows for the owner (even at 0%) and for visitors when the owner shares totals.
+  const prep = usePublicPrep(data.exam_prep, !user);
+  // Readiness shows for the owner (even at 0%) and for visitors when the owner shares it.
   const ready = useMemo(
     () =>
-      user || history.totals.length
-        ? new Map(data.exam_prep.map((x) => [x.id, readiness(x, history.sessions, history.totals)]))
+      user || prep.size
+        ? new Map(
+            data.exam_prep.map((x) => [
+              x.id,
+              readiness(x, history.sessions, history.totals, prep.get(`${x.course}|${x.start}`)),
+            ]),
+          )
         : undefined,
-    [user, history.sessions, history.totals, data.exam_prep],
+    [user, prep, history.sessions, history.totals, data.exam_prep],
   );
   return (
     <>

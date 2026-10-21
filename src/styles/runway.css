@@ -187,7 +187,7 @@ body {
 }
 .rw-block.k-study {
   background: var(--c);
-  color: var(--color-bg);
+  color: var(--c-on, var(--color-bg));
 }
 .rw-block.k-deadline {
   background: color-mix(in srgb, var(--c) 14%, var(--color-bg));
@@ -224,7 +224,6 @@ body {
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  opacity: 0.92;
 }
 .rw-now {
   position: absolute;
@@ -360,7 +359,7 @@ body {
   font-family: var(--mc-display);
   font-weight: 800;
   font-size: 1.25rem;
-  color: var(--c);
+  color: var(--c-ink, var(--c));
 }
 .cp-title {
   font-weight: 600;
@@ -525,7 +524,7 @@ body {
   font-family: var(--mc-display);
   font-weight: 800;
   font-size: 0.95rem;
-  color: var(--c);
+  color: var(--c-ink, var(--c));
 }
 .mc-table td:last-child,
 .mc-table th:last-child {
@@ -536,8 +535,8 @@ body {
   font-weight: 600;
 }
 .mc-table tr.is-past td {
+  /* muted and struck through rather than faded, so past rows still meet 4.5:1 */
   color: var(--color-fg-muted);
-  opacity: 0.55;
 }
 .mc-table tr.is-past td:nth-child(3) {
   text-decoration: line-through;

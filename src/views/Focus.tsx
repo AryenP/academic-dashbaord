@@ -5,7 +5,7 @@ import { NowPlaying } from '../components/NowPlaying';
 import { FocusFormula, PhoneMeter } from '../components/PhoneMeter';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
-import { COURSES, colorOf } from '../lib/courses';
+import { COURSES, courseVars, inkOf } from '../lib/courses';
 import { useLiveSession } from '../lib/liveSession';
 import { currentOrNextStudy, dayKey, timePart, type PlanItem } from '../lib/plan';
 import type { Session } from '../lib/supabase';
@@ -60,7 +60,7 @@ function StartScreen() {
               role="radio"
               aria-checked={course === c}
               className="chip"
-              style={{ '--c': colorOf(c) } as CSSProperties}
+              style={{ ...courseVars(c) } as CSSProperties}
               onClick={() => setCourse(c)}
             >
               {c}
@@ -101,7 +101,7 @@ function StartScreen() {
 function PlannedNow({ block, now }: { block: PlanItem; now: number }) {
   const happening = Date.parse(block.start) <= now;
   return (
-    <p className="fx-planned" style={{ '--c': colorOf(block.course) } as CSSProperties}>
+    <p className="fx-planned" style={{ ...courseVars(block.course) } as CSSProperties}>
       <i aria-hidden="true" />
       <span>
         {happening ? 'On the plan now' : 'Next on the plan'}: <b>{block.course}</b>, {block.title}
@@ -152,7 +152,7 @@ function Running() {
   return (
     <section
       className="fx fx-run"
-      style={{ '--c': colorOf(s.course) } as CSSProperties}
+      style={{ ...courseVars(s.course) } as CSSProperties}
       aria-label="Study session"
     >
       <p className="fx-course">
@@ -225,8 +225,20 @@ function Running() {
         </button>
       </div>
       {live.error && <p className="form-error">{live.error}</p>}
+      <OfflineNote />
       <NowPlaying />
     </section>
+  );
+}
+
+/** Shown while session actions are waiting for a connection. */
+function OfflineNote() {
+  const { pending } = useLiveSession();
+  if (!pending) return null;
+  return (
+    <p className="fx-offline" role="status">
+      Offline. {pending} {pending === 1 ? 'change' : 'changes'} will sync when you're back online.
+    </p>
   );
 }
 
@@ -249,6 +261,7 @@ function BreakScreen({ st }: { st: TimerState }) {
           <Icon name="play" /> Back to work
         </button>
       </div>
+      <OfflineNote />
       <NowPlaying />
     </section>
   );
@@ -274,7 +287,7 @@ function EndScreen({ session }: { session: Session }) {
         </div>
         <div>
           <dt>Course</dt>
-          <dd style={{ color: colorOf(session.course) }}>{session.course}</dd>
+          <dd style={{ color: inkOf(session.course) }}>{session.course}</dd>
         </div>
         {session.focus_pct != null && (
           <>
@@ -350,6 +363,7 @@ function EndScreen({ session }: { session: Session }) {
         )}
       </div>
       {live.error && <p className="form-error">{live.error}</p>}
+      <OfflineNote />
       <p className="muted small">
         Saved sessions show up in the <Link to="/log">log</Link>.
       </p>

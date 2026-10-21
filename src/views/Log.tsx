@@ -2,7 +2,7 @@ import { useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { Icon } from '../components/Icon';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
-import { COURSES, colorOf } from '../lib/courses';
+import { COURSES, courseVars } from '../lib/courses';
 import { focusSeconds, sessionsCsv, useHistory } from '../lib/history';
 import { dayKey, dayName } from '../lib/plan';
 import type { Session } from '../lib/supabase';
@@ -100,7 +100,7 @@ function LogItem({ s }: { s: Session }) {
   if (editing) return <EditItem s={s} onDone={() => setEditing(false)} />;
   const mode = s.source === 'manual' ? 'Added by hand' : MODES.find((m) => m.id === s.mode)?.label;
   return (
-    <li className="log-item" style={{ '--c': colorOf(s.course) } as CSSProperties}>
+    <li className="log-item" style={{ ...courseVars(s.course) } as CSSProperties}>
       <span className="log-time">{span(s.started_at, s.ended_at!)}</span>
       <div className="log-what">
         <span className="w1">

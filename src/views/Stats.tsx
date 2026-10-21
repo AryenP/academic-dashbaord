@@ -2,7 +2,7 @@ import { useMemo, type CSSProperties } from 'react';
 import { FocusStats } from '../components/FocusStats';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
-import { colorOf } from '../lib/courses';
+import { courseVars } from '../lib/courses';
 import { useHistory } from '../lib/history';
 import { WD, dayKey, planDays, utc } from '../lib/plan';
 import { lastNDays, minutesByCourse, plannedVsActual, streak, weekStart } from '../lib/stats';
@@ -97,7 +97,7 @@ function Tile({
       {by.length ? (
         <ul className="tile-by">
           {by.map((c) => (
-            <li key={c.course} style={{ '--c': colorOf(c.course) } as CSSProperties}>
+            <li key={c.course} style={{ ...courseVars(c.course) } as CSSProperties}>
               <i aria-hidden="true" />
               {c.course} <b>{duration(c.minutes * 60)}</b>
             </li>

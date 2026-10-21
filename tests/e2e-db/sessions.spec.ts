@@ -133,7 +133,14 @@ test('runway shows studied time and readiness for the owner, and totals for visi
   const visitor = await browser.newPage();
   await visitor.goto('./');
   await expect(visitor.locator('.rw-day.is-today .rw-actual.is-total')).toBeVisible();
-  await admin.from('profiles').update({ public_totals: false }).eq('id', userId);
+  await expect(visitor.locator('.cp-ready').first()).toContainText('h actually studied');
+
+  await admin.from('profiles').update({ public_level: 'readiness' }).eq('id', userId);
+  await visitor.reload();
+  await expect(visitor.locator('.cp-ready').first()).toContainText('h actually studied');
+  await expect(visitor.locator('.rw-actual')).toHaveCount(0);
+
+  await admin.from('profiles').update({ public_level: 'runway' }).eq('id', userId);
   await visitor.reload();
   await expect(visitor.locator('.rw-actual')).toHaveCount(0);
   await expect(visitor.locator('.cp-ready')).toHaveCount(0);

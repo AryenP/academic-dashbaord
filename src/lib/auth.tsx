@@ -7,6 +7,7 @@ export interface Settings {
   custom_work_min?: number;
   custom_break_min?: number;
   auto_break?: boolean;
+  break_notify?: boolean;
   distracting_apps?: string[];
   focus_playlist?: { uri: string; name: string } | null;
   break_playlist?: { uri: string; name: string } | null;
@@ -28,7 +29,7 @@ interface AuthValue {
   signIn(email: string): Promise<string | null>;
   signOut(): Promise<void>;
   updateProfile(
-    patch: Partial<Pick<Profile, 'display_name' | 'public_totals' | 'phone_token_hash'>>,
+    patch: Partial<Pick<Profile, 'display_name' | 'public_level' | 'phone_token_hash'>>,
   ): Promise<void>;
   updateSettings(patch: Partial<Settings>): Promise<void>;
 }

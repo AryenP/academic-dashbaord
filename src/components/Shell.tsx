@@ -1,19 +1,22 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
-import { colorOf } from '../lib/courses';
+import { courseVars } from '../lib/courses';
 import { useLiveSession } from '../lib/liveSession';
 import { hasBackend } from '../lib/supabase';
 import { clock, timerState } from '../lib/timer';
 import { useNow, usePlan } from '../lib/usePlan';
 import { useQuickStart } from '../lib/useQuickStart';
+import { BreakAlarm } from './BreakAlarm';
 import { NowPlayingCompact } from './NowPlaying';
+import { Shortcuts } from './Shortcuts';
 
 const NAV = [
   { to: '/', label: 'Runway', end: true },
   { to: '/focus', label: 'Focus' },
   { to: '/log', label: 'Log' },
   { to: '/stats', label: 'Stats' },
+  { to: '/review', label: 'Week' },
   { to: '/settings', label: 'Settings' },
 ];
 
@@ -26,7 +29,7 @@ function LiveChip() {
   const st = timerState(live.session, live.breaks, now, settings);
   const label = st.phase === 'break' ? 'Break' : st.phase === 'paused' ? 'Paused' : live.session.course;
   return (
-    <Link to="/focus" className="live-chip" style={{ '--c': colorOf(live.session.course) } as CSSProperties}>
+    <Link to="/focus" className="live-chip" style={{ ...courseVars(live.session.course) } as CSSProperties}>
       <i aria-hidden="true" className={st.phase === 'focus' ? 'is-live' : undefined} />
       <span>{label}</span>
       <b>{clock(st.phase === 'break' ? (st.breakLeftSec ?? 0) : st.focusSec)}</b>
@@ -88,6 +91,8 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <main>{children}</main>
+      <Shortcuts />
+      {user && <BreakAlarm />}
     </div>
   );
 }

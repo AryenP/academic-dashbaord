@@ -1,6 +1,6 @@
 import { useMemo, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
-import { colorOf } from '../lib/courses';
+import { courseVars } from '../lib/courses';
 import { focusSeconds, useHistory } from '../lib/history';
 import { dayKey, iso, utc } from '../lib/plan';
 import { bestHours, focusTrend, pickupsPerHour } from '../lib/stats';
@@ -77,7 +77,7 @@ export function FocusStats({ today }: { today: string }) {
             aria-label={`${p.day} ${p.course}: ${Math.round(p.pct)}%`}
             title={`${p.day} · ${p.course} · ${Math.round(p.pct)}%`}
           >
-            <i style={{ height: `${p.pct}%`, '--c': colorOf(p.course) } as CSSProperties} />
+            <i style={{ height: `${p.pct}%`, ...courseVars(p.course) } as CSSProperties} />
           </div>
         ))}
       </div>

@@ -44,6 +44,7 @@ const VIEWS = [
   { name: 'home-owner', path: './' },
   { name: 'log', path: './#/log' },
   { name: 'stats', path: './#/stats' },
+  { name: 'review', path: './#/review' },
   { name: 'settings', path: './#/settings' },
   { name: 'setup-phone', path: './#/setup/phone' },
   { name: 'focus-start', path: './#/focus' },

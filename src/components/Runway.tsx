@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { Actuals } from '../lib/actuals';
-import { colorOf } from '../lib/courses';
+import { courseVars } from '../lib/courses';
 import {
   H0,
   H1,
@@ -147,7 +147,7 @@ export function Runway({ plan, now, actuals }: { plan: PlanItem[]; now: number; 
                     const style = {
                       top: `${((a - H0) / 60) * PX + 1}px`,
                       height: `${Math.max(6, h)}px`,
-                      '--c': colorOf(r.course),
+                      ...courseVars(r.course),
                       '--i': i++,
                       ...(past ? { '--o': '.32' } : {}),
                     } as CSSProperties;
@@ -157,7 +157,7 @@ export function Runway({ plan, now, actuals }: { plan: PlanItem[]; now: number; 
                         className={`rw-block k-${r.kind.toLowerCase()}${past ? ' is-past' : ''}${isNow(r, now) ? ' is-now' : ''}`}
                         style={style}
                         tabIndex={0}
-                        role="button"
+                        role="img"
                         aria-label={`${r.course} ${r.kind}: ${r.title}, ${r.when}`}
                         onPointerEnter={(e) => showTip(e.currentTarget, r)}
                         onPointerLeave={() => setTip(null)}
@@ -182,7 +182,7 @@ export function Runway({ plan, now, actuals }: { plan: PlanItem[]; now: number; 
                               {
                                 top: `${((a - H0) / 60) * PX}px`,
                                 height: `${Math.max(3, ((b - a) / 60) * PX)}px`,
-                                '--c': colorOf(sp.course),
+                                ...courseVars(sp.course),
                               } as CSSProperties
                             }
                             title={`Studied ${sp.course}`}

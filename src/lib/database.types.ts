@@ -57,7 +57,7 @@ export type Database = {
           id: string;
           is_owner: boolean;
           phone_token_hash: string | null;
-          public_totals: boolean;
+          public_level: string;
           settings: NonNullable<Json>;
         };
         ComputedFields: never;
@@ -67,7 +67,7 @@ export type Database = {
           id: string;
           is_owner?: boolean;
           phone_token_hash?: string | null;
-          public_totals?: boolean;
+          public_level?: string;
           settings?: NonNullable<Json>;
         };
         Update: {
@@ -76,7 +76,7 @@ export type Database = {
           id?: string;
           is_owner?: boolean;
           phone_token_hash?: string | null;
-          public_totals?: boolean;
+          public_level?: string;
           settings?: NonNullable<Json>;
         };
         Relationships: [];
@@ -273,6 +273,14 @@ export type Database = {
         Returns: {
           course: string;
           day: string;
+          minutes: number;
+        }[];
+      };
+      public_prep_minutes: {
+        Args: { p_exams: Json };
+        Returns: {
+          before: string;
+          course: string;
           minutes: number;
         }[];
       };

@@ -182,3 +182,36 @@ export function sessionsCsv(sessions: Session[]): string {
     ]);
   return [head, ...rows].map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
 }
+
+/**
+ * For visitors: the owner's prep minutes before each exam, if they share readiness. Keyed by
+ * `${course}|${exam start}`. Empty when the owner shares only the runway.
+ */
+export function usePublicPrep(
+  exams: { course: string; start: string }[],
+  enabled: boolean,
+): Map<string, number> {
+  const [prep, setPrep] = useState<Map<string, number>>(new Map());
+  const key = exams.map((x) => `${x.course}|${x.start}`).join(',');
+  useEffect(() => {
+    if (!supabase || !enabled || !exams.length) return;
+    let alive = true;
+    supabase
+      .rpc('public_prep_minutes', { p_exams: exams.map((x) => ({ course: x.course, before: x.start })) })
+      .then(({ data }) => {
+        if (!alive) return;
+        const m = new Map<string, number>();
+        // Match rows back to exams by course and instant (the server normalizes the time zone).
+        for (const r of data ?? []) {
+          const x = exams.find((e) => e.course === r.course && Date.parse(e.start) === Date.parse(r.before));
+          if (x) m.set(`${x.course}|${x.start}`, r.minutes);
+        }
+        setPrep(m);
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` stands in for `exams`
+  }, [key, enabled]);
+  return enabled ? prep : new Map();
+}

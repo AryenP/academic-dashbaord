@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { colorOf } from '../lib/courses';
+import { courseVars } from '../lib/courses';
 import { isNow, isPast, type Kind, type PlanItem } from '../lib/plan';
 
 const FILTERS: { kind: Kind | 'All'; label: string }[] = [
@@ -47,7 +47,8 @@ export function Agenda({ plan, now }: { plan: PlanItem[]; now: number }) {
           ))}
         </div>
       </div>
-      <div className="mc-tablewrap" ref={wrapRef}>
+      {/* Scrolls on its own, so it takes keyboard focus for arrow-key scrolling. */}
+      <div className="mc-tablewrap" ref={wrapRef} tabIndex={0} role="region" aria-label="All plan items">
         <table className="mc-table">
           <thead>
             <tr>
@@ -63,7 +64,7 @@ export function Agenda({ plan, now }: { plan: PlanItem[]; now: number }) {
               <tr
                 key={r.id}
                 className={`k-${r.kind.toLowerCase()}${isPast(r, now) ? ' is-past' : ''}${isNow(r, now) ? ' is-now' : ''}`}
-                style={{ '--c': colorOf(r.course) } as CSSProperties}
+                style={{ ...courseVars(r.course) } as CSSProperties}
               >
                 <td>{r.when}</td>
                 <td>{r.course}</td>

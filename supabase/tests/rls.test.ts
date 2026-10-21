@@ -49,7 +49,7 @@ describe('profiles', () => {
   });
 
   it('people can edit their settings but not make themselves owner', async () => {
-    const ok = await other.db.from('profiles').update({ public_totals: false }).eq('id', other.id);
+    const ok = await other.db.from('profiles').update({ public_level: 'runway' }).eq('id', other.id);
     expect(ok.error).toBeNull();
     const bad = await other.db
       .from('profiles')
@@ -144,10 +144,32 @@ describe('public totals', () => {
     ]);
   });
 
-  it('turning public totals off hides them', async () => {
-    await owner.db.from('profiles').update({ public_totals: false }).eq('id', owner.id);
+  it('readiness level hides daily totals but keeps prep minutes per exam', async () => {
+    const exams = [
+      { course: 'DSC 140A', before: '2026-10-26T17:00:00-07:00' },
+      { course: 'DSC 102', before: '2026-10-23T00:00:00-07:00' },
+      { course: 'CSE 151A', before: '2026-11-03T14:00:00-08:00' },
+    ];
+    const prep = async () => (await anon.rpc('public_prep_minutes', { p_exams: exams })).data;
+    expect(await prep()).toEqual(
+      expect.arrayContaining([
+        { course: 'DSC 140A', before: '2026-10-27T00:00:00+00:00', minutes: 52 },
+        { course: 'DSC 102', before: '2026-10-23T07:00:00+00:00', minutes: 0 }, // its session is on the 23rd
+        { course: 'CSE 151A', before: '2026-11-03T22:00:00+00:00', minutes: 0 },
+      ]),
+    );
+    await owner.db.from('profiles').update({ public_level: 'readiness' }).eq('id', owner.id);
     expect((await anon.rpc('public_daily_totals', { days: 3650 })).data).toEqual([]);
-    await owner.db.from('profiles').update({ public_totals: true }).eq('id', owner.id);
+    expect((await prep())?.find((r) => r.course === 'DSC 140A')?.minutes).toBe(52);
+    await owner.db.from('profiles').update({ public_level: 'runway' }).eq('id', owner.id);
+    expect((await anon.rpc('public_daily_totals', { days: 3650 })).data).toEqual([]);
+    expect(await prep()).toEqual([]);
+    await owner.db.from('profiles').update({ public_level: 'totals' }).eq('id', owner.id);
+  });
+
+  it('the level only accepts the three values', async () => {
+    const bad = await owner.db.from('profiles').update({ public_level: 'everything' }).eq('id', owner.id);
+    expect(bad.error).not.toBeNull();
   });
 });
 

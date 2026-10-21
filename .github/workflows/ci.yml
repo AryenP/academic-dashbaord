@@ -45,8 +45,8 @@ jobs:
       - run: npm run test:db
       - name: Serve the Edge Functions
         run: |
-          echo 'SYNC_KEY=ci-sync-key' > supabase/functions/.env
-          supabase functions serve --no-verify-jwt --env-file supabase/functions/.env > functions.log 2>&1 &
+          echo 'SYNC_KEY=ci-sync-key' > supabase/functions/.env.local
+          supabase functions serve --no-verify-jwt --env-file supabase/functions/.env.local > functions.log 2>&1 &
           for i in $(seq 1 60); do
             curl -s -o /dev/null -X OPTIONS http://127.0.0.1:54321/functions/v1/phone-event && break
             sleep 2

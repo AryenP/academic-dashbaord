@@ -29,7 +29,7 @@ jobs:
           fi
           curl -fsS -m 90 -X POST "$SUPABASE_URL/functions/v1/sync-sources" \
             -H "x-sync-key: $SYNC_KEY" -H "Content-Type: application/json" -d '{}' \
-            | python3 -c 'import json,sys; d=json.load(sys.stdin); print(f"due {d.get(\"due\")}, done {d.get(\"done\")}"); [print(r) for r in d.get("results", []) if not r.get("ok")]'
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print("due", d.get("due"), "done", d.get("done")); [print(r) for r in d.get("results", []) if not r.get("ok")]'
       # Once a day, around 09:17 UTC (2 AM Pacific), ask the AI to read what the rules were unsure about.
       - env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -43,4 +43,4 @@ jobs:
           [ -z "$SYNC_KEY" ] && exit 0
           curl -fsS -m 90 -X POST "$SUPABASE_URL/functions/v1/classify-events" \
             -H "x-sync-key: $SYNC_KEY" -H "Content-Type: application/json" -d '{}' \
-            | python3 -c 'import json,sys; d=json.load(sys.stdin); print(f"users {d.get(\"users\")}"); [print(r) for r in d.get("results", [])]'
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print("users", d.get("users")); [print(r) for r in d.get("results", [])]'

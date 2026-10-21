@@ -8,3 +8,9 @@ Changes from `docs/SPEC.md` and `docs/BUILD_PROMPT.md`, with the reason for each
 - **2026-10-20 · Screenshots are written for review, not diffed.** `tests/e2e/screens.spec.ts` saves them to `tests/e2e/__screenshots__/` (git-ignored). Pixel diffs across OS font rendering would be noise in CI.
 - **2026-10-20 · Added `.github/workflows/ci.yml`** to run `npm run check` on every push, so the Deploy workflow only needs lint, unit tests and the build.
 - **2026-10-20 · Tests run in Pacific time** (`TZ` for Vitest, `timezoneId` for Playwright). The plan's day boundaries are Pacific, and CI runners are UTC.
+- **2026-10-20 · `profiles.is_owner`.** The first account to sign up is the owner, and `public_daily_totals()` shows only the owner's totals. Nobody can change `is_owner` from the client. After signing in once, turn off sign-ups in Supabase (Authentication → Sign In / Providers → "Allow new users to sign up").
+- **2026-10-20 · `sessions.paused_at`.** Not in the original schema. Pause is a state, and the timer is derived from timestamps, so the start of the current pause has to be stored. Resuming folds it into `paused_seconds`.
+- **2026-10-20 · Session transitions are SQL functions** (`pause_session`, `resume_session`, `start_break`, `end_break`, `end_session`). The web app and the phone function share them, they're atomic, and they use the database clock. They run as the caller, so RLS still applies.
+- **2026-10-20 · Only one unfinished session per person** (partial unique index). A second "start" from the phone is a no-op.
+- **2026-10-20 · Rate limit uses a `phone_rate` table** (per token hash, per minute) behind a service-role-only function. Supabase has no built-in KV.
+- **2026-10-20 · Database and function tests.** `npm run test:db` runs the RLS tests against a local Supabase, and `npm run test:fn` runs the phone-event handler tests in Deno. CI runs both in a `backend` job.

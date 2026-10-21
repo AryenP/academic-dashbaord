@@ -13,10 +13,13 @@
     "test": "TZ=America/Los_Angeles vitest run",
     "test:e2e": "playwright test",
     "test:py": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest -q scripts/tests; else python3 -m pytest -q scripts/tests; fi",
-    "check": "npm run lint && npm run format:check && npm run test && npm run build && npm run test:e2e && npm run test:py"
+    "check": "npm run lint && npm run format:check && npm run test && npm run build && npm run test:e2e && npm run test:py",
+    "test:db": "vitest run -c vitest.db.config.ts",
+    "test:fn": "deno test supabase/functions"
   },
   "dependencies": {
     "@fontsource/big-shoulders-display": "^5.3.0",
+    "@supabase/supabase-js": "^2.118.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4"

@@ -28,3 +28,23 @@ jobs:
       - run: pip install -r scripts/requirements.txt pytest
       - run: npx playwright install --with-deps chromium
       - run: npm run check
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - run: npm ci
+      - run: npm run test:fn
+      - run: supabase start -x studio,imgproxy,vector,logflare,supavisor,storage-api,mailpit,edge-runtime
+      - run: npm run test:db

@@ -34,6 +34,24 @@ jobs:
           GCAL_ICS_URL: ${{ secrets.GCAL_ICS_URL }}
         run: python scripts/sync.py
 
+      # Supabase pauses free projects after 7 days without requests. This run every 15 minutes keeps it
+      # awake. It reads only public totals, and never fails the sync.
+      - name: Keep Supabase awake
+        if: ${{ always() }}
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Supabase secrets not set yet; skipping."
+            exit 0
+          fi
+          curl -fsS -m 20 -o /dev/null -w "Supabase answered %{http_code}\n" \
+            -X POST "$SUPABASE_URL/rest/v1/rpc/public_daily_totals" \
+            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" -d '{"days":1}'
+
       - name: Commit if the plan changed
         id: commit
         run: |

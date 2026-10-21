@@ -5,6 +5,9 @@
 import type { CourseInfo } from './courses';
 import type { ExamPrep, Kind, PlanData, PlanItem } from './plan';
 import { round1 } from './plan';
+import { localIso } from './tz';
+
+export { localIso, todayIn } from './tz';
 
 export interface ItemRow {
   id: string;
@@ -20,51 +23,6 @@ export interface ItemRow {
 
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const pad = (n: number) => String(n).padStart(2, '0');
-
-const fmtCache = new Map<string, Intl.DateTimeFormat>();
-function parts(t: number, tz: string) {
-  let f = fmtCache.get(tz);
-  if (!f) {
-    f = new Intl.DateTimeFormat('en-US', {
-      timeZone: tz,
-      hourCycle: 'h23',
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-      weekday: 'short',
-    });
-    fmtCache.set(tz, f);
-  }
-  const p: Record<string, string> = {};
-  for (const x of f.formatToParts(new Date(t))) p[x.type] = x.value;
-  return {
-    y: Number(p.year),
-    mo: Number(p.month),
-    d: Number(p.day),
-    h: Number(p.hour) % 24,
-    mi: Number(p.minute),
-    s: Number(p.second),
-    wd: p.weekday,
-  };
-}
-
-/** `2026-10-20T17:30:00-07:00`: wall time in `tz` with that moment's UTC offset. */
-export function localIso(iso: string | number, tz: string): string {
-  const t = typeof iso === 'number' ? iso : Date.parse(iso);
-  const p = parts(t, tz);
-  const asUtc = Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi, p.s);
-  const off = Math.round((asUtc - t) / 60_000);
-  const sign = off < 0 ? '-' : '+';
-  const a = Math.abs(off);
-  return `${p.y}-${pad(p.mo)}-${pad(p.d)}T${pad(p.h)}:${pad(p.mi)}:${pad(p.s)}${sign}${pad(Math.floor(a / 60))}:${pad(a % 60)}`;
-}
-
-/** Today's date (YYYY-MM-DD) in `tz`. */
-export const todayIn = (tz: string, now = Date.now()) => localIso(now, tz).slice(0, 10);
 
 const dayLabel = (s: string) => {
   const [y, m, d] = s.slice(0, 10).split('-').map(Number);

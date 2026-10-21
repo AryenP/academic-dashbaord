@@ -1,6 +1,6 @@
 # Runway
 
-Runway is a study app for students. Sign up with your school email, put your exams and study blocks on the runway (connecting a calendar is next), run your study sessions with breaks and music, check your focus with your phone, and see how ready you actually are for each exam. It started as my own study cockpit built from my Google Calendar; v2 makes it something anyone can use.
+Runway is a study app for students. Sign up with your school email, connect your calendar (Canvas, Google, iCloud, Outlook or an .ics file), run your study sessions with breaks and music, check your focus with your phone, and see how ready you actually are for each exam. It started as my own study cockpit built from my Google Calendar; v2 makes it something anyone can use.
 
 **Live:** https://aryenp.github.io/academic-dashbaord/
 
@@ -29,14 +29,14 @@ Runway starts from the plan I already keep and closes the loop: **plan → sessi
 ## How it works
 
 ```
-the site (GitHub Pages, prerendered landing page + the app) ──▶ Supabase Postgres ◀── courses, plan items,
-                                                                 (Row Level Security)   sessions, breaks
-iPhone Shortcuts ──POST──▶ Edge Function phone-event ────────────▶
+Canvas / Google / iCloud / Outlook feeds ──▶ Edge Function sync-sources ──▶ Supabase Postgres ◀── the site (GitHub Pages)
+            (every 15 min, GitHub Actions; addresses in Vault)              (Row Level Security)
+iPhone Shortcuts ──POST──▶ Edge Function phone-event ───────────────────────▶
 Spotify app on phone/laptop ◀── Web API (PKCE) ── the site
 ```
 
 - **Frontend:** Vite, React, TypeScript, hash routing. The runway's design carried over from the first version: Big Shoulders Display for numbers, course colors, theme-following light and dark.
-- **Plan:** per account, in `courses` and `plan_items` (study blocks, deadlines, exams, classes, commitments), drawn in your timezone. The landing page draws a demo plan with made-up courses.
+- **Plan:** per account, in `courses` and `plan_items` (study blocks, deadlines, exams, classes, commitments), drawn in your timezone. They come from the calendars you connect: the `sync-sources` Edge Function fetches each feed every 15 minutes (addresses are stored encrypted in Supabase Vault), expands recurring events, reads titles with the course-code rules, and keeps the plan in step. The landing page draws a demo plan with made-up courses.
 - **Backend:** Supabase. Every table has Row Level Security; sign-up needs a school email; sharing is off by default, and visitors to a share page can call exactly four functions that return nothing unless that person turned sharing on. Session state changes are SQL functions, so the web app and the phone go through the same code. Deleting your account deletes everything.
 - **Phone:** a personal token (only its hash is stored), rate-limited to 120 requests a minute. Shortcuts can't read Screen Time, and a website can't either, so this is the honest version: it sees only the apps I list.
 - **Spotify:** Authorization Code with PKCE and the player endpoints. No Web Playback SDK; it's been unreliable for Development Mode apps since March 2026 (see `docs/RESEARCH.md`).
@@ -47,8 +47,8 @@ Design decisions and the reasons for each are in [`docs/DECISIONS.md`](docs/DECI
 
 - **Unit** (Vitest): the timer, the focus formula, stats, the offline queue, the Spotify client.
 - **Database** (Vitest against a local Supabase): RLS. Another account can't read or change your rows; share pages get only what you turned on; sign-up needs a school email; deleting an account removes everything.
-- **Edge Function** (Deno): validation, rate limiting, starting and ending sessions from the phone.
-- **Browser** (Playwright): the landing page, sign-in and privacy pages, plus signed-in flows against a local Supabase with Spotify faked at the network layer: sessions, breaks, phone tracking, sharing, offline sync, and an axe accessibility check of every view in light and dark.
+- **Edge Functions** (Deno): the iCal parser and recurrence expansion, the title rules, the sync against a fake database (first sync, 304, a renamed event, a deleted event, an override, duplicates across sources, errors), and the phone-event handler.
+- **Browser** (Playwright): the landing page, sign-in and privacy pages, plus signed-in flows against a local Supabase with Spotify faked at the network layer: connecting a calendar (served from the test), sessions, breaks, phone tracking, sharing, offline sync, and an axe accessibility check of every view in light and dark.
 
 Lighthouse on mobile: 96 performance, 100 accessibility.
 
@@ -64,14 +64,14 @@ With the backend (needs Docker and the Supabase CLI):
 
 ```sh
 supabase start                          # local Postgres, Auth, Realtime
-supabase functions serve --no-verify-jwt
+echo 'SYNC_KEY=local' > supabase/functions/.env && supabase functions serve --no-verify-jwt --env-file supabase/functions/.env
 # put the local URL and anon key in .env.local as VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 npm run test:db && npm run test:fn && npm run test:e2e:db
 ```
 
 ### Deploying your own
 
-1. **Supabase.** Create a free project and run `supabase link` and `supabase db push`, then `supabase functions deploy phone-event --no-verify-jwt`. Add `SUPABASE_URL` and `SUPABASE_ANON_KEY` as repo secrets. Under Authentication → URL Configuration, set the Site URL to your Pages URL.
+1. **Supabase.** Create a free project and run `supabase link` and `supabase db push`, then `supabase functions deploy phone-event sync-sources --no-verify-jwt` and `supabase functions deploy validate-source`. Pick a random `SYNC_KEY`, set it with `supabase secrets set SYNC_KEY=…` and as a repo secret, and add `SUPABASE_URL` and `SUPABASE_ANON_KEY` as repo secrets. Under Authentication → URL Configuration, set the Site URL to your Pages URL.
 2. **Pages.** Settings → Pages → Source: GitHub Actions.
 3. **Google sign-in (optional).** Add a Google OAuth client under Authentication → Providers and build with `VITE_GOOGLE_SIGNIN=true`.
 4. **Spotify (optional, needs Premium).** Create an app at developer.spotify.com with the redirect URIs `https://<you>.github.io/academic-dashbaord/spotify.html` and `http://127.0.0.1:5173/academic-dashbaord/spotify.html`, and add its Client ID as the repo secret `SPOTIFY_CLIENT_ID`.

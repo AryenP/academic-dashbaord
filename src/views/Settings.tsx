@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PhoneSettings } from '../components/PhoneSettings';
+import { SourcesSettings } from '../components/SourcesSettings';
 import { SpotifySettings } from '../components/SpotifySettings';
 import { useAuth } from '../lib/auth';
 import { Link, useNavigate } from 'react-router-dom';
@@ -19,6 +20,7 @@ export function Settings() {
       ) : (
         <>
           <Account />
+          <SourcesSettings />
           <Breaks />
           <Sharing />
           <PhoneSettings />

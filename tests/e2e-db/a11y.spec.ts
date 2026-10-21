@@ -5,7 +5,16 @@ import { connectedSpotify } from './fakeSpotify';
 import { admin, OWNER_HANDLE, resetDb, seedPlan, seedSession, signIn } from './helpers';
 
 // Automated accessibility check (axe, WCAG 2.1 AA) of every view, signed in, in light and dark.
-const VIEWS = ['./', './#/focus', './#/log', './#/stats', './#/settings', './#/setup/phone', './#/privacy'];
+const VIEWS = [
+  './',
+  './#/focus',
+  './#/log',
+  './#/stats',
+  './#/settings',
+  './#/setup/phone',
+  './#/privacy',
+  './#/connect',
+];
 const PUBLIC = ['./', './#/signin', './#/privacy', `./#/u/${OWNER_HANDLE}`];
 
 for (const scheme of SCHEMES)

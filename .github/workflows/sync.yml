@@ -1,0 +1,32 @@
+name: Sync calendars
+
+# Every 15 minutes, asks the sync-sources Edge Function to sync every calendar that's due. The key
+# is a shared secret set in both GitHub (SYNC_KEY) and Supabase (`supabase secrets set SYNC_KEY=…`).
+# This request also keeps the free Supabase project awake (it pauses after 7 idle days).
+on:
+  schedule:
+    - cron: '*/15 * * * *' # GitHub may run it a few minutes late
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: sync-calendars
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SYNC_KEY: ${{ secrets.SYNC_KEY }}
+        run: |
+          if [ -z "$SYNC_KEY" ]; then
+            echo "SYNC_KEY is not set; skipping."
+            exit 0
+          fi
+          curl -fsS -m 90 -X POST "$SUPABASE_URL/functions/v1/sync-sources" \
+            -H "x-sync-key: $SYNC_KEY" -H "Content-Type: application/json" -d '{}' \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print(f"due {d.get(\"due\")}, done {d.get(\"done\")}"); [print(r) for r in d.get("results", []) if not r.get("ok")]'

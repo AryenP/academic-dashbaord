@@ -43,14 +43,15 @@ jobs:
       - run: npm run test:fn
       - run: supabase start -x studio,imgproxy,vector,logflare,supavisor,storage-api,mailpit,edge-runtime
       - run: npm run test:db
-      - name: Serve the Edge Function
+      - name: Serve the Edge Functions
         run: |
-          supabase functions serve --no-verify-jwt > functions.log 2>&1 &
+          echo 'SYNC_KEY=ci-sync-key' > supabase/functions/.env
+          supabase functions serve --no-verify-jwt --env-file supabase/functions/.env > functions.log 2>&1 &
           for i in $(seq 1 60); do
             curl -s -o /dev/null -X OPTIONS http://127.0.0.1:54321/functions/v1/phone-event && break
             sleep 2
           done
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test -c playwright.db.config.ts sessions phone spotify offline a11y
+      - run: npx playwright test -c playwright.db.config.ts sessions phone spotify offline connect a11y
       - if: failure()
         run: cat functions.log

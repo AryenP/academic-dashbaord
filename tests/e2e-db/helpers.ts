@@ -24,6 +24,11 @@ export async function resetDb(): Promise<string> {
     password: PASSWORD,
     email_confirm: true,
   });
+  // Tests start past the connect screen unless they say otherwise (connect.spec clears this).
+  await admin
+    .from('profiles')
+    .update({ onboarding: { connect_seen: true } })
+    .eq('id', c.user!.id);
   return c.user!.id;
 }
 
@@ -84,4 +89,8 @@ export async function seedPlan(userId: string) {
   }));
   const ins = await admin.from('plan_items').insert(rows);
   if (ins.error) throw ins.error;
+  await admin
+    .from('profiles')
+    .update({ onboarding: { connect_seen: true } })
+    .eq('id', userId);
 }

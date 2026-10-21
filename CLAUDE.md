@@ -15,7 +15,7 @@ Runway is a study app anyone with a school email can sign up for: connect a cale
 
 ## Plan data
 
-The plan is per user in the database: `courses` and `plan_items` (kind: study, deadline, exam, class, commitment), built into the runway's shape by `src/lib/planBuild.ts` in the person's timezone. The landing page draws a demo plan (`src/landing/demo.ts`). The v1 calendar sync (`scripts/sync.py`, `public/data.json`) is retired; calendar sources come back server-side in Phase 1.
+The plan is per user in the database: `courses` and `plan_items` (kind: study, deadline, exam, class, commitment), built into the runway's shape by `src/lib/planBuild.ts` in the person's timezone. Plan items come from `calendar_sources` (addresses in Vault) through the `sync-sources` Edge Function (`supabase/functions/_shared/sync.ts`: parse, title rules, dedupe), triggered every 15 minutes by `.github/workflows/sync.yml`, or by hand (`AddItem`). The landing page draws a demo plan (`src/landing/demo.ts`).
 
 ## Tests
 

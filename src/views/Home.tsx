@@ -1,4 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { AddItem } from '../components/AddItem';
 import { Agenda } from '../components/Agenda';
 import { Checkpoints } from '../components/Checkpoints';
@@ -12,6 +13,7 @@ import { useHistory, type DayCourseMinutes } from '../lib/history';
 import { useLiveSession } from '../lib/liveSession';
 import { daysUntil, isNow, isPast, type ExamPrep, type PlanData } from '../lib/plan';
 import type { Session } from '../lib/supabase';
+import { ago, useSources } from '../lib/sources';
 import { useNow, usePlan } from '../lib/usePlan';
 
 function Lede({ exams, now }: { exams: ExamPrep[]; now: number }) {
@@ -155,30 +157,86 @@ export function RunwayPage({
   );
 }
 
-function EmptyRunway() {
-  const [adding, setAdding] = useState(true);
+function EmptyRunway({ hasSources }: { hasSources: boolean }) {
+  const [adding, setAdding] = useState(false);
   return (
     <section className="empty-runway" aria-labelledby="empty-h">
       <h2 id="empty-h" className="mc-h2">
         Nothing on your runway yet
       </h2>
-      <p>
-        Add your next exam and a study block or two, and the runway draws itself. Connecting a calendar so
-        this happens on its own is the next thing coming to Runway.
-      </p>
-      {adding ? <AddItem onDone={() => setAdding(true)} /> : null}
+      {hasSources ? (
+        <p>
+          Your calendar is connected but nothing in it reads as a class, exam, deadline or study block. Check
+          it in <Link to="/settings">Settings</Link>, or add things by hand.
+        </p>
+      ) : (
+        <p>Connect your calendar and the runway draws itself: classes, exams, deadlines, study blocks.</p>
+      )}
+      <div className="row">
+        {!hasSources && (
+          <Link to="/connect" className="btn btn-primary">
+            Connect a calendar
+          </Link>
+        )}
+        {!adding && (
+          <button className="btn btn-quiet" onClick={() => setAdding(true)}>
+            Add by hand
+          </button>
+        )}
+      </div>
+      {adding && <AddItem onDone={() => setAdding(false)} />}
     </section>
   );
 }
 
+function SourcesFoot() {
+  const { sources } = useSources();
+  const now = useNow(30_000);
+  if (!sources?.length) return <AddItemFoot />;
+  const bad = sources.find((s) => s.status === 'error');
+  const synced = sources.filter((s) => s.kind !== 'ics_upload' && s.last_synced_at);
+  const latest =
+    synced
+      .map((s) => s.last_synced_at!)
+      .sort()
+      .at(-1) ?? null;
+  return (
+    <>
+      {bad
+        ? `${bad.label} couldn't sync. `
+        : latest
+          ? `Synced from ${sources.map((s) => s.label).join(' and ')} ${ago(latest, now)}. Updates about every 15 minutes. `
+          : `${sources.map((s) => s.label).join(' and ')} connected. `}
+      <Link to="/settings">Calendars</Link> · <AddItemFoot />
+    </>
+  );
+}
+
 export function Home() {
-  const { user, ready } = useAuth();
+  const { user, ready, profile } = useAuth();
   const data = usePlan();
   const history = useHistory();
   const live = useLiveSession();
+  const { sources, loading: sourcesLoading } = useSources();
+  const navigate = useNavigate();
+
+  // A brand-new account goes straight to the connect screen, once.
+  const seen = !!(profile?.onboarding as { connect_seen?: boolean } | null)?.connect_seen;
+  const sendToConnect =
+    !!user &&
+    !!profile &&
+    !data.loading &&
+    !sourcesLoading &&
+    data.plan.length === 0 &&
+    !sources?.length &&
+    !seen;
+  useEffect(() => {
+    if (sendToConnect) navigate('/connect', { replace: true });
+  }, [sendToConnect, navigate]);
+
   if (!ready) return <div className="fx fx-loading" aria-busy="true" />;
   if (!user) return <Landing />;
-  if (data.loading) return <div className="fx fx-loading" aria-busy="true" />;
+  if (data.loading || sendToConnect) return <div className="fx fx-loading" aria-busy="true" />;
   return (
     <RunwayPage
       data={data}
@@ -187,8 +245,8 @@ export function Home() {
       live={live.session}
       self
       title="Your runway"
-      empty={<EmptyRunway />}
-      foot={data.plan.length > 0 ? <AddItemFoot /> : undefined}
+      empty={<EmptyRunway hasSources={!!sources?.length} />}
+      foot={data.plan.length > 0 ? <SourcesFoot /> : undefined}
     />
   );
 }
@@ -197,8 +255,8 @@ function AddItemFoot() {
   const [open, setOpen] = useState(false);
   if (!open)
     return (
-      <button className="btn btn-quiet" onClick={() => setOpen(true)}>
-        Add to the runway
+      <button className="btn btn-link" onClick={() => setOpen(true)}>
+        Add to the runway by hand
       </button>
     );
   return <AddItem onDone={() => setOpen(false)} />;

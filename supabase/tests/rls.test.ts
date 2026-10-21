@@ -309,3 +309,173 @@ describe('phone events', () => {
     expect((await admin.rpc('phone_rate_hit', { p_token_hash: key })).data).toBe(2);
   });
 });
+
+describe('calendar sources', () => {
+  let sourceA: string;
+
+  it('schools are readable by anyone, and found by email domain', async () => {
+    const { data } = await anon.from('schools').select('name, canvas_url').contains('domains', ['ucsd.edu']);
+    expect(data).toEqual([{ name: 'UC San Diego', canvas_url: 'https://canvas.ucsd.edu' }]);
+  });
+
+  it('adding a source puts the address in Vault and never in a column', async () => {
+    const r = await a.db.rpc('add_calendar_source', {
+      p_kind: 'canvas',
+      p_label: 'Canvas',
+      p_url: 'webcal://canvas.ucsd.edu/feeds/calendars/user_abc123.ics',
+    });
+    expect(r.error).toBeNull();
+    sourceA = r.data!.id;
+    expect(r.data).toMatchObject({ kind: 'canvas', host: 'canvas.ucsd.edu', status: 'pending' });
+    expect(JSON.stringify(r.data)).not.toContain('abc123');
+    // The client can't read secret_id at all.
+    const cols = await a.db.from('calendar_sources').select('id, host').eq('id', sourceA);
+    expect(cols.data).toEqual([{ id: sourceA, host: 'canvas.ucsd.edu' }]);
+    const secret = await a.db
+      .from('calendar_sources')
+      .select('secret_id' as never)
+      .eq('id', sourceA);
+    expect(secret.error).not.toBeNull();
+    // The service role gets the address back, with webcal:// turned into https://.
+    const url = await admin.rpc('source_url', { p_source: sourceA });
+    expect(url.data).toBe('https://canvas.ucsd.edu/feeds/calendars/user_abc123.ics');
+    expect((await a.db.rpc('source_url', { p_source: sourceA })).error).not.toBeNull();
+  });
+
+  it('rejects addresses that are cut off, not https, or not an address', async () => {
+    for (const bad of [
+      'https://calendar.google.com/calendar/ical/x%40gmail.com/private-abc/basic.ics…',
+      'https://calendar.google.com/calendar/ical/x/private-abc/basic...',
+      'ftp://x.example/a.ics',
+      'not a url',
+      'https://calendar.google.com/calendar/ical/x/pri vate/basic.ics',
+    ]) {
+      const r = await a.db.rpc('add_calendar_source', { p_kind: 'ical', p_label: 'x', p_url: bad });
+      expect(r.error, bad).not.toBeNull();
+    }
+  });
+
+  it("user B can't see, rename, sync or remove user A's source", async () => {
+    expect((await b.db.from('calendar_sources').select('id, label')).data).toEqual([]);
+    const upd = await b.db
+      .from('calendar_sources')
+      .update({ label: 'hacked' })
+      .eq('id', sourceA)
+      .select('id');
+    expect(upd.data).toEqual([]);
+    await b.db.rpc('request_sync', { p_source: sourceA });
+    const del = await b.db.from('calendar_sources').delete().eq('id', sourceA).select('id');
+    expect(del.data).toEqual([]);
+    const still = await admin.from('calendar_sources').select('label').eq('id', sourceA).single();
+    expect(still.data?.label).toBe('Canvas');
+  });
+
+  it('the person can rename it, but not change anything else', async () => {
+    const ok = await a.db.from('calendar_sources').update({ label: 'My Canvas' }).eq('id', sourceA);
+    expect(ok.error).toBeNull();
+    const bad = await a.db
+      .from('calendar_sources')
+      .update({ status: 'ok' } as never)
+      .eq('id', sourceA);
+    expect(bad.error).not.toBeNull();
+  });
+
+  it('events from a sync are private, and only the override column is editable', async () => {
+    const ev = await admin
+      .from('events')
+      .insert({
+        user_id: a.id,
+        source_id: sourceA,
+        uid: 'e1',
+        hash: 'h',
+        title: 'HW 2 due [DSC 140A]',
+        start_at: '2026-10-26T06:59:00Z',
+        end_at: '2026-10-26T07:00:00Z',
+        kind: 'deadline',
+        course_code: 'DSC 140A',
+        confidence: 0.9,
+      })
+      .select()
+      .single();
+    expect(ev.error).toBeNull();
+    expect((await b.db.from('events').select('*')).data).toEqual([]);
+    expect((await anon.from('events').select('id')).data ?? []).toEqual([]);
+    const own = await a.db.from('events').select('title').eq('id', ev.data!.id);
+    expect(own.data).toEqual([{ title: 'HW 2 due [DSC 140A]' }]);
+    const ok = await a.db
+      .from('events')
+      .update({ override: { kind: 'personal' } })
+      .eq('id', ev.data!.id);
+    expect(ok.error).toBeNull();
+    const bad = await a.db
+      .from('events')
+      .update({ kind: 'exam' } as never)
+      .eq('id', ev.data!.id);
+    expect(bad.error).not.toBeNull();
+    const forged = await b.db.from('events').insert({
+      user_id: a.id,
+      source_id: sourceA,
+      uid: 'x',
+      hash: 'h',
+      title: 'x',
+      start_at: '2026-10-26T06:59:00Z',
+      end_at: '2026-10-26T07:00:00Z',
+    } as never);
+    expect(forged.error).not.toBeNull();
+  });
+
+  it('finish_sync schedules the next run and backs off on failure', async () => {
+    await admin.rpc('finish_sync', {
+      p_source: sourceA,
+      p_ok: false,
+      p_error: 'HTTP 404',
+      p_count: null as never,
+      p_etag: null as never,
+      p_last_modified: null as never,
+    });
+    let s = (await admin.from('calendar_sources').select('*').eq('id', sourceA).single()).data!;
+    expect(s).toMatchObject({ status: 'error', last_error: 'HTTP 404', backoff_minutes: 30 });
+    await admin.rpc('finish_sync', {
+      p_source: sourceA,
+      p_ok: true,
+      p_error: null as never,
+      p_count: 37,
+      p_etag: 'W/"1"',
+      p_last_modified: null as never,
+    });
+    s = (await admin.from('calendar_sources').select('*').eq('id', sourceA).single()).data!;
+    expect(s).toMatchObject({
+      status: 'ok',
+      last_error: null,
+      backoff_minutes: 15,
+      event_count: 37,
+      etag: 'W/"1"',
+    });
+    expect(Date.parse(s.next_sync_at)).toBeGreaterThan(Date.now() + 10 * 60_000);
+    // Only due sources come back, and only to the service role.
+    expect((await admin.rpc('due_sources', { p_limit: 10 })).data).toEqual([]);
+    await a.db.rpc('request_sync', { p_source: sourceA });
+    expect((await admin.rpc('due_sources', { p_limit: 10 })).data?.map((r) => r.id)).toEqual([sourceA]);
+    expect((await a.db.rpc('due_sources', { p_limit: 10 })).error).not.toBeNull();
+  });
+
+  it('removing a source removes its events, plan items and Vault secret', async () => {
+    const { data: secrets } = await admin.rpc('source_url', { p_source: sourceA });
+    expect(secrets).toBeTruthy();
+    const del = await a.db.from('calendar_sources').delete().eq('id', sourceA).select('id');
+    expect(del.data).toHaveLength(1);
+    expect((await admin.from('events').select('*').eq('source_id', sourceA)).data).toEqual([]);
+    expect((await admin.rpc('source_url', { p_source: sourceA })).data).toBeNull();
+  });
+
+  it('an .ics upload source needs no address', async () => {
+    const r = await a.db.rpc('add_calendar_source', {
+      p_kind: 'ics_upload',
+      p_label: 'export.ics',
+      p_url: '',
+    });
+    expect(r.error).toBeNull();
+    expect(r.data).toMatchObject({ kind: 'ics_upload', status: 'ok', host: null });
+    await a.db.from('calendar_sources').delete().eq('id', r.data!.id);
+  });
+});

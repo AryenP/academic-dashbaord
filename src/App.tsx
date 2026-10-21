@@ -19,6 +19,7 @@ const PhoneSetup = lazy(() => import('./views/PhoneSetup').then((m) => ({ defaul
 const SignIn = lazy(() => import('./views/SignIn').then((m) => ({ default: m.SignIn })));
 const Privacy = lazy(() => import('./views/Privacy').then((m) => ({ default: m.Privacy })));
 const Share = lazy(() => import('./views/Share').then((m) => ({ default: m.Share })));
+const Connect = lazy(() => import('./views/Connect').then((m) => ({ default: m.Connect })));
 
 export function App() {
   return (
@@ -41,6 +42,7 @@ export function App() {
                       <Route path="/signin" element={<SignIn />} />
                       <Route path="/privacy" element={<Privacy />} />
                       <Route path="/u/:handle" element={<Share />} />
+                      <Route path="/connect" element={<Connect />} />
                       <Route path="*" element={<Home />} />
                     </Routes>
                   </Suspense>

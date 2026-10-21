@@ -23,6 +23,61 @@ export type Database = {
   };
   public: {
     Tables: {
+      calendar_sources: {
+        Row: {
+          backoff_minutes: number;
+          created_at: string;
+          etag: string | null;
+          event_count: number;
+          host: string | null;
+          id: string;
+          kind: string;
+          label: string;
+          last_error: string | null;
+          last_modified: string | null;
+          last_synced_at: string | null;
+          next_sync_at: string;
+          secret_id: string | null;
+          status: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          backoff_minutes?: number;
+          created_at?: string;
+          etag?: string | null;
+          event_count?: number;
+          host?: string | null;
+          id?: string;
+          kind: string;
+          label: string;
+          last_error?: string | null;
+          last_modified?: string | null;
+          last_synced_at?: string | null;
+          next_sync_at?: string;
+          secret_id?: string | null;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          backoff_minutes?: number;
+          created_at?: string;
+          etag?: string | null;
+          event_count?: number;
+          host?: string | null;
+          id?: string;
+          kind?: string;
+          label?: string;
+          last_error?: string | null;
+          last_modified?: string | null;
+          last_synced_at?: string | null;
+          next_sync_at?: string;
+          secret_id?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       courses: {
         Row: {
           code: string;
@@ -53,6 +108,91 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      events: {
+        Row: {
+          all_day: boolean;
+          classifier: string;
+          confidence: number;
+          course_code: string | null;
+          deleted_at: string | null;
+          end_at: string;
+          first_seen_at: string;
+          hash: string;
+          id: string;
+          kind: string;
+          location: string;
+          override: Json | null;
+          plan_item_id: string | null;
+          recurrence_id: string;
+          source_id: string;
+          start_at: string;
+          title: string;
+          uid: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          all_day?: boolean;
+          classifier?: string;
+          confidence?: number;
+          course_code?: string | null;
+          deleted_at?: string | null;
+          end_at: string;
+          first_seen_at?: string;
+          hash: string;
+          id?: string;
+          kind?: string;
+          location?: string;
+          override?: Json | null;
+          plan_item_id?: string | null;
+          recurrence_id?: string;
+          source_id: string;
+          start_at: string;
+          title: string;
+          uid: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          all_day?: boolean;
+          classifier?: string;
+          confidence?: number;
+          course_code?: string | null;
+          deleted_at?: string | null;
+          end_at?: string;
+          first_seen_at?: string;
+          hash?: string;
+          id?: string;
+          kind?: string;
+          location?: string;
+          override?: Json | null;
+          plan_item_id?: string | null;
+          recurrence_id?: string;
+          source_id?: string;
+          start_at?: string;
+          title?: string;
+          uid?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'events_plan_item_id_fkey';
+            columns: ['plan_item_id'];
+            isOneToOne: false;
+            referencedRelation: 'plan_items';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'events_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
+            referencedRelation: 'calendar_sources';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       phone_events: {
         Row: {
@@ -114,6 +254,7 @@ export type Database = {
           reason: string | null;
           score: number | null;
           source: string;
+          source_id: string | null;
           start_at: string;
           status: string;
           submitted_at: string | null;
@@ -136,6 +277,7 @@ export type Database = {
           reason?: string | null;
           score?: number | null;
           source?: string;
+          source_id?: string | null;
           start_at: string;
           status?: string;
           submitted_at?: string | null;
@@ -157,6 +299,7 @@ export type Database = {
           reason?: string | null;
           score?: number | null;
           source?: string;
+          source_id?: string | null;
           start_at?: string;
           status?: string;
           submitted_at?: string | null;
@@ -172,6 +315,13 @@ export type Database = {
             columns: ['course_id'];
             isOneToOne: false;
             referencedRelation: 'courses';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'plan_items_source_id_fkey';
+            columns: ['source_id'];
+            isOneToOne: false;
+            referencedRelation: 'calendar_sources';
             referencedColumns: ['id'];
           },
         ];
@@ -213,6 +363,62 @@ export type Database = {
           settings?: NonNullable<Json>;
           share_level?: string;
           timezone?: string;
+        };
+        Relationships: [];
+      };
+      school_requests: {
+        Row: {
+          canvas_url: string | null;
+          created_at: string;
+          domain: string;
+          id: string;
+          school_name: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          canvas_url?: string | null;
+          created_at?: string;
+          domain: string;
+          id?: string;
+          school_name?: string | null;
+          user_id?: string;
+        };
+        Update: {
+          canvas_url?: string | null;
+          created_at?: string;
+          domain?: string;
+          id?: string;
+          school_name?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      schools: {
+        Row: {
+          canvas_url: string | null;
+          created_at: string;
+          domains: string[];
+          id: string;
+          lms: string;
+          name: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          canvas_url?: string | null;
+          created_at?: string;
+          domains: string[];
+          id?: string;
+          lms?: string;
+          name: string;
+        };
+        Update: {
+          canvas_url?: string | null;
+          created_at?: string;
+          domains?: string[];
+          id?: string;
+          lms?: string;
+          name?: string;
         };
         Relationships: [];
       };
@@ -326,7 +532,59 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      add_calendar_source: {
+        Args: { p_kind: string; p_label: string; p_url: string };
+        Returns: {
+          backoff_minutes: number;
+          created_at: string;
+          etag: string | null;
+          event_count: number;
+          host: string | null;
+          id: string;
+          kind: string;
+          label: string;
+          last_error: string | null;
+          last_modified: string | null;
+          last_synced_at: string | null;
+          next_sync_at: string;
+          secret_id: string | null;
+          status: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'calendar_sources';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+      due_sources: {
+        Args: { p_limit?: number };
+        Returns: {
+          backoff_minutes: number;
+          created_at: string;
+          etag: string | null;
+          event_count: number;
+          host: string | null;
+          id: string;
+          kind: string;
+          label: string;
+          last_error: string | null;
+          last_modified: string | null;
+          last_synced_at: string | null;
+          next_sync_at: string;
+          secret_id: string | null;
+          status: string;
+          user_id: string;
+        }[];
+        SetofOptions: {
+          from: '*';
+          to: 'calendar_sources';
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       end_break: {
         Args: { p_at?: string; p_session: string };
         Returns: {
@@ -383,6 +641,18 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      finish_sync: {
+        Args: {
+          p_count: number;
+          p_error: string;
+          p_etag: string;
+          p_last_modified: string;
+          p_ok: boolean;
+          p_source: string;
+        };
+        Returns: undefined;
+      };
+      is_feed_url: { Args: { u: string }; Returns: boolean };
       is_school_email: { Args: { e: string }; Returns: boolean };
       make_handle: { Args: { email: string }; Returns: string };
       pause_session: {
@@ -430,6 +700,7 @@ export type Database = {
           minutes: number;
         }[];
       };
+      request_sync: { Args: { p_source: string }; Returns: undefined };
       resume_session: {
         Args: { p_at?: string; p_session: string };
         Returns: {
@@ -482,6 +753,7 @@ export type Database = {
           timezone: string;
         }[];
       };
+      source_url: { Args: { p_source: string }; Returns: string };
       start_break: {
         Args: { p_at?: string; p_kind?: string; p_session: string };
         Returns: {

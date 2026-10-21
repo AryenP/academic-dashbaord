@@ -21,7 +21,11 @@ export default defineConfig({
     command: 'npx vite build --outDir dist-db && npx vite preview --outDir dist-db --port 4174',
     url: 'http://127.0.0.1:4174/academic-dashbaord/',
     reuseExistingServer: !process.env.CI,
-    env: { VITE_SUPABASE_URL: status.API_URL, VITE_SUPABASE_ANON_KEY: status.ANON_KEY },
+    env: {
+      VITE_SUPABASE_URL: status.API_URL,
+      VITE_SUPABASE_ANON_KEY: status.ANON_KEY,
+      VITE_SPOTIFY_CLIENT_ID: 'test-client-id',
+    },
     timeout: 120_000,
   },
 });

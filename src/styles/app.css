@@ -1,5 +1,10 @@
 /* App shell and the views beyond the runway: focus, log, stats, settings. Same tokens, same type. */
 
+/* Runway's headings (.mc-h2) read the display font from here on every page, not just the runway. */
+.app-root {
+  --mc-display: var(--font-display);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1123,4 +1128,147 @@ textarea {
 .heat td.is-empty {
   background: transparent;
   box-shadow: inset 0 0 0 1px var(--color-border-line);
+}
+
+/* ── music ──────────────────────────────────────────────────────────────── */
+.np {
+  width: min(100%, 26rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+  border-top: 1px solid var(--color-border-line);
+  padding-top: var(--gap-md);
+  margin-top: var(--gap-md);
+  text-align: left;
+}
+.np-track {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  min-width: 0;
+}
+.np-track img,
+.np-cover {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  background: var(--color-panel);
+  object-fit: cover;
+}
+.np-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.np-text b,
+.np-text span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.np-text span {
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+}
+.np-idle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+}
+.np-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+}
+.np-play {
+  color: var(--color-fg);
+  border: 1px solid var(--border-strong);
+}
+.np-volume {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-fg-muted);
+  flex: 1;
+  min-width: 7rem;
+}
+.np-volume input {
+  width: 100%;
+  accent-color: var(--color-fg);
+}
+.np-device {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.np-devices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.np-dev {
+  font: inherit;
+  width: 100%;
+  text-align: left;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-fg);
+  cursor: pointer;
+}
+.np-dev:hover {
+  background: var(--color-panel);
+}
+.np-dev.is-active {
+  font-weight: 600;
+}
+.np-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-caption);
+  color: var(--color-warn);
+  border: 1px solid color-mix(in srgb, var(--color-warn) 45%, transparent);
+  border-radius: 10px;
+  padding: 6px 6px 6px 12px;
+}
+.np-error span {
+  flex: 1;
+  min-width: 12rem;
+}
+.np-embed {
+  width: min(100%, 26rem);
+  border: 0;
+  border-radius: 12px;
+  margin-top: var(--gap-md);
+}
+.np-mini {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 14rem;
+  min-width: 0;
+}
+.np-mini-t {
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .np-mini-t {
+    display: none;
+  }
 }

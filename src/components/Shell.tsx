@@ -7,6 +7,7 @@ import { hasBackend } from '../lib/supabase';
 import { clock, timerState } from '../lib/timer';
 import { useNow, usePlan } from '../lib/usePlan';
 import { useQuickStart } from '../lib/useQuickStart';
+import { NowPlayingCompact } from './NowPlaying';
 
 const NAV = [
   { to: '/', label: 'Runway', end: true },
@@ -74,6 +75,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="top-actions">
           {user && (
             <>
+              {!focus && <NowPlayingCompact />}
               <LiveChip />
               {!focus && <StartButton />}
             </>

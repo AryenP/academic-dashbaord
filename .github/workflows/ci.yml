@@ -56,6 +56,6 @@ jobs:
             sleep 2
           done
       - run: npx playwright install --with-deps chromium
-      - run: npx playwright test -c playwright.db.config.ts sessions phone
+      - run: npx playwright test -c playwright.db.config.ts sessions phone spotify
       - if: failure()
         run: cat functions.log

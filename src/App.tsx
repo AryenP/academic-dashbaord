@@ -6,6 +6,9 @@ import { LiveSessionProvider } from './lib/liveSession';
 import { Focus } from './views/Focus';
 import { Home } from './views/Home';
 import { PhoneSettings } from './components/PhoneSettings';
+import { SpotifyCues } from './components/SpotifyCues';
+import { SpotifySettings } from './components/SpotifySettings';
+import { SpotifyProvider } from './lib/useSpotify';
 import { Log } from './views/Log';
 import { PhoneSetup } from './views/PhoneSetup';
 import { Settings } from './views/Settings';
@@ -16,25 +19,29 @@ export function App() {
     <AuthProvider>
       <LiveSessionProvider>
         <HistoryProvider>
-          <HashRouter>
-            <Shell>
-              <Routes>
-                <Route path="/focus" element={<Focus />} />
-                <Route path="/log" element={<Log />} />
-                <Route path="/stats" element={<Stats />} />
-                <Route
-                  path="/settings"
-                  element={
-                    <Settings>
-                      <PhoneSettings />
-                    </Settings>
-                  }
-                />
-                <Route path="/setup/phone" element={<PhoneSetup />} />
-                <Route path="*" element={<Home />} />
-              </Routes>
-            </Shell>
-          </HashRouter>
+          <SpotifyProvider>
+            <SpotifyCues />
+            <HashRouter>
+              <Shell>
+                <Routes>
+                  <Route path="/focus" element={<Focus />} />
+                  <Route path="/log" element={<Log />} />
+                  <Route path="/stats" element={<Stats />} />
+                  <Route
+                    path="/settings"
+                    element={
+                      <Settings>
+                        <PhoneSettings />
+                        <SpotifySettings />
+                      </Settings>
+                    }
+                  />
+                  <Route path="/setup/phone" element={<PhoneSetup />} />
+                  <Route path="*" element={<Home />} />
+                </Routes>
+              </Shell>
+            </HashRouter>
+          </SpotifyProvider>
         </HistoryProvider>
       </LiveSessionProvider>
     </AuthProvider>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { NowPlaying } from '../components/NowPlaying';
 import { FocusFormula, PhoneMeter } from '../components/PhoneMeter';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
@@ -224,6 +225,7 @@ function Running() {
         </button>
       </div>
       {live.error && <p className="form-error">{live.error}</p>}
+      <NowPlaying />
     </section>
   );
 }
@@ -247,6 +249,7 @@ function BreakScreen({ st }: { st: TimerState }) {
           <Icon name="play" /> Back to work
         </button>
       </div>
+      <NowPlaying />
     </section>
   );
 }

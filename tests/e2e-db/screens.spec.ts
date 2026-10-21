@@ -1,5 +1,6 @@
 import { test } from '@playwright/test';
 import { SCHEMES, SIZES } from '../e2e/fixtures';
+import { connectedSpotify } from './fakeSpotify';
 import { admin, resetDb, seedSession, signIn } from './helpers';
 
 // Screenshots of the signed-in views with a week of realistic sessions, for review after each phase.
@@ -54,6 +55,7 @@ for (const s of SIZES)
       const userId = await resetDb();
       await seedWeek(userId);
       await signIn(page);
+      await connectedSpotify(page);
       await page.setViewportSize({ width: s.width, height: s.height });
       await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
       const shot = async (name: string) => {

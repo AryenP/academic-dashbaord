@@ -249,7 +249,7 @@ function PasteBox({ guide }: { guide: Guide }) {
     try {
       const { result: r } = await add(guide.kind, guide.name, url.trim());
       if (!r.ok) setError(r.error ?? 'The first sync failed. Check Settings → Calendars.');
-      navigate('/', { replace: true });
+      navigate(r.ok ? '/courses?read=1' : '/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add that calendar.');
     } finally {
@@ -314,7 +314,7 @@ function UploadBox() {
     try {
       const { result } = await upload(file.name, await file.text());
       if (!result.ok) setError(result.error ?? "Runway couldn't read that file.");
-      else navigate('/', { replace: true });
+      else navigate('/courses?read=1', { replace: true });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Runway couldn't read that file.");
     } finally {

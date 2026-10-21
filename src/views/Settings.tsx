@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PhoneSettings } from '../components/PhoneSettings';
 import { SourcesSettings } from '../components/SourcesSettings';
 import { SpotifySettings } from '../components/SpotifySettings';
@@ -21,6 +21,7 @@ export function Settings() {
         <>
           <Account />
           <SourcesSettings />
+          <AiUsage />
           <Breaks />
           <Sharing />
           <PhoneSettings />
@@ -148,6 +149,36 @@ function Sharing() {
           Your share page: <Link to={`/u/${profile?.handle ?? ''}`}>{url}</Link>
         </p>
       )}
+    </section>
+  );
+}
+
+function AiUsage() {
+  const [u, setU] = useState<{ calls: number; cents: number; cap_cents: number } | null>(null);
+  useEffect(() => {
+    supabase
+      ?.rpc('my_ai_usage')
+      .then(
+        ({ data }) =>
+          data?.[0] &&
+          setU({ calls: data[0].calls, cents: Number(data[0].cents), cap_cents: Number(data[0].cap_cents) }),
+      );
+  }, []);
+  if (!u) return null;
+  return (
+    <section className="card-section" aria-labelledby="ai-h">
+      <h2 id="ai-h" className="mc-h2">
+        Reading your calendar
+      </h2>
+      <p className="mc-note">
+        Runway's AI reads the events the title rules were unsure about. It sees titles, times and places,
+        nothing else. This month: {u.calls} {u.calls === 1 ? 'read' : 'reads'},{' '}
+        {u.cents < 1 ? 'under 1¢' : `${Math.round(u.cents)}¢`} of a{' '}
+        {Math.round((u.cap_cents / 100) * 100) / 100 >= 1
+          ? `$${(u.cap_cents / 100).toFixed(2)}`
+          : `${u.cap_cents}¢`}{' '}
+        allowance. <Link to="/courses">See what it found.</Link>
+      </p>
     </section>
   );
 }

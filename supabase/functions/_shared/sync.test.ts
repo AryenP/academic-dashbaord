@@ -1,6 +1,8 @@
 import { assert, assertEquals } from 'jsr:@std/assert@1';
 import {
+  effective,
   planTimes,
+  rebuildPlan,
   summarize,
   syncSource,
   type EventRow,
@@ -17,7 +19,7 @@ const NOW = new Date('2026-10-21T18:00:00Z');
 function fakeStore(url: string | null = 'https://calendar.example/secret.ics') {
   let nextId = 1;
   const id = (p: string) => `${p}${nextId++}`;
-  type Row = Omit<EventRow & EventWrite, 'deleted_at'> & { deleted_at: string | null };
+  type Row = EventRow & EventWrite;
   const events = new Map<string, Row>();
   const plans = new Map<string, PlanWrite & { id: string }>();
   const courses: { id: string; code: string; color: number }[] = [];
@@ -32,12 +34,25 @@ function fakeStore(url: string | null = 'https://calendar.example/secret.ics') {
       rows.map((r) => {
         const k = key(r);
         const prev = events.get(k);
-        const row = { ...prev, ...r, id: prev?.id ?? id('ev'), override: prev?.override ?? null } as Row;
+        const row = {
+          override: null,
+          ai_hash: null,
+          ai_kind: null,
+          ai_course_code: null,
+          ...prev,
+          ...r,
+          id: prev?.id ?? id('ev'),
+        } as Row;
         events.set(k, row);
         return row.id;
       }),
+    linkEvents: async (links) => {
+      for (const l of links)
+        for (const e of events.values()) if (e.id === l.id) e.plan_item_id = l.plan_item_id;
+    },
     markDeleted: async (ids) => {
-      for (const e of events.values()) if (ids.includes(e.id)) e.deleted_at = NOW.toISOString();
+      for (const e of events.values())
+        if (ids.includes(e.id)) (e as { deleted_at: string | null }).deleted_at = NOW.toISOString();
     },
     courses: async () => [...courses],
     addCourse: async (_u, code, color) => {
@@ -165,8 +180,10 @@ Deno.test("a person's override survives re-syncs", async () => {
     fetchImpl: serve(google.replace('Dinner with Sam', 'Dinner with Sam!')),
   });
   const again = [...f.events.values()].find((e) => e.uid === 'dinner@google.com')!;
-  assertEquals(again.kind, 'commitment');
+  assertEquals(again.kind, 'personal'); // the rules' reading stays on the row…
+  assertEquals(effective(again).kind, 'commitment'); // …the override is what counts
   assert(again.plan_item_id);
+  assertEquals(f.plans.get(again.plan_item_id!)?.kind, 'commitment');
 });
 
 Deno.test('the same deadline from Canvas and Google becomes one plan item', async () => {
@@ -218,18 +235,56 @@ Deno.test('summarize reports courses and counts for the connect screen', () => {
 });
 
 Deno.test('planTimes: all-day exams fill the day, other all-day events are not drawn', () => {
-  const o = {
-    uid: 'x',
-    recurrenceId: '',
-    title: 'x',
-    start: '2026-10-26',
-    end: '2026-10-27',
-    allDay: true,
-    location: '',
-  };
+  const o = { start_at: '2026-10-26T07:00:00.000Z', end_at: '2026-10-27T07:00:00.000Z', all_day: true };
   assertEquals(planTimes(o, 'exam', 'America/Los_Angeles'), {
     start_at: '2026-10-26T15:00:00.000Z',
     end_at: '2026-10-27T05:00:00.000Z',
   });
   assertEquals(planTimes(o, 'class', 'America/Los_Angeles'), null);
 });
+
+Deno.test('effective: override beats the AI, the AI beats the rules, a stale AI reading is ignored', () => {
+  const base = { hash: 'h1', kind: 'personal', course_code: null, override: null };
+  assertEquals(effective(base).by, 'rules');
+  const ai = { ...base, ai_hash: 'h1', ai_kind: 'commitment', ai_course_code: null };
+  assertEquals(effective(ai), { kind: 'commitment', course: null, by: 'ai' });
+  assertEquals(effective({ ...ai, ai_hash: 'old' }).by, 'rules');
+  assertEquals(effective({ ...ai, override: { kind: 'study', course_code: 'DSC 140A' } }), {
+    kind: 'study',
+    course: 'DSC 140A',
+    by: 'override',
+  });
+});
+
+Deno.test(
+  'an AI reading turns a personal event into a drawn one on rebuild, and a re-sync keeps it',
+  async () => {
+    const f = fakeStore();
+    await syncSource(f.store, SRC, { now: NOW, fetchImpl: serve(google) });
+    const before = f.plans.size;
+    const dinner = [...f.events.values()].find((e) => e.uid === 'dinner@google.com')!;
+    dinner.ai_hash = dinner.hash;
+    dinner.ai_kind = 'commitment';
+    await rebuildPlan(f.store, SRC);
+    assertEquals(f.plans.size, before + 1);
+    assert(dinner.plan_item_id);
+    await syncSource(
+      f.store,
+      { ...SRC, etag: 'W/"v1"' },
+      { now: NOW, fetchImpl: serve('', { status: 304 }) },
+    );
+    await syncSource(f.store, SRC, { now: NOW, fetchImpl: serve(google), force: true });
+    assertEquals(f.plans.size, before + 1);
+    const study = [...f.events.values()].find((e) => e.uid === 'study1@google.com')!;
+    study.ai_hash = study.hash;
+    study.ai_kind = 'study';
+    study.ai_course_code = 'DSC 140A';
+    await rebuildPlan(f.store, SRC);
+    const item = f.plans.get(study.plan_item_id!)!;
+    assertEquals(f.courses.find((c) => c.id === item.course_id)?.code, 'DSC 140A');
+    study.override = { kind: 'personal' };
+    await rebuildPlan(f.store, SRC);
+    assertEquals(study.plan_item_id, null);
+    assertEquals(f.plans.size, before);
+  },
+);

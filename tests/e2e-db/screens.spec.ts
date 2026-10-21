@@ -50,6 +50,7 @@ const VIEWS = [
   { name: 'setup-phone', path: './#/setup/phone' },
   { name: 'focus-start', path: './#/focus' },
   { name: 'connect', path: './#/connect' },
+  { name: 'courses', path: './#/courses' },
 ];
 
 for (const s of SIZES)

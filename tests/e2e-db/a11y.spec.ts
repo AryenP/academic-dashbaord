@@ -14,6 +14,7 @@ const VIEWS = [
   './#/setup/phone',
   './#/privacy',
   './#/connect',
+  './#/courses',
 ];
 const PUBLIC = ['./', './#/signin', './#/privacy', `./#/u/${OWNER_HANDLE}`];
 

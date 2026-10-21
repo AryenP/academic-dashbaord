@@ -79,3 +79,18 @@ Deno.test('exams without a course still read as exams, with low confidence', () 
   assertEquals(r.confidence, 0.6);
   assertEquals(c('MATH 20C final'), 'MATH 20C');
 });
+
+Deno.test('known courses place number-only titles; course-less due items are deadlines', () => {
+  const known = ['DSC 140A', 'DSC 102', 'CSE 151A'];
+  assertEquals(classify({ title: 'Midterm 1 (140A)', knownCourses: known }), {
+    kind: 'exam',
+    course: 'DSC 140A',
+    confidence: 0.9,
+  });
+  assertEquals(classify({ title: '📚 140A practice problems', knownCourses: known }).course, 'DSC 140A');
+  assertEquals(classify({ title: 'office hours (151A)', knownCourses: known }).kind, 'class');
+  assertEquals(classify({ title: 'Lab 4 due' }), { kind: 'deadline', course: null, confidence: 0.5 });
+  assertEquals(classify({ title: 'HW 2: finish + submit' }).kind, 'deadline');
+  assertEquals(classify({ title: 'Midterm 1 (140A)', knownCourses: ['DSC 140A', 'MATH 140A'] }).course, null); // ambiguous
+  assertEquals(classify({ title: 'Dinner at 7', knownCourses: known }).kind, 'personal');
+});

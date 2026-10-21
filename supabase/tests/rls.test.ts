@@ -479,3 +479,93 @@ describe('calendar sources', () => {
     await a.db.from('calendar_sources').delete().eq('id', r.data!.id);
   });
 });
+
+describe('AI reading and budget', () => {
+  it('readings are private; a person edits only the override', async () => {
+    const src = await a.db.rpc('add_calendar_source', {
+      p_kind: 'ical',
+      p_label: 'G',
+      p_url: 'https://x.example/a.ics',
+    });
+    const ev = await admin
+      .from('events')
+      .insert({
+        user_id: a.id,
+        source_id: src.data!.id,
+        uid: 'ai1',
+        hash: 'h',
+        title: '📚 140A practice',
+        start_at: '2026-10-22T16:00:00Z',
+        end_at: '2026-10-22T18:00:00Z',
+        kind: 'study',
+        confidence: 0.6,
+        ai_hash: 'h',
+        ai_kind: 'study',
+        ai_course_code: 'DSC 140A',
+        ai_reason: 'books emoji',
+      })
+      .select('id')
+      .single();
+    expect(ev.error).toBeNull();
+    const own = await a.db
+      .from('events')
+      .select('ai_kind, ai_course_code, ai_reason')
+      .eq('id', ev.data!.id)
+      .single();
+    expect(own.data).toEqual({ ai_kind: 'study', ai_course_code: 'DSC 140A', ai_reason: 'books emoji' });
+    expect((await b.db.from('events').select('ai_kind').eq('id', ev.data!.id)).data).toEqual([]);
+    const bad = await a.db
+      .from('events')
+      .update({ ai_kind: 'exam' } as never)
+      .eq('id', ev.data!.id);
+    expect(bad.error).not.toBeNull();
+    await a.db.from('calendar_sources').delete().eq('id', src.data!.id);
+  });
+
+  it('config and usage are off limits; the budget functions run as the service role only', async () => {
+    expect((await a.db.from('app_config').select('*')).data ?? []).toEqual([]);
+    expect((await anon.from('app_config').select('*')).data ?? []).toEqual([]);
+    expect((await a.db.rpc('ai_budget', { p_user: a.id })).error).not.toBeNull();
+    expect(
+      (await a.db.rpc('ai_record', { p_user: a.id, p_input: 1, p_cached: 0, p_output: 1, p_cents: 1 })).error,
+    ).not.toBeNull();
+    const budget = (await admin.rpc('ai_budget', { p_user: a.id })).data![0];
+    expect(budget).toMatchObject({ enabled: true });
+    expect(Number(budget.user_left)).toBe(200);
+    await admin.rpc('ai_record', {
+      p_user: a.id,
+      p_input: 1000,
+      p_cached: 500,
+      p_output: 100,
+      p_cents: 0.75,
+    });
+    await admin.rpc('ai_record', {
+      p_user: a.id,
+      p_input: 1000,
+      p_cached: 500,
+      p_output: 100,
+      p_cents: 0.25,
+    });
+    const after = (await admin.rpc('ai_budget', { p_user: a.id })).data![0];
+    expect(Number(after.user_left)).toBe(199);
+    expect(Number(after.global_left)).toBe(4999);
+    // The person sees their own total and the cap, and nobody else's.
+    const mine = (await a.db.rpc('my_ai_usage')).data![0];
+    expect(mine).toMatchObject({ calls: 2 });
+    expect(Number(mine.cents)).toBe(1);
+    expect(Number(mine.cap_cents)).toBe(200);
+    expect((await b.db.from('ai_usage').select('*')).data).toEqual([]);
+    expect(Number((await b.db.rpc('my_ai_usage')).data![0].cents)).toBe(0);
+  });
+
+  it("a person can rename and recolor their courses, but not someone else's", async () => {
+    const c = await a.db.from('courses').insert({ code: 'COGS 1', color: 3 }).select('id').single();
+    const ok = await a.db
+      .from('courses')
+      .update({ name: 'Intro to Cognitive Science', color: 4 })
+      .eq('id', c.data!.id);
+    expect(ok.error).toBeNull();
+    const other = await b.db.from('courses').update({ name: 'x' }).eq('id', c.data!.id).select('id');
+    expect(other.data).toEqual([]);
+  });
+});

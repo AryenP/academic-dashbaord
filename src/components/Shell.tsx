@@ -13,6 +13,7 @@ import { Shortcuts } from './Shortcuts';
 
 const NAV = [
   { to: '/', label: 'Runway', end: true },
+  { to: '/courses', label: 'Courses' },
   { to: '/focus', label: 'Focus' },
   { to: '/log', label: 'Log' },
   { to: '/stats', label: 'Stats' },

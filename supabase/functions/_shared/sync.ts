@@ -1,8 +1,13 @@
 // One source, one sync: fetch the feed, read every occurrence, write events, and keep the person's
 // plan items in step with them. Pure over a Store so it can be tested with a fake database.
+//
+// What an event *is* (kind, course) comes from, in order: the person's override, the AI reading
+// (when it was made for the current version of the event), the title rules. `materialize` turns
+// that into plan items and is shared by the sync and by the AI pass.
 import { classify, cleanTitle, type EventKind } from './classify.ts';
-import { occurrenceHash, parseFeed, type Occurrence } from './ical.ts';
+import { occurrenceHash, parseFeed } from './ical.ts';
 import { checkUrl, fetchFeed, HttpError, NotACalendarLike, TooLarge } from './net.ts';
+import { effective } from '../../../src/lib/reading.ts';
 import { atWallTime, localIso } from '../../../src/lib/tz.ts';
 
 export interface Source {
@@ -13,14 +18,24 @@ export interface Source {
   last_modified: string | null;
 }
 
+/** An event row as stored. */
 export interface EventRow {
   id: string;
   uid: string;
   recurrence_id: string;
   hash: string;
+  title: string;
+  start_at: string;
+  end_at: string;
+  all_day: boolean;
+  location: string;
   kind: string;
   course_code: string | null;
+  confidence: number;
   override: { kind?: string; course_code?: string | null } | null;
+  ai_hash: string | null;
+  ai_kind: string | null;
+  ai_course_code: string | null;
   plan_item_id: string | null;
   deleted_at: string | null;
 }
@@ -58,9 +73,11 @@ export interface PlanWrite {
 export interface Store {
   sourceUrl(sourceId: string): Promise<string | null>;
   timezone(userId: string): Promise<string>;
+  /** Every event row of the source, deleted ones included. */
   events(sourceId: string): Promise<EventRow[]>;
   /** Upserts by (source_id, uid, recurrence_id) and returns ids in order. */
   upsertEvents(rows: EventWrite[]): Promise<string[]>;
+  linkEvents(links: { id: string; plan_item_id: string | null }[]): Promise<void>;
   markDeleted(eventIds: string[]): Promise<void>;
   courses(userId: string): Promise<{ id: string; code: string; color: number }[]>;
   addCourse(
@@ -87,7 +104,7 @@ export interface Store {
 export const WINDOW_BACK_DAYS = 30;
 export const WINDOW_AHEAD_DAYS = 180;
 
-/** Friendly words for what went wrong, for Settings → Sources. */
+/** Friendly words for what went wrong, for Settings → Calendars. */
 export function describeError(e: unknown): string {
   if (e instanceof HttpError) {
     if (e.status === 404)
@@ -104,23 +121,110 @@ export function describeError(e: unknown): string {
   return e instanceof Error ? e.message : 'Something went wrong.';
 }
 
-/** Turns an occurrence into the times a plan item should have, in the person's timezone. */
+/** The times a plan item should have, in the person's timezone. `null`: not drawn. */
 export function planTimes(
-  o: Occurrence,
+  e: { start_at: string; end_at: string; all_day: boolean },
   kind: EventKind,
   tz: string,
 ): { start_at: string; end_at: string } | null {
-  if (!o.allDay) return { start_at: o.start, end_at: o.end };
+  if (!e.all_day) return { start_at: e.start_at, end_at: e.end_at };
   // An all-day deadline is due at the end of that day; an all-day exam fills the study day.
   // Other all-day events (holidays, "no class") aren't drawn.
+  const day = localIso(e.start_at, tz).slice(0, 10);
   if (kind === 'deadline')
-    return { start_at: atWallTime(o.start, 23, 0, tz), end_at: atWallTime(o.start, 23, 59, tz) };
-  if (kind === 'exam')
-    return { start_at: atWallTime(o.start, 8, 0, tz), end_at: atWallTime(o.start, 22, 0, tz) };
+    return { start_at: atWallTime(day, 23, 0, tz), end_at: atWallTime(day, 23, 59, tz) };
+  if (kind === 'exam') return { start_at: atWallTime(day, 8, 0, tz), end_at: atWallTime(day, 22, 0, tz) };
   return null;
 }
 
 const DRAWN: ReadonlySet<string> = new Set(['study', 'deadline', 'exam', 'class', 'commitment']);
+
+export { effective } from '../../../src/lib/reading.ts';
+
+/** One event as `materialize` needs it. */
+export interface MaterialRow {
+  id: string;
+  title: string;
+  start_at: string;
+  end_at: string;
+  all_day: boolean;
+  location: string;
+  kind: string;
+  course: string | null;
+  plan_item_id: string | null;
+  /** True when nothing about the event or its reading changed since its plan item was made. */
+  settled: boolean;
+}
+
+/** Creates, updates, links or unlinks one plan item per event. Returns how many are drawn. */
+export async function materialize(
+  store: Store,
+  src: Source,
+  tz: string,
+  rows: MaterialRow[],
+): Promise<number> {
+  const courses = await store.courses(src.user_id);
+  const courseId = async (code: string | null) => {
+    if (!code) return null;
+    let c = courses.find((x) => x.code === code);
+    if (!c) {
+      const used = new Set(courses.map((x) => x.color));
+      let color = 6;
+      for (let n = 1; n < 6; n++)
+        if (!used.has(n)) {
+          color = n;
+          break;
+        }
+      c = await store.addCourse(src.user_id, code, color);
+      courses.push(c);
+    }
+    return c.id;
+  };
+
+  let drawn = 0;
+  const links: { id: string; plan_item_id: string | null }[] = [];
+  for (const r of rows) {
+    const times = DRAWN.has(r.kind) ? planTimes(r, r.kind as EventKind, tz) : null;
+    if (!times) {
+      // Not drawn (personal, or an all-day class): let go of any plan item it had.
+      if (r.plan_item_id) links.push({ id: r.id, plan_item_id: null });
+      continue;
+    }
+    drawn++;
+    if (r.settled && r.plan_item_id) continue;
+    const row: PlanWrite = {
+      user_id: src.user_id,
+      source_id: src.id,
+      course_id: await courseId(r.course),
+      kind: r.kind as PlanWrite['kind'],
+      title: cleanTitle(r.title).slice(0, 200),
+      ...times,
+      location: r.location,
+      source: 'calendar',
+    };
+    if (r.plan_item_id) {
+      await store.updatePlanItem(r.plan_item_id, row);
+      continue;
+    }
+    const dup = await store.duplicate(src.user_id, row.title, row.start_at);
+    links.push({ id: r.id, plan_item_id: dup ?? (await store.insertPlanItem(row)) });
+  }
+  if (links.length) await store.linkEvents(links);
+  await store.pruneOrphans(src.id);
+  return drawn;
+}
+
+/** Rebuilds a source's plan items from its stored events (after the AI pass or a review). */
+export async function rebuildPlan(store: Store, src: Source): Promise<number> {
+  const tz = await store.timezone(src.user_id);
+  const rows = (await store.events(src.id))
+    .filter((e) => !e.deleted_at)
+    .map((e): MaterialRow => {
+      const eff = effective(e);
+      return { ...e, kind: eff.kind, course: eff.course, settled: false };
+    });
+  return materialize(store, src, tz, rows);
+}
 
 export interface SyncResult {
   ok: boolean;
@@ -134,7 +238,7 @@ export interface SyncResult {
 export async function syncSource(
   store: Store,
   src: Source,
-  opts: { now?: Date; text?: string; fetchImpl?: typeof fetch } = {},
+  opts: { now?: Date; text?: string; fetchImpl?: typeof fetch; force?: boolean } = {},
 ): Promise<SyncResult> {
   const now = opts.now ?? new Date();
   try {
@@ -146,7 +250,8 @@ export async function syncSource(
       if (!url) throw new Error('The calendar address is missing. Remove this source and add it again.');
       const c = checkUrl(url);
       if ('error' in c) throw new Error(`The address can't be used (${c.error}).`);
-      const r = await fetchFeed(c.url, { etag, lastModified }, opts.fetchImpl);
+      const cond = opts.force ? {} : { etag, lastModified };
+      const r = await fetchFeed(c.url, cond, opts.fetchImpl);
       if (r.status === 304) {
         await store.finish(src.id, true, null, null, etag, lastModified);
         return { ok: true, unchanged: true };
@@ -163,31 +268,10 @@ export async function syncSource(
     const tz = await store.timezone(src.user_id);
     const existing = await store.events(src.id);
     const byKey = new Map(existing.map((e) => [`${e.uid}\u0001${e.recurrence_id}`, e]));
-    const courses = await store.courses(src.user_id);
-    const courseId = async (code: string | null) => {
-      if (!code) return null;
-      let c = courses.find((x) => x.code === code);
-      if (!c) {
-        const used = new Set(courses.map((x) => x.color));
-        let color = 6;
-        for (let n = 1; n < 6; n++)
-          if (!used.has(n)) {
-            color = n;
-            break;
-          }
-        c = await store.addCourse(src.user_id, code, color);
-        courses.push(c);
-      }
-      return c.id;
-    };
+    const known = (await store.courses(src.user_id)).map((c) => c.code);
 
     const writes: EventWrite[] = [];
-    const planned: ({
-      occ: Occurrence;
-      kind: EventKind;
-      course: string | null;
-      prev: EventRow | undefined;
-    } | null)[] = [];
+    const prevs: (EventRow | undefined)[] = [];
     const seen = new Set<string>();
     for (const o of feed.events) {
       const key = `${o.uid}\u0001${o.recurrenceId}`;
@@ -195,23 +279,16 @@ export async function syncSource(
       seen.add(key);
       const prev = byKey.get(key);
       const hash = await occurrenceHash(o);
-      let kind: string;
-      let course: string | null;
-      let confidence: number;
-      if (prev && prev.hash === hash && !prev.deleted_at) {
-        kind = prev.kind;
-        course = prev.course_code;
-        confidence = 1;
-      } else {
-        const r = classify({ title: o.title, allDay: o.allDay, uid: o.uid, sourceKind: src.kind });
-        kind = r.kind;
-        course = r.course;
-        confidence = r.confidence;
-      }
-      if (prev?.override) {
-        if (prev.override.kind) kind = prev.override.kind;
-        if (prev.override.course_code !== undefined) course = prev.override.course_code;
-      }
+      const same = !!prev && prev.hash === hash;
+      const r = same
+        ? { kind: prev.kind, course: prev.course_code, confidence: Number(prev.confidence) }
+        : classify({
+            title: o.title,
+            allDay: o.allDay,
+            uid: o.uid,
+            sourceKind: src.kind,
+            knownCourses: known,
+          });
       writes.push({
         user_id: src.user_id,
         source_id: src.id,
@@ -223,61 +300,50 @@ export async function syncSource(
         end_at: o.allDay ? atWallTime(o.end, 0, 0, tz) : o.end,
         all_day: o.allDay,
         location: o.location,
-        kind,
-        course_code: course,
-        confidence: prev && prev.hash === hash ? Number(confidence) : confidence,
+        kind: r.kind,
+        course_code: r.course,
+        confidence: r.confidence,
         plan_item_id: prev?.plan_item_id ?? null,
         deleted_at: null,
       });
-      planned.push(DRAWN.has(kind) ? { occ: o, kind: kind as EventKind, course, prev } : null);
+      prevs.push(prev);
     }
     const ids = await store.upsertEvents(writes);
 
-    // Plan items: create, update or link one per drawn event.
-    let plannedCount = 0;
-    const linkWrites: EventWrite[] = [];
-    for (let i = 0; i < writes.length; i++) {
-      const p = planned[i];
-      const w = writes[i];
-      if (!p) continue;
-      const times = planTimes(p.occ, p.kind, tz);
-      if (!times) continue;
-      const row: PlanWrite = {
-        user_id: src.user_id,
-        source_id: src.id,
-        course_id: await courseId(p.course),
-        kind: p.kind as PlanWrite['kind'],
-        title: cleanTitle(p.occ.title).slice(0, 200),
-        ...times,
-        location: p.occ.location,
-        source: 'calendar',
+    const rows: MaterialRow[] = writes.map((w, i) => {
+      const prev = prevs[i];
+      const settled = !!prev && prev.hash === w.hash && !prev.deleted_at;
+      const eff = effective({
+        hash: w.hash,
+        kind: w.kind,
+        course_code: w.course_code,
+        override: prev?.override ?? null,
+        ai_hash: prev?.ai_hash,
+        ai_kind: prev?.ai_kind,
+        ai_course_code: prev?.ai_course_code,
+      });
+      return {
+        id: ids[i],
+        title: w.title,
+        start_at: w.start_at,
+        end_at: w.end_at,
+        all_day: w.all_day,
+        location: w.location,
+        kind: eff.kind,
+        course: eff.course,
+        plan_item_id: w.plan_item_id,
+        settled,
       };
-      const unchanged = p.prev && p.prev.hash === w.hash && !p.prev.deleted_at && p.prev.plan_item_id;
-      if (unchanged) {
-        plannedCount++;
-        continue;
-      }
-      if (p.prev?.plan_item_id) {
-        await store.updatePlanItem(p.prev.plan_item_id, row);
-        plannedCount++;
-        continue;
-      }
-      const dup = await store.duplicate(src.user_id, row.title, row.start_at);
-      const planId = dup ?? (await store.insertPlanItem(row));
-      linkWrites.push({ ...w, plan_item_id: planId });
-      plannedCount++;
-    }
-    if (linkWrites.length) await store.upsertEvents(linkWrites);
+    });
 
     // Anything the feed no longer has.
     const gone = existing
       .filter((e) => !e.deleted_at && !seen.has(`${e.uid}\u0001${e.recurrence_id}`))
       .map((e) => e.id);
     if (gone.length) await store.markDeleted(gone);
-    await store.pruneOrphans(src.id);
-    void ids;
+    const planned = await materialize(store, src, tz, rows);
     await store.finish(src.id, true, null, writes.length, etag, lastModified);
-    return { ok: true, events: writes.length, planned: plannedCount };
+    return { ok: true, events: writes.length, planned };
   } catch (e) {
     const msg = describeError(e);
     await store.finish(src.id, false, msg, null, null, null);

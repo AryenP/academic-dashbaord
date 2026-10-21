@@ -175,3 +175,20 @@ export function ago(iso: string | null, now = Date.now()): string {
   if (m < 36 * 60) return `${Math.round(m / 60)} h ago`;
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
+
+export interface ReadResult {
+  ok: boolean;
+  read?: number;
+  pending?: number;
+  spent?: number;
+  model?: string;
+  skipped?: 'off' | 'user_budget' | 'global_budget' | 'no_key';
+  message?: string;
+}
+
+/** Asks the AI to read this person's unsure events (or all of them), then rebuilds the plan. */
+export const readWithAi = (all = false) => invoke<ReadResult>('classify-events', { all });
+
+/** Rebuilds a source's plan items from its stored events and the person's overrides. */
+export const rebuildSource = (sourceId: string) =>
+  invoke<SyncResult>('sync-sources', { source_id: sourceId, rebuild: true });

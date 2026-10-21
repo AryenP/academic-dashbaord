@@ -30,3 +30,17 @@ jobs:
           curl -fsS -m 90 -X POST "$SUPABASE_URL/functions/v1/sync-sources" \
             -H "x-sync-key: $SYNC_KEY" -H "Content-Type: application/json" -d '{}' \
             | python3 -c 'import json,sys; d=json.load(sys.stdin); print(f"due {d.get(\"due\")}, done {d.get(\"done\")}"); [print(r) for r in d.get("results", []) if not r.get("ok")]'
+      # Once a day, around 09:17 UTC (2 AM Pacific), ask the AI to read what the rules were unsure about.
+      - env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SYNC_KEY: ${{ secrets.SYNC_KEY }}
+        run: |
+          H=$(date -u +%H); M=$(date -u +%M)
+          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ] && { [ "$H" != "09" ] || [ "$M" -ge 15 ]; }; then
+            echo "Not the nightly slot; skipping the AI pass."
+            exit 0
+          fi
+          [ -z "$SYNC_KEY" ] && exit 0
+          curl -fsS -m 90 -X POST "$SUPABASE_URL/functions/v1/classify-events" \
+            -H "x-sync-key: $SYNC_KEY" -H "Content-Type: application/json" -d '{}' \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print(f"users {d.get(\"users\")}"); [print(r) for r in d.get("results", [])]'

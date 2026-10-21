@@ -1740,3 +1740,162 @@ kbd {
 .rw-block.k-class {
   --c: var(--c, var(--course-6));
 }
+
+/* ── v2: your courses (review) ──────────────────────────────────────────── */
+.courses {
+  max-width: 80ch;
+}
+.cs-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin: var(--gap-md) 0;
+}
+.cs-chip {
+  border: 1px solid var(--color-border-line);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: var(--fs-body);
+}
+.cs-chip b {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.15rem;
+  margin-right: 4px;
+}
+.cs-chip.is-unsure {
+  border-color: var(--color-warn);
+  color: var(--color-warn);
+}
+.cs-actions {
+  margin: 0 0 var(--gap-lg);
+  align-items: center;
+}
+.cs-card {
+  border-top: 3px solid var(--c, var(--color-border-line));
+  padding: var(--gap-md) 0 var(--gap-lg);
+  margin-bottom: var(--gap-md);
+}
+.cs-card > .mc-h2 {
+  margin-top: 0;
+}
+.cs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-sm) var(--gap-md);
+  margin-bottom: var(--gap-sm);
+}
+.cs-code {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--c-ink, inherit);
+}
+.cs-name {
+  flex: 1 1 14ch;
+  min-width: 10ch;
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+}
+.cs-name:hover,
+.cs-name:focus {
+  border-color: var(--color-border-line);
+  background: var(--color-bg);
+}
+.cs-colors {
+  display: flex;
+  gap: 6px;
+}
+.cs-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+  cursor: pointer;
+  min-height: 0;
+}
+.cs-swatch[aria-checked='true'] {
+  border-color: var(--color-fg);
+  box-shadow: 0 0 0 2px var(--color-bg) inset;
+}
+.cs-group {
+  margin-top: var(--gap-sm);
+}
+.cs-h3 {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-fg-muted);
+  margin: var(--gap-sm) 0 4px;
+}
+.cs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.cs-row {
+  display: grid;
+  gap: var(--gap-xs) var(--gap-md);
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border-line);
+}
+.cs-row.is-unsure {
+  box-shadow: inset 3px 0 0 var(--color-warn);
+  padding-left: var(--gap-sm);
+}
+.cs-row-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.cs-title {
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+.cs-when,
+.cs-reason {
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+}
+.cs-flag {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  color: var(--color-warn);
+}
+.cs-row-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+.cs-row-edit select {
+  min-height: 40px;
+}
+.cs-fold summary,
+.cs-fold-inline summary {
+  cursor: pointer;
+  font-weight: 600;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cs-fold-inline summary {
+  font-weight: 500;
+  font-size: var(--fs-body);
+}
+.cs-done {
+  margin-top: var(--gap-lg);
+}
+@media (min-width: 720px) {
+  .cs-row {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}

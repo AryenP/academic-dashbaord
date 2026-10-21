@@ -23,6 +23,59 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_usage: {
+        Row: {
+          cached_tokens: number;
+          calls: number;
+          cents: number;
+          input_tokens: number;
+          month: string;
+          output_tokens: number;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cached_tokens?: number;
+          calls?: number;
+          cents?: number;
+          input_tokens?: number;
+          month: string;
+          output_tokens?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          cached_tokens?: number;
+          calls?: number;
+          cents?: number;
+          input_tokens?: number;
+          month?: string;
+          output_tokens?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      app_config: {
+        Row: {
+          key: string;
+          updated_at: string;
+          value: NonNullable<Json>;
+        };
+        ComputedFields: never;
+        Insert: {
+          key: string;
+          updated_at?: string;
+          value: NonNullable<Json>;
+        };
+        Update: {
+          key?: string;
+          updated_at?: string;
+          value?: NonNullable<Json>;
+        };
+        Relationships: [];
+      };
       calendar_sources: {
         Row: {
           backoff_minutes: number;
@@ -111,6 +164,15 @@ export type Database = {
       };
       events: {
         Row: {
+          ai_at: string | null;
+          ai_confidence: number | null;
+          ai_course_code: string | null;
+          ai_course_name: string | null;
+          ai_hash: string | null;
+          ai_kind: string | null;
+          ai_reason: string | null;
+          ai_take_home: boolean | null;
+          ai_weight: number | null;
           all_day: boolean;
           classifier: string;
           confidence: number;
@@ -134,6 +196,15 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          ai_at?: string | null;
+          ai_confidence?: number | null;
+          ai_course_code?: string | null;
+          ai_course_name?: string | null;
+          ai_hash?: string | null;
+          ai_kind?: string | null;
+          ai_reason?: string | null;
+          ai_take_home?: boolean | null;
+          ai_weight?: number | null;
           all_day?: boolean;
           classifier?: string;
           confidence?: number;
@@ -156,6 +227,15 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          ai_at?: string | null;
+          ai_confidence?: number | null;
+          ai_course_code?: string | null;
+          ai_course_name?: string | null;
+          ai_hash?: string | null;
+          ai_kind?: string | null;
+          ai_reason?: string | null;
+          ai_take_home?: boolean | null;
+          ai_weight?: number | null;
           all_day?: boolean;
           classifier?: string;
           confidence?: number;
@@ -558,6 +638,18 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      ai_budget: {
+        Args: { p_user: string };
+        Returns: {
+          enabled: boolean;
+          global_left: number;
+          user_left: number;
+        }[];
+      };
+      ai_record: {
+        Args: { p_cached: number; p_cents: number; p_input: number; p_output: number; p_user: string };
+        Returns: undefined;
+      };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
       due_sources: {
         Args: { p_limit?: number };
@@ -655,6 +747,14 @@ export type Database = {
       is_feed_url: { Args: { u: string }; Returns: boolean };
       is_school_email: { Args: { e: string }; Returns: boolean };
       make_handle: { Args: { email: string }; Returns: string };
+      my_ai_usage: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          calls: number;
+          cap_cents: number;
+          cents: number;
+        }[];
+      };
       pause_session: {
         Args: { p_at?: string; p_session: string };
         Returns: {

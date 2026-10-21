@@ -16,6 +16,8 @@ export interface ClassifyInput {
   /** Canvas feeds mark assignments in the UID. */
   uid?: string;
   sourceKind?: 'ical' | 'canvas' | 'ics_upload';
+  /** The person's course codes so far, so "(140A)" can be matched by number. */
+  knownCourses?: string[];
 }
 
 // Letters that look like a department but aren't. Mostly things that precede a number in titles.
@@ -60,11 +62,23 @@ const DEADLINE =
 const COMMITMENT =
   /\b(work|shift|research|lab meeting|internship|intern|club|meeting|standup|stand-up|1:1|volunteer|ta hours|tutoring|rehearsal)\b/i;
 
+/** "(140A)" or "140a hw" → "DSC 140A" when exactly one known course has that number. */
+export function matchKnown(text: string, known: string[] | undefined): string | null {
+  if (!known?.length) return null;
+  for (const m of text.matchAll(/(?<![A-Za-z])(\d{1,3}[A-Za-z]{0,2})(?![A-Za-z0-9])/g)) {
+    const num = m[1].toUpperCase();
+    if (!/[A-Z]/.test(num) && num.length < 2) continue; // a bare single digit is noise
+    const hits = known.filter((c) => c.split(' ')[1] === num);
+    if (hits.length === 1) return hits[0];
+  }
+  return null;
+}
+
 export function classify(input: ClassifyInput): Reading {
   const raw = input.title.trim();
   const bracket = raw.match(BRACKET_RE)?.[1] ?? null;
   const body = cleanTitle(raw);
-  const course = (bracket && findCourse(bracket)) || findCourse(body);
+  const course = (bracket && findCourse(bracket)) || findCourse(body) || matchKnown(body, input.knownCourses);
   const canvasAssignment = input.sourceKind === 'canvas' && /assignment/i.test(input.uid ?? '');
 
   const studyish = STUDY.test(raw) && !/\bpractice (exam|midterm|final|test)\b/i.test(body);
@@ -80,6 +94,7 @@ export function classify(input: ClassifyInput): Reading {
   }
   if (EXAM.test(body) && course) return { kind: 'study', course, confidence: 0.75 }; // "midterm review"
   if (course && DEADLINE.test(body)) return { kind: 'deadline', course, confidence: 0.9 };
+  if (/\boffice hours\b/i.test(body)) return { kind: 'class', course, confidence: course ? 0.85 : 0.5 };
   if (
     course &&
     (CLASS.test(body) ||
@@ -90,6 +105,12 @@ export function classify(input: ClassifyInput): Reading {
   if (course) return { kind: input.allDay ? 'deadline' : 'class', course, confidence: 0.5 };
   if (input.sourceKind === 'canvas' && bracket)
     return { kind: CLASS.test(body) ? 'class' : 'deadline', course: bracket.trim(), confidence: 0.6 };
+  // "Lab 4 due", "HW due": a deadline with no course yet; the AI or the person places it.
+  if (
+    /\b(due|submit|deadline)\b/i.test(body) ||
+    /^(hw|homework|pset|problem set|lab|project|essay|p\d)\b/i.test(body)
+  )
+    return { kind: 'deadline', course: null, confidence: 0.5 };
   if (COMMITMENT.test(body) && !input.allDay) return { kind: 'commitment', course: null, confidence: 0.6 };
   return { kind: 'personal', course: null, confidence: 0.5 };
 }

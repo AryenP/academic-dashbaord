@@ -57,7 +57,9 @@ test('a new account lands on connect; a Canvas feed is checked, added, synced an
   await expect(page.locator('.cn-chip')).toHaveText(['DSC 140A', 'DSC 102', 'DSC 106']);
   await page.getByRole('button', { name: 'Add this calendar' }).click();
 
-  await expect(page).toHaveURL(/#\/$/, { timeout: 15_000 });
+  // The first sync done, the courses screen opens; the runway is one link away.
+  await expect(page).toHaveURL(/#\/courses/, { timeout: 15_000 });
+  await page.goto('./');
   await expect(page.getByRole('heading', { name: 'Your runway' })).toBeVisible();
   await expect(page.locator('.rw-block.k-exam')).toHaveCount(1);
   await expect(page.locator('.rw-block.k-deadline')).toHaveCount(2);
@@ -95,7 +97,8 @@ test('Settings lists the calendar, syncs it again, and removes it with its items
   await box.blur();
   await expect(page.getByText(/Found 3 courses and \d+ items/)).toBeVisible({ timeout: 15_000 });
   await page.getByRole('button', { name: 'Add this calendar' }).click();
-  await expect(page).toHaveURL(/#\/$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/#\/courses/, { timeout: 15_000 });
+  await page.goto('./');
   // Class blocks draw quietly; the research meeting is a commitment; dinner is not drawn.
   await expect(page.locator('.rw-block.k-class').first()).toBeVisible();
   await expect(page.locator('.rw-block.k-commitment')).toHaveCount(1);
@@ -126,7 +129,8 @@ test('an .ics upload is read once', async ({ page }) => {
     mimeType: 'text/calendar',
     buffer: Buffer.from(readFileSync(new URL('google.ics', FIXTURES), 'utf8')),
   });
-  await expect(page).toHaveURL(/#\/$/, { timeout: 15_000 });
+  await expect(page).toHaveURL(/#\/courses/, { timeout: 15_000 });
+  await page.goto('./');
   await expect(page.locator('.cp')).toHaveCount(2); // two exams; the take-home one draws across two days
   await page.goto('./#/settings');
   await expect(page.locator('.src-item')).toContainText("A file doesn't stay in sync");

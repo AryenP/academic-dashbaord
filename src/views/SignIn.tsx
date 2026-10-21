@@ -7,6 +7,17 @@ import { isSchoolEmail } from '../lib/email';
 
 const GOOGLE = import.meta.env.VITE_GOOGLE_SIGNIN === 'true';
 
+// Supabase's messages are for developers; these are for the person at the keyboard.
+function friendly(message: string): string {
+  if (/rate limit/i.test(message))
+    return 'Too many sign-in emails in a short time. The last link Runway sent you still works for an hour, so check your inbox (and spam). Otherwise try again in a little while.';
+  if (/database error|school email/i.test(message))
+    return 'Runway is for students: use your school email, the one ending in .edu.';
+  if (/network|fetch/i.test(message))
+    return "Runway couldn't reach the sign-in service. Check your connection and try again.";
+  return message;
+}
+
 export function SignIn() {
   const { user, ready, signIn } = useAuth();
   const [email, setEmail] = useState('');
@@ -26,7 +37,7 @@ export function SignIn() {
     setError(null);
     setState('sending');
     const err = await signIn(addr);
-    setError(err);
+    setError(err && friendly(err));
     setState(err ? 'idle' : 'sent');
   };
 

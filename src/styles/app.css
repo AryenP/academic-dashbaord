@@ -1425,3 +1425,33 @@ kbd {
   border-radius: 999px;
   padding: 4px 12px;
 }
+
+/* ── v2: sign-in, privacy, empty runway, add-item ─────────────────────────── */
+.page-narrow {
+  max-width: 62ch;
+}
+.prose p {
+  line-height: 1.6;
+  max-width: 62ch;
+}
+.prose .mc-h2 {
+  margin-top: var(--gap-lg);
+}
+.signin-or {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-md);
+  margin: var(--gap-md) 0 0;
+}
+.empty-runway {
+  display: grid;
+  gap: var(--gap-md);
+  max-width: 62ch;
+}
+.empty-runway p {
+  margin: 0;
+}
+.add-item .chips {
+  margin-top: 4px;
+}

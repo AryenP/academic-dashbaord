@@ -1,6 +1,7 @@
 name: Check
 
-# Full test suite on every push and pull request: lint, format, unit, build, browser and Python tests.
+# Full test suite on every push and pull request: lint, format, unit, build and browser tests, then the
+# database, function and signed-in browser tests against a local Supabase.
 on:
   push:
     branches: [main]
@@ -19,13 +20,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
-          cache-dependency-path: scripts/requirements.txt
       - run: npm ci
-      - run: pip install -r scripts/requirements.txt pytest
       - run: npx playwright install --with-deps chromium
       - run: npm run check
 

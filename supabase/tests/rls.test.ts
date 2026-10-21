@@ -1,6 +1,6 @@
 // Database tests against a local Supabase (`supabase start`), run with `npm run test:db`.
-// They prove the privacy rules with real Row Level Security: the owner sees only their own rows,
-// a second account sees nothing of the owner's, and visitors get daily totals and nothing else.
+// They prove the privacy rules with real Row Level Security: each person sees only their own rows,
+// a second account sees nothing of the first's, and share pages return only what was turned on.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { execSync } from 'node:child_process';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -30,38 +30,119 @@ async function signedIn(email: string): Promise<{ db: DB; id: string }> {
   return { db, id: user.id };
 }
 
-let owner: { db: DB; id: string };
-let other: { db: DB; id: string };
+let a: { db: DB; id: string }; // "alice"
+let b: { db: DB; id: string }; // "bob"
 
 beforeAll(async () => {
   // Start from an empty database every run.
   const { data } = await admin.auth.admin.listUsers();
   for (const u of data.users) await admin.auth.admin.deleteUser(u.id);
-  owner = await signedIn('owner@runway.test');
-  other = await signedIn('other@runway.test');
+  a = await signedIn('alice@ucsd.edu');
+  b = await signedIn('bob@ucsd.edu');
 });
 
-describe('profiles', () => {
-  it('the first sign-up becomes the owner, later ones do not', async () => {
-    const { data } = await admin.from('profiles').select('id, is_owner');
-    expect(data?.find((p) => p.id === owner.id)?.is_owner).toBe(true);
-    expect(data?.find((p) => p.id === other.id)?.is_owner).toBe(false);
-  });
-
-  it('people can edit their settings but not make themselves owner', async () => {
-    const ok = await other.db.from('profiles').update({ public_level: 'runway' }).eq('id', other.id);
+describe('sign-up', () => {
+  it('needs a school email', async () => {
+    const r = await admin.auth.admin.createUser({ email: 'someone@gmail.com', password: 'x'.repeat(12) });
+    expect(r.error).not.toBeNull();
+    const ok = await admin.auth.admin.createUser({ email: 'c@cam.ac.uk', password: 'x'.repeat(12) });
     expect(ok.error).toBeNull();
-    const bad = await other.db
-      .from('profiles')
-      .update({ is_owner: true } as never)
-      .eq('id', other.id);
-    expect(bad.error).not.toBeNull();
+    await admin.auth.admin.deleteUser(ok.data.user!.id);
   });
 
-  it("nobody reads someone else's profile", async () => {
-    const { data } = await other.db.from('profiles').select('*');
-    expect(data?.map((p) => p.id)).toEqual([other.id]);
+  it('gives everyone a handle, a school domain and private sharing', async () => {
+    const { data } = await admin.from('profiles').select('*').eq('id', a.id).single();
+    expect(data).toMatchObject({ handle: 'alice', school_domain: 'ucsd.edu', share_level: 'off' });
+    const bob = await admin.from('profiles').select('handle').eq('id', b.id).single();
+    expect(bob.data?.handle).toBe('bob');
+  });
+
+  it("nobody reads someone else's profile, and the handle is validated", async () => {
+    const { data } = await b.db.from('profiles').select('*');
+    expect(data?.map((p) => p.id)).toEqual([b.id]);
     expect((await anon.from('profiles').select('*')).data).toEqual([]);
+    const bad = await b.db.from('profiles').update({ handle: 'No Spaces!' }).eq('id', b.id);
+    expect(bad.error).not.toBeNull();
+    const taken = await b.db.from('profiles').update({ handle: 'alice' }).eq('id', b.id);
+    expect(taken.error).not.toBeNull();
+    const ok = await b.db
+      .from('profiles')
+      .update({ handle: 'bobby', timezone: 'America/New_York' })
+      .eq('id', b.id);
+    expect(ok.error).toBeNull();
+  });
+});
+
+describe('courses and plan items', () => {
+  let courseA: string;
+  let examA: string;
+
+  it('a person adds a course and items; defaults set the owner', async () => {
+    const c = await a.db.from('courses').insert({ code: 'DSC 140A', color: 1 }).select().single();
+    expect(c.error).toBeNull();
+    courseA = c.data!.id;
+    const x = await a.db
+      .from('plan_items')
+      .insert({
+        course_id: courseA,
+        kind: 'exam',
+        title: 'Midterm 1',
+        start_at: '2026-10-26T17:00:00-07:00',
+        end_at: '2026-10-26T18:00:00-07:00',
+        weight: 25,
+      })
+      .select()
+      .single();
+    expect(x.error).toBeNull();
+    examA = x.data!.id;
+    expect(x.data!.user_id).toBe(a.id);
+    const s = await a.db.from('plan_items').insert({
+      course_id: courseA,
+      kind: 'study',
+      title: 'Practice problems',
+      start_at: '2026-10-25T09:00:00-07:00',
+      end_at: '2026-10-25T11:00:00-07:00',
+    });
+    expect(s.error).toBeNull();
+  });
+
+  it("user B can't see, change or delete user A's courses or items", async () => {
+    expect((await b.db.from('courses').select('*')).data).toEqual([]);
+    expect((await b.db.from('plan_items').select('*')).data).toEqual([]);
+    expect((await anon.from('plan_items').select('*')).data).toEqual([]);
+    const upd = await b.db.from('plan_items').update({ title: 'hacked' }).eq('id', examA).select();
+    expect(upd.data).toEqual([]);
+    const del = await b.db.from('plan_items').delete().eq('id', examA).select();
+    expect(del.data).toEqual([]);
+    const still = await admin.from('plan_items').select('title').eq('id', examA).single();
+    expect(still.data?.title).toBe('Midterm 1');
+  });
+
+  it("user B can't attach an item to user A's course", async () => {
+    const r = await b.db.from('plan_items').insert({
+      course_id: courseA,
+      kind: 'study',
+      title: 'x',
+      start_at: '2026-10-25T09:00:00Z',
+      end_at: '2026-10-25T10:00:00Z',
+    });
+    expect(r.error).not.toBeNull();
+  });
+
+  it('a session links to a plan item of its own', async () => {
+    const r = await a.db
+      .from('sessions')
+      .insert({
+        course: 'DSC 140A',
+        mode: 'pomodoro',
+        plan_item_id: examA,
+        started_at: '2026-10-25T16:00:00Z',
+        ended_at: '2026-10-25T17:00:00Z',
+      })
+      .select()
+      .single();
+    expect(r.error).toBeNull();
+    expect(r.data!.plan_item_id).toBe(examA);
   });
 });
 
@@ -71,20 +152,20 @@ describe('sessions', () => {
   it('the owner runs a session through pause, break and end', async () => {
     const t0 = Date.parse('2026-10-22T17:00:00Z');
     const at = (min: number) => new Date(t0 + min * 60_000).toISOString();
-    const { data: s, error } = await owner.db
+    const { data: s, error } = await a.db
       .from('sessions')
       .insert({ course: 'DSC 140A', mode: 'pomodoro', started_at: at(0), note: 'private note' })
       .select()
       .single();
     expect(error).toBeNull();
     sid = s!.id;
-    expect(s!.user_id).toBe(owner.id);
+    expect(s!.user_id).toBe(a.id);
 
-    await owner.db.rpc('pause_session', { p_session: sid, p_at: at(10) });
-    await owner.db.rpc('resume_session', { p_session: sid, p_at: at(13) });
-    await owner.db.rpc('start_break', { p_session: sid, p_kind: 'short', p_at: at(25) });
-    await owner.db.rpc('end_break', { p_session: sid, p_at: at(30) });
-    const { data: done } = await owner.db.rpc('end_session', { p_session: sid, p_at: at(60) });
+    await a.db.rpc('pause_session', { p_session: sid, p_at: at(10) });
+    await a.db.rpc('resume_session', { p_session: sid, p_at: at(13) });
+    await a.db.rpc('start_break', { p_session: sid, p_kind: 'short', p_at: at(25) });
+    await a.db.rpc('end_break', { p_session: sid, p_at: at(30) });
+    const { data: done } = await a.db.rpc('end_session', { p_session: sid, p_at: at(60) });
     expect(done).toMatchObject({ paused_seconds: 180, break_seconds: 300, paused_at: null });
     expect(Date.parse(done!.ended_at!)).toBe(t0 + 60 * 60_000);
   });
@@ -92,36 +173,36 @@ describe('sessions', () => {
   it('ending a session closes an open break and folds a pause', async () => {
     const t0 = Date.parse('2026-10-23T17:00:00Z');
     const at = (min: number) => new Date(t0 + min * 60_000).toISOString();
-    const { data: s } = await owner.db
+    const { data: s } = await a.db
       .from('sessions')
       .insert({ course: 'DSC 102', mode: 'flow', started_at: at(0) })
       .select()
       .single();
-    await owner.db.rpc('start_break', { p_session: s!.id, p_at: at(50) });
-    const { data: done } = await owner.db.rpc('end_session', { p_session: s!.id, p_at: at(55) });
+    await a.db.rpc('start_break', { p_session: s!.id, p_at: at(50) });
+    const { data: done } = await a.db.rpc('end_session', { p_session: s!.id, p_at: at(55) });
     expect(done!.break_seconds).toBe(300);
-    const { data: breaks } = await owner.db.from('session_breaks').select('ended_at').eq('session_id', s!.id);
+    const { data: breaks } = await a.db.from('session_breaks').select('ended_at').eq('session_id', s!.id);
     expect(breaks!.every((b) => b.ended_at)).toBe(true);
   });
 
   it('only one live session at a time', async () => {
-    const a = await owner.db.from('sessions').insert({ course: 'X', mode: 'flow' });
-    expect(a.error).toBeNull();
-    const b = await owner.db.from('sessions').insert({ course: 'Y', mode: 'flow' });
-    expect(b.error?.code).toBe('23505');
-    await owner.db.from('sessions').delete().is('ended_at', null);
+    const first = await a.db.from('sessions').insert({ course: 'X', mode: 'flow' });
+    expect(first.error).toBeNull();
+    const second = await a.db.from('sessions').insert({ course: 'Y', mode: 'flow' });
+    expect(second.error?.code).toBe('23505');
+    await a.db.from('sessions').delete().is('ended_at', null);
   });
 
   it("another account can't see, change or add to the owner's sessions", async () => {
-    expect((await other.db.from('sessions').select('*')).data).toEqual([]);
-    expect((await other.db.from('session_breaks').select('*')).data).toEqual([]);
-    const upd = await other.db.from('sessions').update({ note: 'hacked' }).eq('id', sid).select();
+    expect((await b.db.from('sessions').select('*')).data).toEqual([]);
+    expect((await b.db.from('session_breaks').select('*')).data).toEqual([]);
+    const upd = await b.db.from('sessions').update({ note: 'hacked' }).eq('id', sid).select();
     expect(upd.data).toEqual([]);
-    const brk = await other.db.from('session_breaks').insert({ session_id: sid, kind: 'short' });
+    const brk = await b.db.from('session_breaks').insert({ session_id: sid, kind: 'short' });
     expect(brk.error).not.toBeNull();
-    const spoof = await other.db.from('sessions').insert({ user_id: owner.id, course: 'X', mode: 'flow' });
+    const spoof = await b.db.from('sessions').insert({ user_id: a.id, course: 'X', mode: 'flow' });
     expect(spoof.error).not.toBeNull();
-    const { data } = await owner.db.from('sessions').select('note').eq('id', sid).single();
+    const { data } = await a.db.from('sessions').select('note').eq('id', sid).single();
     expect(data!.note).toBe('private note');
   });
 
@@ -134,64 +215,96 @@ describe('sessions', () => {
   });
 });
 
-describe('public totals', () => {
-  it("visitors get the owner's daily minutes per course, nothing else", async () => {
-    const { data, error } = await anon.rpc('public_daily_totals', { days: 3650 });
-    expect(error).toBeNull();
-    expect(data).toEqual([
-      { day: '2026-10-22', course: 'DSC 140A', minutes: 52 }, // 60 − 3 paused − 5 break
-      { day: '2026-10-23', course: 'DSC 102', minutes: 50 },
+describe('sharing by handle', () => {
+  it('shares nothing while sharing is off', async () => {
+    expect((await anon.rpc('share_profile', { p_handle: 'alice' })).data).toEqual([]);
+    expect((await anon.rpc('share_plan', { p_handle: 'alice' })).data).toEqual([]);
+    expect((await anon.rpc('public_daily_totals', { p_handle: 'alice', days: 30 })).data).toEqual([]);
+  });
+
+  it("'runway' shares the plan only", async () => {
+    await a.db.from('profiles').update({ share_level: 'runway' }).eq('id', a.id);
+    const p = await anon.rpc('share_profile', { p_handle: 'Alice' });
+    expect(p.data?.[0]).toMatchObject({ handle: 'alice', share_level: 'runway' });
+    const plan = await anon.rpc('share_plan', { p_handle: 'alice' });
+    expect(plan.data?.map((r) => r.title).sort()).toEqual(['Midterm 1', 'Practice problems']);
+    expect(plan.data?.[0]).toMatchObject({ course: 'DSC 140A', color: 1 });
+    expect((await anon.rpc('public_daily_totals', { p_handle: 'alice', days: 30 })).data).toEqual([]);
+    const prep = await anon.rpc('public_prep_minutes', {
+      p_handle: 'alice',
+      p_exams: [{ course: 'DSC 140A', before: '2026-10-26T17:00:00-07:00' }],
+    });
+    expect(prep.data).toEqual([]);
+  });
+
+  it("'readiness' adds prep minutes, 'totals' adds daily totals in the person's timezone", async () => {
+    await a.db.from('profiles').update({ share_level: 'readiness' }).eq('id', a.id);
+    const prep = await anon.rpc('public_prep_minutes', {
+      p_handle: 'alice',
+      p_exams: [{ course: 'DSC 140A', before: '2026-10-26T17:00:00-07:00' }],
+    });
+    expect(prep.data?.[0]).toMatchObject({ course: 'DSC 140A', minutes: 112 }); // 60 + (60 − 3 paused − 5 break)
+    expect((await anon.rpc('public_daily_totals', { p_handle: 'alice', days: 366 })).data).toEqual([]);
+
+    await a.db.from('profiles').update({ share_level: 'totals', timezone: 'Asia/Tokyo' }).eq('id', a.id);
+    const t = await anon.rpc('public_daily_totals', { p_handle: 'alice', days: 366 });
+    // Days in Tokyo: 17:00Z on Oct 22 and 23 are the 23rd and 24th there; 16:00Z on Oct 25 is the 26th.
+    expect(t.data).toEqual([
+      { day: '2026-10-23', course: 'DSC 140A', minutes: 52 },
+      { day: '2026-10-24', course: 'DSC 102', minutes: 50 },
+      { day: '2026-10-26', course: 'DSC 140A', minutes: 60 },
     ]);
+    await a.db.from('profiles').update({ share_level: 'off' }).eq('id', a.id);
   });
 
-  it('readiness level hides daily totals but keeps prep minutes per exam', async () => {
-    const exams = [
-      { course: 'DSC 140A', before: '2026-10-26T17:00:00-07:00' },
-      { course: 'DSC 102', before: '2026-10-23T00:00:00-07:00' },
-      { course: 'CSE 151A', before: '2026-11-03T14:00:00-08:00' },
-    ];
-    const prep = async () => (await anon.rpc('public_prep_minutes', { p_exams: exams })).data;
-    expect(await prep()).toEqual(
-      expect.arrayContaining([
-        { course: 'DSC 140A', before: '2026-10-27T00:00:00+00:00', minutes: 52 },
-        { course: 'DSC 102', before: '2026-10-23T07:00:00+00:00', minutes: 0 }, // its session is on the 23rd
-        { course: 'CSE 151A', before: '2026-11-03T22:00:00+00:00', minutes: 0 },
-      ]),
-    );
-    await owner.db.from('profiles').update({ public_level: 'readiness' }).eq('id', owner.id);
-    expect((await anon.rpc('public_daily_totals', { days: 3650 })).data).toEqual([]);
-    expect((await prep())?.find((r) => r.course === 'DSC 140A')?.minutes).toBe(52);
-    await owner.db.from('profiles').update({ public_level: 'runway' }).eq('id', owner.id);
-    expect((await anon.rpc('public_daily_totals', { days: 3650 })).data).toEqual([]);
-    expect(await prep()).toEqual([]);
-    await owner.db.from('profiles').update({ public_level: 'totals' }).eq('id', owner.id);
+  it('never returns notes, phone data or other people', async () => {
+    const fns = ['share_profile', 'share_plan'] as const;
+    for (const fn of fns) {
+      const r = await anon.rpc(fn, { p_handle: 'bobby' });
+      expect(r.data).toEqual([]);
+    }
+  });
+});
+
+describe('deleting an account', () => {
+  it('removes the person and everything they had', async () => {
+    const c = await signedIn('carol@ucsd.edu');
+    await c.db.from('courses').insert({ code: 'CSE 12', color: 2 });
+    await c.db.from('sessions').insert({ course: 'CSE 12', mode: 'flow', note: 'secret' });
+    const r = await c.db.rpc('delete_my_account');
+    expect(r.error).toBeNull();
+    const users = await admin.auth.admin.listUsers();
+    expect(users.data.users.find((u) => u.id === c.id)).toBeUndefined();
+    expect((await admin.from('courses').select('*').eq('user_id', c.id)).data).toEqual([]);
+    expect((await admin.from('sessions').select('*').eq('user_id', c.id)).data).toEqual([]);
+    expect((await admin.from('profiles').select('*').eq('id', c.id)).data).toEqual([]);
   });
 
-  it('the level only accepts the three values', async () => {
-    const bad = await owner.db.from('profiles').update({ public_level: 'everything' }).eq('id', owner.id);
-    expect(bad.error).not.toBeNull();
+  it('anonymous callers cannot delete anything', async () => {
+    const r = await anon.rpc('delete_my_account');
+    expect(r.error).not.toBeNull();
   });
 });
 
 describe('phone events', () => {
   it('only the service role writes them; the owner reads their own', async () => {
-    const forged = await other.db
+    const forged = await b.db
       .from('phone_events')
-      .insert({ user_id: owner.id, app: 'Instagram', kind: 'open' } as never);
+      .insert({ user_id: a.id, app: 'Instagram', kind: 'open' } as never);
     expect(forged.error).not.toBeNull();
-    const ownInsert = await owner.db
+    const ownInsert = await a.db
       .from('phone_events')
-      .insert({ user_id: owner.id, app: 'Instagram', kind: 'open' } as never);
+      .insert({ user_id: a.id, app: 'Instagram', kind: 'open' } as never);
     expect(ownInsert.error).not.toBeNull();
-    await admin.from('phone_events').insert({ user_id: owner.id, app: 'Instagram', kind: 'open' });
-    expect((await owner.db.from('phone_events').select('app')).data).toEqual([{ app: 'Instagram' }]);
-    expect((await other.db.from('phone_events').select('app')).data).toEqual([]);
+    await admin.from('phone_events').insert({ user_id: a.id, app: 'Instagram', kind: 'open' });
+    expect((await a.db.from('phone_events').select('app')).data).toEqual([{ app: 'Instagram' }]);
+    expect((await b.db.from('phone_events').select('app')).data).toEqual([]);
   });
 
   it('the rate counter is off limits to clients', async () => {
     const key = `test-${Date.now()}`; // fresh counter each run
     expect((await anon.rpc('phone_rate_hit', { p_token_hash: key })).error).not.toBeNull();
-    expect((await owner.db.rpc('phone_rate_hit', { p_token_hash: key })).error).not.toBeNull();
+    expect((await a.db.rpc('phone_rate_hit', { p_token_hash: key })).error).not.toBeNull();
     expect((await admin.rpc('phone_rate_hit', { p_token_hash: key })).data).toBe(1);
     expect((await admin.rpc('phone_rate_hit', { p_token_hash: key })).data).toBe(2);
   });

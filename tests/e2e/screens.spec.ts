@@ -3,7 +3,11 @@ import { SCHEMES, SIZES, freezeTime } from './fixtures';
 
 // Screenshots of every view at phone and laptop sizes, light and dark, for review after each phase.
 // They're written to tests/e2e/__screenshots__/ (git-ignored), not compared pixel-for-pixel.
-const ROUTES = [{ name: 'home', path: './' }];
+const ROUTES = [
+  { name: 'landing', path: './' },
+  { name: 'signin', path: './#/signin' },
+  { name: 'privacy', path: './#/privacy' },
+];
 
 for (const r of ROUTES)
   for (const s of SIZES)
@@ -13,6 +17,7 @@ for (const r of ROUTES)
         await page.setViewportSize({ width: s.width, height: s.height });
         await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
         await page.goto(r.path);
+        await page.waitForLoadState('networkidle');
         await page.evaluate(() => document.fonts.ready);
         await page.screenshot({
           path: `tests/e2e/__screenshots__/${r.name}-${s.name}-${scheme}.png`,

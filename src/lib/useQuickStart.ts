@@ -19,7 +19,7 @@ export function useQuickStart(plan: PlanItem[]) {
       const sameDay = block && block.day === new Date().toLocaleDateString('en-CA');
       await live.start({
         course: block ? block.course : 'General',
-        plan_block_id: block && sameDay ? block.id : null,
+        plan_item_id: block && sameDay ? block.id : null,
         mode: (settings.break_mode as Mode) || 'pomodoro',
       });
     }

@@ -9,7 +9,7 @@ test('installable: manifest and icons are served', async ({ page, request }) => 
   for (const icon of manifest.icons) expect((await request.get(icon.src)).status()).toBe(200);
 });
 
-test('after one visit, the app opens offline with the last plan', async ({ page, context }) => {
+test('after one visit, the site opens offline', async ({ page, context }) => {
   await freezeTime(page);
   await page.goto('./');
   await page.evaluate(async () => {
@@ -23,8 +23,8 @@ test('after one visit, the app opens offline with the last plan', async ({ page,
   });
   await context.setOffline(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Midterm runway' })).toBeVisible();
-  await expect(page.locator('.rw-day')).toHaveCount(16);
+  await expect(page.getByRole('heading', { name: 'Your runway to every exam.' })).toBeVisible();
+  await expect(page.locator('.rw-day')).toHaveCount(12);
   // A view that was never opened still loads: its chunk was precached.
   await page.goto('./#/log');
   await expect(page.getByRole('heading', { name: /Sign in to see your study log|Log/ })).toBeVisible();

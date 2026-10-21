@@ -44,19 +44,22 @@
   --course-2: #0f9a86;
   --course-3: #8a4fd6;
   --course-4: #d9842b;
-  --course-5: #6d727e;
+  --course-5: #b8306f;
+  --course-6: #6d727e; /* gray: no course, or more than five */
   /* text in a course color, ≥ 4.5:1 on the background and on the "now" highlight */
   --course-1-ink: #2a63c7;
   --course-2-ink: #0a7465;
   --course-3-ink: #814ac9;
   --course-4-ink: #91591c;
-  --course-5-ink: #646873;
+  --course-5-ink: #a52a63;
+  --course-6-ink: #646873;
   /* labels on top of a course fill, whichever of white or ink reads better */
   --course-1-on: #ffffff;
   --course-2-on: #1b1d22;
   --course-3-on: #ffffff;
   --course-4-on: #1b1d22;
   --course-5-on: #ffffff;
+  --course-6-on: #ffffff;
 
   color-scheme: light dark;
 }
@@ -79,17 +82,20 @@
     --course-2: #4fd1bd;
     --course-3: #b98cff;
     --course-4: #f2a95c;
-    --course-5: #9aa0ad;
+    --course-5: #f08ac0;
+    --course-6: #9aa0ad;
     --course-1-ink: var(--course-1);
     --course-2-ink: var(--course-2);
     --course-3-ink: var(--course-3);
     --course-4-ink: var(--course-4);
     --course-5-ink: var(--course-5);
+    --course-6-ink: var(--course-6);
     --course-1-on: var(--color-bg);
     --course-2-on: var(--color-bg);
     --course-3-on: var(--color-bg);
     --course-4-on: var(--color-bg);
     --course-5-on: var(--color-bg);
+    --course-6-on: var(--color-bg);
   }
 }
 :root[data-theme='dark'] {
@@ -109,17 +115,20 @@
   --course-2: #4fd1bd;
   --course-3: #b98cff;
   --course-4: #f2a95c;
-  --course-5: #9aa0ad;
+  --course-5: #f08ac0;
+  --course-6: #9aa0ad;
   --course-1-ink: var(--course-1);
   --course-2-ink: var(--course-2);
   --course-3-ink: var(--course-3);
   --course-4-ink: var(--course-4);
   --course-5-ink: var(--course-5);
+  --course-6-ink: var(--course-6);
   --course-1-on: var(--color-bg);
   --course-2-on: var(--color-bg);
   --course-3-on: var(--color-bg);
   --course-4-on: var(--color-bg);
   --course-5-on: var(--color-bg);
+  --course-6-on: var(--color-bg);
   color-scheme: dark;
 }
 :root[data-theme='light'] {

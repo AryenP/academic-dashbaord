@@ -5,7 +5,7 @@
 import type { Session, SessionBreak } from './supabase';
 
 export type Op =
-  | { op: 'start'; id: string; course: string; plan_block_id: string | null; mode: string; at: string }
+  | { op: 'start'; id: string; course: string; plan_item_id: string | null; mode: string; at: string }
   | { op: 'pause' | 'resume' | 'endBreak' | 'end'; session: string; at: string }
   | { op: 'startBreak'; session: string; kind: 'short' | 'long'; at: string };
 
@@ -43,7 +43,7 @@ export function apply(st: LocalState, op: Op, userId: string): LocalState {
         id: op.id,
         user_id: userId,
         course: op.course,
-        plan_block_id: op.plan_block_id,
+        plan_item_id: op.plan_item_id,
         mode: op.mode,
         source: 'web',
         started_at: op.at,

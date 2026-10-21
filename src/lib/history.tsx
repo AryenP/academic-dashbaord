@@ -4,8 +4,8 @@ import { useLiveSession } from './liveSession';
 import { dayKey } from './plan';
 import { supabase, type Session } from './supabase';
 
-// Finished sessions for the signed-in owner, and per-day totals for visitors. Every view that
-// shows "actual" time (runway, checkpoints, log, stats) reads from here.
+// Finished sessions for the signed-in person. Every view that shows "actual" time (runway,
+// checkpoints, log, stats) reads from here. Share pages fetch their totals themselves (views/Share).
 
 export interface DayCourseMinutes {
   day: string;
@@ -15,9 +15,9 @@ export interface DayCourseMinutes {
 
 interface HistoryValue {
   loading: boolean;
-  /** The owner's finished sessions, newest first. Empty for visitors. */
+  /** Your finished sessions, newest first. Empty when signed out. */
   sessions: Session[];
-  /** Minutes per day and course: from sessions for the owner, from public totals for visitors. */
+  /** Minutes per day and course, from sessions. */
   totals: DayCourseMinutes[];
   refresh(): Promise<void>;
   update(id: string, patch: Partial<Session>): Promise<void>;
@@ -71,11 +71,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       const rows = data ?? [];
       return { sessions: rows, totals: totalsFromSessions(rows) };
     }
-    const { data } = await supabase.rpc('public_daily_totals', { days: 366 });
-    return {
-      sessions: [] as Session[],
-      totals: (data ?? []).map((r) => ({ day: r.day, course: r.course, minutes: r.minutes })),
-    };
+    return { sessions: [] as Session[], totals: [] as DayCourseMinutes[] };
   }, [user, ready]);
 
   const apply = useCallback((r: Awaited<ReturnType<typeof load>>) => {
@@ -184,20 +180,24 @@ export function sessionsCsv(sessions: Session[]): string {
 }
 
 /**
- * For visitors: the owner's prep minutes before each exam, if they share readiness. Keyed by
- * `${course}|${exam start}`. Empty when the owner shares only the runway.
+ * On a share page: that person's prep minutes before each exam, if they share readiness. Keyed by
+ * `${course}|${exam start}`. Empty when they share only the runway.
  */
 export function usePublicPrep(
+  handle: string | null,
   exams: { course: string; start: string }[],
-  enabled: boolean,
 ): Map<string, number> {
+  const enabled = !!handle;
   const [prep, setPrep] = useState<Map<string, number>>(new Map());
   const key = exams.map((x) => `${x.course}|${x.start}`).join(',');
   useEffect(() => {
     if (!supabase || !enabled || !exams.length) return;
     let alive = true;
     supabase
-      .rpc('public_prep_minutes', { p_exams: exams.map((x) => ({ course: x.course, before: x.start })) })
+      .rpc('public_prep_minutes', {
+        p_handle: handle!,
+        p_exams: exams.map((x) => ({ course: x.course, before: x.start })),
+      })
       .then(({ data }) => {
         if (!alive) return;
         const m = new Map<string, number>();

@@ -70,7 +70,7 @@ Deno.test('session_start starts a session on the current block with the saved br
     {
       user_id: 'user1',
       course: 'DSC 140A',
-      plan_block_id: 'blk1',
+      plan_item_id: 'blk1',
       mode: 'fifty_ten',
       started_at: NOW.toISOString(),
     },

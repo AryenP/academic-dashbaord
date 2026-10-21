@@ -11,7 +11,7 @@ const start: Op = {
   op: 'start',
   id: 's1',
   course: 'DSC 140A',
-  plan_block_id: null,
+  plan_item_id: null,
   mode: 'pomodoro',
   at: at(0),
 };

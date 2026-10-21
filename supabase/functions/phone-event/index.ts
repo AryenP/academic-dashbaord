@@ -6,7 +6,6 @@ import { handle, type PlanBlock, type Store } from './handler.ts';
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
   auth: { persistSession: false },
 });
-const PLAN_URL = Deno.env.get('PLAN_URL') ?? 'https://aryenp.github.io/academic-dashbaord/data.json';
 
 const must = <T>({ data, error }: { data: T; error: unknown }): T => {
   if (error) throw error;
@@ -34,9 +33,26 @@ const store: Store = {
     };
     await freeze(s);
   },
-  plan: async () => {
-    const r = await fetch(PLAN_URL, { signal: AbortSignal.timeout(3000) });
-    return ((await r.json()) as { plan: PlanBlock[] }).plan;
+  plan: async (userId) => {
+    // Today's study blocks, give or take a day, so a block can be matched by time.
+    const now = Date.now();
+    const rows = must(
+      await db
+        .from('plan_items')
+        .select('id, kind, start_at, end_at, courses(code)')
+        .eq('user_id', userId)
+        .eq('kind', 'study')
+        .eq('accepted', true)
+        .gte('end_at', new Date(now - 864e5).toISOString())
+        .lte('start_at', new Date(now + 864e5).toISOString()),
+    ) as { id: string; kind: string; start_at: string; end_at: string; courses: { code: string } | null }[];
+    return rows.map((r): PlanBlock => ({
+      id: r.id,
+      kind: 'Study',
+      course: r.courses?.code ?? 'General',
+      start: r.start_at,
+      end: r.end_at,
+    }));
   },
 };
 

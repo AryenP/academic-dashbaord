@@ -29,7 +29,12 @@ interface AuthValue {
   signIn(email: string): Promise<string | null>;
   signOut(): Promise<void>;
   updateProfile(
-    patch: Partial<Pick<Profile, 'display_name' | 'public_level' | 'phone_token_hash'>>,
+    patch: Partial<
+      Pick<
+        Profile,
+        'display_name' | 'handle' | 'timezone' | 'share_level' | 'onboarding' | 'phone_token_hash'
+      >
+    >,
   ): Promise<void>;
   updateSettings(patch: Partial<Settings>): Promise<void>;
 }

@@ -31,12 +31,13 @@ export interface Store {
   startSession(s: {
     user_id: string;
     course: string;
-    plan_block_id: string | null;
+    plan_item_id: string | null;
     mode: string;
     started_at: string;
   }): Promise<void>;
   endSession(id: string, endedAt: string): Promise<void>;
-  plan(): Promise<PlanBlock[]>;
+  /** That person's study blocks around `now` (kind 'Study', times as ISO). */
+  plan(userId: string): Promise<PlanBlock[]>;
 }
 
 export async function sha256Hex(s: string): Promise<string> {
@@ -106,7 +107,7 @@ export async function handle(req: Request, store: Store, now = new Date()): Prom
     if (!(await store.openSession(profile.id))) {
       let block: PlanBlock | undefined;
       try {
-        block = currentBlock(await store.plan(), p.at);
+        block = currentBlock(await store.plan(profile.id), p.at);
       } catch {
         block = undefined; // plan unavailable: still start the session
       }
@@ -114,7 +115,7 @@ export async function handle(req: Request, store: Store, now = new Date()): Prom
       await store.startSession({
         user_id: profile.id,
         course: block?.course ?? 'General',
-        plan_block_id: block?.id ?? null,
+        plan_item_id: block?.id ?? null,
         mode: mode && ['pomodoro', 'fifty_ten', 'custom', 'flow'].includes(mode) ? mode : 'pomodoro',
         started_at: at,
       });

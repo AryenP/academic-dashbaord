@@ -63,7 +63,8 @@ Three screens between sign-up and the first runway: connect, review, runway. Bre
 - Prerendered to static HTML at build time. Open Graph and Twitter meta with a static preview image.
 
 **Sign up / sign in** (`#/signin`)
-- Continue with Google (Supabase Auth, scopes `openid email profile`), and email magic link. Sign-ups are turned back on in `supabase/config.toml` and pushed in the same change that ships the landing page, never before.
+- Continue with Google (Supabase Auth, scopes `openid email profile`), and email magic link.
+- **School email only.** New accounts must use a school address: `.edu`, or the international forms (`.edu.<cc>`, `.ac.<cc>`). The form says so before sending the link, and the database rejects anything else on insert, so the rule holds for Google sign-in too. Existing accounts are untouched. The domain is what finds the school and, later, classmates. Sign-ups are turned back on in `supabase/config.toml` and pushed in the same change that ships the landing page, never before.
 - A profile row is created by the existing trigger; `is_owner` goes away.
 
 **Per-user data**

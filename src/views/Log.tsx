@@ -2,13 +2,13 @@ import { useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { Icon } from '../components/Icon';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
-import { COURSES, courseVars } from '../lib/courses';
+import { courseVars } from '../lib/courses';
+import { usePlan } from '../lib/usePlan';
 import { focusSeconds, sessionsCsv, useHistory } from '../lib/history';
 import { dayKey, dayName } from '../lib/plan';
 import type { Session } from '../lib/supabase';
 import { MODES, duration } from '../lib/timer';
 
-const COURSE_OPTIONS = [...COURSES, 'General'];
 const pad = (n: number) => String(n).padStart(2, '0');
 const localTime = (iso: string) => {
   const d = new Date(iso);
@@ -213,7 +213,8 @@ function EditItem({ s, onDone }: { s: Session; onDone: () => void }) {
 
 function ManualEntry({ onDone }: { onDone: () => void }) {
   const h = useHistory();
-  const [course, setCourse] = useState(COURSES[0]);
+  const { courses } = usePlan();
+  const [course, setCourse] = useState(courses[0]?.code ?? 'General');
   const [day, setDay] = useState(dayKey(new Date()));
   const [time, setTime] = useState('');
   const [minutes, setMinutes] = useState(60);
@@ -279,7 +280,9 @@ function ManualEntry({ onDone }: { onDone: () => void }) {
 }
 
 function CourseSelect({ value, onChange }: { value: string; onChange: (c: string) => void }) {
-  const options = COURSE_OPTIONS.includes(value) ? COURSE_OPTIONS : [value, ...COURSE_OPTIONS];
+  const { courses } = usePlan();
+  const base = [...courses.map((c) => c.code), 'General'];
+  const options = base.includes(value) ? base : [value, ...base];
   return (
     <label className="field">
       <span className="field-label">Course</span>

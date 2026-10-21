@@ -1,57 +1,170 @@
-import { useEffect, useState } from 'react';
-import snapshot from '../../public/data.json';
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import { useAuth } from './auth';
+import { nextSlot, setCourseSlots, type CourseInfo } from './courses';
 import type { PlanData } from './plan';
+import { buildPlan, EMPTY_PLAN, type ItemRow } from './planBuild';
+import { supabase } from './supabase';
 
-// The build bundles the plan as it was at build time, so the page draws instantly and works offline.
-// The live copy comes from data.json, which the sync Action rebuilds from Google Calendar every 15 minutes.
-const SNAP = snapshot as PlanData;
-const URL = `${import.meta.env.BASE_URL}data.json`;
+// The signed-in person's plan: their courses and plan items from the database, built into the
+// shape every view reads (src/lib/plan.ts). Visitors have no plan here; the landing page and share
+// pages build their own PlanData and pass it down.
 
-export function usePlan(): PlanData {
-  const [data, setData] = useState<PlanData>(SNAP);
+export type NewItem = {
+  kind: 'study' | 'deadline' | 'exam' | 'class' | 'commitment';
+  course: string | null; // course code; created if new
+  title: string;
+  start_at: string; // ISO
+  end_at: string;
+  location?: string;
+  weight?: number | null;
+};
+
+interface PlanValue extends PlanData {
+  loading: boolean;
+  timezone: string;
+  refresh(): Promise<void>;
+  addItem(item: NewItem): Promise<void>;
+  removeItem(id: string): Promise<void>;
+}
+
+const PlanContext = createContext<PlanValue | null>(null);
+
+const must = <T>(r: { data: T; error: { message: string } | null }): T => {
+  if (r.error) throw new Error(r.error.message);
+  return r.data;
+};
+
+export function PlanProvider({ children }: { children: ReactNode }) {
+  const { user, ready, profile } = useAuth();
+  const timezone = profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC';
+  const [rows, setRows] = useState<{ items: ItemRow[]; courses: CourseInfo[] } | null>(null);
+
+  const load = useCallback(async () => {
+    if (!supabase || !user) return null;
+    const [items, courses] = await Promise.all([
+      supabase
+        .from('plan_items')
+        .select('id, course_id, kind, title, start_at, end_at, location, weight, take_home')
+        .eq('accepted', true)
+        .gte('end_at', new Date(Date.now() - 45 * 864e5).toISOString())
+        .order('start_at')
+        .limit(3000),
+      supabase.from('courses').select('id, code, name, color, hidden').order('created_at'),
+    ]);
+    return { items: must(items) ?? [], courses: must(courses) ?? [] };
+  }, [user]);
+
+  // Rows belong to the user they were loaded for; a different (or no) user means an empty plan.
+  const [rowsFor, setRowsFor] = useState<string | null>(null);
+  const current = user && rowsFor === user.id ? rows : null;
 
   useEffect(() => {
+    if (!ready || !user) return;
     let alive = true;
-    const pull = async () => {
-      try {
-        const r = await fetch(`${URL}?t=${Date.now()}`, { cache: 'no-store' });
-        if (!r.ok) return;
-        const d = (await r.json()) as PlanData;
-        if (alive && d && Array.isArray(d.plan)) setData((old) => (old.updated === d.updated ? old : d));
-      } catch {
-        // offline: keep showing the last plan
-      }
-    };
+    const pull = () =>
+      load()
+        .then((r) => {
+          if (alive && r) {
+            setRows(r);
+            setRowsFor(user.id);
+          }
+        })
+        .catch(() => {
+          // offline or signed out mid-flight: keep what we have
+        });
     pull();
-    const id = setInterval(pull, 5 * 60_000);
     const onVis = () => {
       if (!document.hidden) pull();
     };
     document.addEventListener('visibilitychange', onVis);
     return () => {
       alive = false;
-      clearInterval(id);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, []);
+  }, [user, ready, load]);
 
-  return data;
+  const data = useMemo(() => {
+    setCourseSlots(current?.courses ?? []);
+    if (!current) return EMPTY_PLAN;
+    return buildPlan(current.items, current.courses, timezone);
+  }, [current, timezone]);
+
+  const refresh = useCallback(async () => {
+    const r = await load();
+    if (r && user) {
+      setRows(r);
+      setRowsFor(user.id);
+    }
+  }, [load, user]);
+
+  const addItem = useCallback(
+    async (item: NewItem) => {
+      if (!supabase || !user) throw new Error('Sign in first.');
+      let course_id: string | null = null;
+      if (item.course) {
+        const code = item.course.trim().toUpperCase().replace(/\s+/g, ' ');
+        const existing = current?.courses.find((c) => c.code === code);
+        if (existing) course_id = existing.id;
+        else {
+          const c = must(
+            await supabase
+              .from('courses')
+              .insert({ code, color: nextSlot(current?.courses ?? []) })
+              .select('id')
+              .single(),
+          );
+          course_id = c!.id;
+        }
+      }
+      must(
+        await supabase.from('plan_items').insert({
+          course_id,
+          kind: item.kind,
+          title: item.title.trim(),
+          start_at: item.start_at,
+          end_at: item.end_at,
+          location: item.location?.trim() ?? '',
+          weight: item.weight ?? null,
+        }),
+      );
+      await refresh();
+    },
+    [user, current, refresh],
+  );
+
+  const removeItem = useCallback(
+    async (id: string) => {
+      if (!supabase) return;
+      must(await supabase.from('plan_items').delete().eq('id', id));
+      await refresh();
+    },
+    [refresh],
+  );
+
+  const value: PlanValue = {
+    ...data,
+    loading: !!user && current === null,
+    timezone,
+    refresh,
+    addItem,
+    removeItem,
+  };
+  return createElement(PlanContext.Provider, { value }, children);
 }
 
-/** Current time, re-rendered every `ms` and whenever the tab comes back into view. */
-export function useNow(ms = 60_000): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const tick = () => setNow(Date.now());
-    const id = setInterval(tick, ms);
-    const onVis = () => {
-      if (!document.hidden) tick();
-    };
-    document.addEventListener('visibilitychange', onVis);
-    return () => {
-      clearInterval(id);
-      document.removeEventListener('visibilitychange', onVis);
-    };
-  }, [ms]);
-  return now;
+export function usePlan(): PlanValue {
+  const v = useContext(PlanContext);
+  if (!v) throw new Error('usePlan needs <PlanProvider>');
+  return v;
 }
+
+export { useNow } from './useNow';

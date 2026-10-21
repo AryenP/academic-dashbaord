@@ -1,0 +1,187 @@
+/* Landing page (src/landing/Landing.tsx). Same tokens and type as the app; the runway is the hero. */
+
+.ld {
+  --mc-display: var(--font-display);
+  --dash-gutter: clamp(16px, 3vw, 40px);
+  max-width: 1320px;
+  margin-inline: auto;
+  padding: clamp(16px, 3vw, 32px) var(--dash-gutter) 48px;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+.ld p {
+  max-width: 62ch;
+}
+
+.ld-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-lg);
+  margin-bottom: clamp(32px, 6vw, 72px);
+}
+.ld-top nav {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+}
+.ld-top nav a:not(.btn) {
+  color: var(--color-fg-muted);
+  text-decoration: none;
+  padding: 10px 6px;
+}
+.ld-top nav a:not(.btn):hover {
+  color: var(--color-fg);
+}
+@media (max-width: 480px) {
+  .ld-top nav a[href='#how'] {
+    display: none;
+  }
+}
+
+/* hero */
+.ld-hero {
+  display: grid;
+  gap: clamp(24px, 4vw, 40px);
+}
+.ld-h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(3.2rem, 9vw, 7rem);
+  line-height: 0.88;
+  letter-spacing: -0.015em;
+  margin: 0 0 var(--gap-lg);
+  max-width: 10ch;
+}
+.ld-lede {
+  font-size: clamp(1.1rem, 1.7vw, 1.35rem);
+  line-height: 1.45;
+  margin: 0 0 var(--gap-lg);
+}
+.ld-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-md) var(--gap-lg);
+  margin: 0;
+}
+.ld-more {
+  color: var(--color-fg-muted);
+  padding: 10px 0;
+}
+.ld-board {
+  display: grid;
+  gap: var(--gap-sm);
+}
+.ld-board .mc-runway {
+  --mc-hl: color-mix(in srgb, var(--color-warn) 14%, transparent);
+  --mc-red: var(--color-critical);
+  --mc-px: 19px;
+}
+.ld-board-static {
+  min-height: 356px;
+}
+.ld-board-note {
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+  margin: 0;
+}
+
+/* how it works */
+.ld-how {
+  margin-top: clamp(48px, 8vw, 96px);
+}
+.ld-steps {
+  display: grid;
+  gap: var(--gap-lg);
+  margin: var(--gap-md) 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.ld-steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: var(--gap-md);
+  max-width: 62ch;
+}
+.ld-steps li::before {
+  content: counter(step);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2.25rem;
+  line-height: 1;
+  color: var(--color-fg-muted);
+}
+.ld-steps b {
+  display: block;
+  font-weight: 600;
+}
+
+/* proof */
+.ld-proof {
+  display: grid;
+  gap: var(--gap-xl);
+  margin-top: clamp(48px, 8vw, 96px);
+}
+.ld-proof > div {
+  border-top: 1px solid var(--color-border-line);
+  padding-top: var(--gap-lg);
+}
+.ld-proof .mc-h2 {
+  margin-top: 0;
+}
+.ld-cp {
+  margin: var(--gap-md) 0;
+}
+.ld-num {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-md);
+  margin: var(--gap-md) 0;
+}
+.ld-num b {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 3.5rem;
+  line-height: 1;
+  color: var(--color-ok);
+}
+.ld-num span {
+  color: var(--color-fg-muted);
+}
+
+/* end */
+.ld-end {
+  margin-top: clamp(48px, 8vw, 96px);
+  padding-top: var(--gap-xl);
+  border-top: 1px solid var(--color-border-line);
+  display: grid;
+  gap: var(--gap-lg);
+  justify-items: start;
+}
+.ld-end-h {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.8rem, 4vw, 2.75rem);
+  line-height: 1;
+  margin: 0;
+  max-width: 24ch;
+}
+
+.ld-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-lg);
+  margin-top: clamp(48px, 8vw, 96px);
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+}
+
+@media (min-width: 900px) {
+  .ld-proof {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

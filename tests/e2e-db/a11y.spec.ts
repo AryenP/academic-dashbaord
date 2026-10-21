@@ -2,14 +2,16 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { SCHEMES } from '../e2e/fixtures';
 import { connectedSpotify } from './fakeSpotify';
-import { admin, resetDb, seedSession, signIn } from './helpers';
+import { admin, OWNER_HANDLE, resetDb, seedPlan, seedSession, signIn } from './helpers';
 
 // Automated accessibility check (axe, WCAG 2.1 AA) of every view, signed in, in light and dark.
-const VIEWS = ['./', './#/focus', './#/log', './#/stats', './#/settings', './#/setup/phone'];
+const VIEWS = ['./', './#/focus', './#/log', './#/stats', './#/settings', './#/setup/phone', './#/privacy'];
+const PUBLIC = ['./', './#/signin', './#/privacy', `./#/u/${OWNER_HANDLE}`];
 
 for (const scheme of SCHEMES)
   test(`no WCAG A/AA violations, ${scheme}`, async ({ page }) => {
     const userId = await resetDb();
+    await seedPlan(userId);
     await seedSession(userId, {
       startedMinAgo: 200,
       lengthMin: 50,
@@ -21,8 +23,7 @@ for (const scheme of SCHEMES)
       .from('profiles')
       .update({ phone_token_hash: 'x'.repeat(64) })
       .eq('id', userId);
-    await signIn(page);
-    await connectedSpotify(page);
+    await admin.from('profiles').update({ share_level: 'totals' }).eq('id', userId);
     await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
     const problems: string[] = [];
     const check = async (where: string) => {
@@ -37,6 +38,14 @@ for (const scheme of SCHEMES)
             .join(' | ')}`,
         );
     };
+    // Signed out: the landing page, sign-in, privacy and a share page.
+    for (const v of PUBLIC) {
+      await page.goto(v);
+      await page.waitForLoadState('networkidle');
+      await check(`signed out ${v}`);
+    }
+    await signIn(page);
+    await connectedSpotify(page);
     for (const v of VIEWS) {
       await page.goto(v);
       await page.waitForLoadState('networkidle');

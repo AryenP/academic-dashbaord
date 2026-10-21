@@ -1,6 +1,10 @@
-// Plan data: the shape of public/data.json (written by scripts/sync.py) and date helpers over it.
+// Plan data: what the runway draws (built from plan_items by src/lib/planBuild.ts) and date helpers over it.
 
-export type Kind = 'Study' | 'Deadline' | 'Exam';
+import type { CourseInfo } from './courses';
+
+// Study, Deadline and Exam come from v1. Class and Commitment (work, research, a club) are fixed
+// time the planner works around; they draw as neutral blocks and never count as study.
+export type Kind = 'Study' | 'Deadline' | 'Exam' | 'Class' | 'Commitment';
 
 export interface PlanItem {
   id: string;
@@ -38,6 +42,7 @@ export interface Totals {
 
 export interface PlanData {
   plan: PlanItem[];
+  courses: CourseInfo[];
   totals: Totals[];
   exam_prep: ExamPrep[];
   updated: string;
@@ -63,7 +68,11 @@ export const isNow = (r: { start: string; end: string }, now = Date.now()) =>
   Date.parse(r.start) <= now && !isPast(r, now);
 /** Minutes past local midnight, read straight from the ISO string's wall time. */
 export const mins = (s: string) => Number(s.slice(11, 13)) * 60 + Number(s.slice(14, 16));
-export const shortCourse = (c: string) => c.split(' ')[1] || c;
+/** The number part of a course code when it's distinctive ("140A"), else the whole code ("COGS 1"). */
+export const shortCourse = (c: string) => {
+  const n = c.split(' ')[1];
+  return n && n.length >= 2 ? n : c;
+};
 export const round1 = (x: number) => Math.round(x * 10) / 10;
 
 export function dayName(k: string, now = new Date()) {

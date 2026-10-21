@@ -18,7 +18,7 @@ interface LiveValue {
   error: string | null;
   /** Server clock minus this device's clock, in ms. Timers add it to Date.now(). */
   skewMs: number;
-  start(input: { course: string; plan_block_id: string | null; mode: Mode }): Promise<void>;
+  start(input: { course: string; plan_item_id: string | null; mode: Mode }): Promise<void>;
   pause(): Promise<void>;
   resume(): Promise<void>;
   startBreak(kind: BreakKind): Promise<void>;
@@ -153,7 +153,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
         const row: TablesInsert<'sessions'> = {
           id: op.id,
           course: op.course,
-          plan_block_id: op.plan_block_id,
+          plan_item_id: op.plan_item_id,
           mode: op.mode,
         };
         if (replay) row.started_at = op.at;

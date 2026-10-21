@@ -5,7 +5,7 @@ import { NowPlaying } from '../components/NowPlaying';
 import { FocusFormula, PhoneMeter } from '../components/PhoneMeter';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
-import { COURSES, courseVars, inkOf } from '../lib/courses';
+import { courseVars, inkOf } from '../lib/courses';
 import { useLiveSession } from '../lib/liveSession';
 import { currentOrNextStudy, dayKey, timePart, type PlanItem } from '../lib/plan';
 import type { Session } from '../lib/supabase';
@@ -38,9 +38,11 @@ function StartScreen() {
   const now = useNow();
   const block = useMemo(() => currentOrNextStudy(plan, now), [plan, now]);
   const today = dayKey(new Date(now));
-  const [course, setCourse] = useState(block?.course ?? COURSES[0]);
+  const { courses: planCourses } = usePlan();
+  const codes = planCourses.map((c) => c.code);
+  const [course, setCourse] = useState(block?.course ?? codes[0] ?? 'General');
   const [mode, setMode] = useState<Mode>((settings.break_mode as Mode) || 'pomodoro');
-  const courses = [...COURSES, 'General'];
+  const courses = [...codes, 'General'];
   const linked = block && block.course === course && block.day === today ? block : null;
 
   return (
@@ -89,7 +91,7 @@ function StartScreen() {
       </div>
       <button
         className="btn btn-primary btn-big"
-        onClick={() => live.start({ course, plan_block_id: linked?.id ?? null, mode })}
+        onClick={() => live.start({ course, plan_item_id: linked?.id ?? null, mode })}
       >
         <Icon name="play" /> Start
       </button>

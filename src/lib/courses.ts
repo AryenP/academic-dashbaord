@@ -1,22 +1,45 @@
-// Course order sets the color: the first course gets --course-1, and so on. Unknown courses are gray.
-// Each color comes in three parts (src/styles/tokens.css): the fill, an "ink" shade for course-colored
-// text that meets 4.5:1 contrast, and the label color to use on top of the fill.
-export const COURSES = ['DSC 140A', 'DSC 102', 'CSE 151A', 'DSC 106'];
+// Course colors. Each course has a color slot (1–6, from the `courses` table); the slot picks
+// --course-N in tokens.css, which comes in three parts: the fill, an "ink" shade for course-colored
+// text that meets 4.5:1 contrast, and the label color to use on top of the fill. Slot 6 is gray,
+// for anything without a course ("General") and for overflow.
 
-const slot = (course: string) => {
-  const i = COURSES.indexOf(course);
-  return i >= 0 ? i + 1 : 5;
-};
+export interface CourseInfo {
+  id: string;
+  code: string;
+  name: string | null;
+  color: number;
+  hidden: boolean;
+}
 
-export const colorOf = (course: string) => `var(--course-${slot(course)})`;
-export const inkOf = (course: string) => `var(--course-${slot(course)}-ink)`;
+export const SLOTS = 6;
+export const GRAY = 6;
+
+// Sessions store the course code as text, so lookups go by code. The plan provider fills this in;
+// before it does (or for a course that isn't in the plan) everything is gray.
+let slots = new Map<string, number>();
+
+export function setCourseSlots(courses: { code: string; color: number }[]) {
+  slots = new Map(courses.map((c) => [c.code, c.color]));
+}
+
+export const slotOf = (course: string) => slots.get(course) ?? GRAY;
+
+export const colorOf = (course: string) => `var(--course-${slotOf(course)})`;
+export const inkOf = (course: string) => `var(--course-${slotOf(course)}-ink)`;
 
 /** CSS variables for a course: --c (fill), --c-ink (text), --c-on (text on the fill). */
 export function courseVars(course: string): Record<string, string> {
-  const n = slot(course);
+  const n = slotOf(course);
   return {
     '--c': `var(--course-${n})`,
     '--c-ink': `var(--course-${n}-ink)`,
     '--c-on': `var(--course-${n}-on)`,
   };
+}
+
+/** The first color slot no course uses yet (gray last). */
+export function nextSlot(courses: { color: number }[]): number {
+  const used = new Set(courses.map((c) => c.color));
+  for (let n = 1; n < GRAY; n++) if (!used.has(n)) return n;
+  return GRAY;
 }

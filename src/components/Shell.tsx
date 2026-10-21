@@ -84,7 +84,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </>
           )}
           {!user && ready && hasBackend && (
-            <Link to="/settings" className="btn btn-quiet">
+            <Link to="/signin" className="btn btn-quiet">
               Sign in
             </Link>
           )}

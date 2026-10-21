@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 import { PhoneSettings } from '../components/PhoneSettings';
 import { SpotifySettings } from '../components/SpotifySettings';
 import { useAuth } from '../lib/auth';
-import { hasBackend } from '../lib/supabase';
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import { MODES, type Mode } from '../lib/timer';
 
 export function Settings() {
@@ -12,75 +13,42 @@ export function Settings() {
     <div className="page">
       <h1 className="page-h">Settings</h1>
       {!user ? (
-        <SignIn />
+        <p>
+          <Link to="/signin">Sign in</Link> to see your settings.
+        </p>
       ) : (
         <>
           <Account />
           <Breaks />
-          <Privacy />
+          <Sharing />
           <PhoneSettings />
           <SpotifySettings />
+          <DeleteAccount />
         </>
       )}
     </div>
   );
 }
 
-function SignIn() {
-  const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
-  const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
-  const [error, setError] = useState<string | null>(null);
-
-  if (!hasBackend)
-    return (
-      <p className="muted">
-        The backend isn't connected on this copy of the site, so there's nothing to sign in to.
-      </p>
-    );
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    setState('sending');
-    const err = await signIn(email.trim());
-    setError(err);
-    setState(err ? 'idle' : 'sent');
-  };
-
-  return (
-    <section className="card-section" aria-labelledby="signin-h">
-      <h2 id="signin-h" className="mc-h2">
-        Sign in
-      </h2>
-      {state === 'sent' ? (
-        <p>
-          Check <b>{email}</b> for a sign-in link. Open it on this device.
-        </p>
-      ) : (
-        <form className="form-row" onSubmit={submit}>
-          <label className="field grow">
-            <span className="field-label">Email</span>
-            <input
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@ucsd.edu"
-            />
-          </label>
-          <button className="btn btn-primary" disabled={state === 'sending'}>
-            {state === 'sending' ? 'Sending…' : 'Email me a link'}
-          </button>
-        </form>
-      )}
-      {error && <p className="form-error">{error}</p>}
-    </section>
-  );
-}
+const ZONES: string[] = (() => {
+  try {
+    return (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('timeZone');
+  } catch {
+    return ['America/Los_Angeles', 'America/Denver', 'America/Chicago', 'America/New_York', 'UTC'];
+  }
+})();
 
 function Account() {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut, updateProfile } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const save = async (patch: Parameters<typeof updateProfile>[0]) => {
+    setError(null);
+    try {
+      await updateProfile(patch);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not save.');
+    }
+  };
   return (
     <section className="card-section" aria-labelledby="acct-h">
       <h2 id="acct-h" className="mc-h2">
@@ -94,6 +62,132 @@ function Account() {
           Sign out
         </button>
       </div>
+      <div className="form-row">
+        <label className="field">
+          <span className="field-label">Name</span>
+          <input
+            type="text"
+            maxLength={60}
+            defaultValue={profile?.display_name ?? ''}
+            onBlur={(e) =>
+              e.target.value !== (profile?.display_name ?? '') && save({ display_name: e.target.value })
+            }
+          />
+        </label>
+        <label className="field">
+          <span className="field-label">Handle</span>
+          <input
+            type="text"
+            pattern="[a-z0-9_]{3,24}"
+            maxLength={24}
+            defaultValue={profile?.handle ?? ''}
+            onBlur={(e) =>
+              e.target.value !== profile?.handle && save({ handle: e.target.value.toLowerCase() })
+            }
+          />
+          <span className="field-hint">Letters, numbers and _ only. It's your share-page address.</span>
+        </label>
+        <label className="field">
+          <span className="field-label">Time zone</span>
+          <select value={profile?.timezone ?? 'UTC'} onChange={(e) => save({ timezone: e.target.value })}>
+            {ZONES.map((z) => (
+              <option key={z}>{z}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      {error && <p className="form-error">{error}</p>}
+    </section>
+  );
+}
+
+const LEVELS = [
+  { id: 'off', label: 'Nobody', hint: 'Your runway is private. The default.' },
+  { id: 'runway', label: 'Just the runway', hint: 'Your plan and nothing else.' },
+  { id: 'readiness', label: 'Runway and exam readiness', hint: 'Prep hours per exam, no daily totals.' },
+  {
+    id: 'totals',
+    label: 'Runway, readiness and daily totals',
+    hint: 'How long you studied each day, per course.',
+  },
+];
+
+function Sharing() {
+  const { profile, updateProfile } = useAuth();
+  const level = profile?.share_level ?? 'off';
+  const url = `${location.origin}${location.pathname}#/u/${profile?.handle ?? ''}`;
+  return (
+    <section className="card-section" aria-labelledby="share-h">
+      <h2 id="share-h" className="mc-h2">
+        Sharing
+      </h2>
+      <p className="mc-note">
+        Off by default. Session notes, phone data and app names are never shared at any level.
+      </p>
+      <fieldset className="field">
+        <legend className="sr-only">Who can see your runway</legend>
+        {LEVELS.map((l) => (
+          <label key={l.id} className="check">
+            <input
+              type="radio"
+              name="share-level"
+              checked={level === l.id}
+              onChange={() => updateProfile({ share_level: l.id })}
+            />
+            <span>
+              {l.label}
+              <span className="field-hint"> {l.hint}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      {level !== 'off' && (
+        <p>
+          Your share page: <Link to={`/u/${profile?.handle ?? ''}`}>{url}</Link>
+        </p>
+      )}
+    </section>
+  );
+}
+
+function DeleteAccount() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+  const [confirm, setConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const del = async () => {
+    const { error } = await supabase!.rpc('delete_my_account');
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    await signOut();
+    navigate('/');
+  };
+  return (
+    <section className="card-section" aria-labelledby="del-h">
+      <h2 id="del-h" className="mc-h2">
+        Delete my account
+      </h2>
+      <p className="mc-note">
+        Removes your account and everything tied to it: plan, sessions, notes, phone events, settings. At
+        once, and for good.
+      </p>
+      {!confirm ? (
+        <button className="btn btn-danger" onClick={() => setConfirm(true)}>
+          Delete my account…
+        </button>
+      ) : (
+        <div className="row">
+          <button className="btn btn-danger" onClick={del}>
+            Yes, delete everything
+          </button>
+          <button className="btn btn-quiet" onClick={() => setConfirm(false)}>
+            Keep it
+          </button>
+        </div>
+      )}
+      {error && <p className="form-error">{error}</p>}
     </section>
   );
 }
@@ -165,16 +259,6 @@ function Breaks() {
   );
 }
 
-const LEVELS = [
-  {
-    id: 'totals',
-    label: 'Daily totals and exam readiness',
-    hint: 'How long you studied each day, per course.',
-  },
-  { id: 'readiness', label: 'Exam readiness only', hint: 'Prep hours per exam, no daily totals.' },
-  { id: 'runway', label: 'Just the runway', hint: 'Your plan and nothing else.' },
-];
-
 function BreakNotify() {
   const { settings, updateSettings } = useAuth();
   const supported = typeof Notification !== 'undefined';
@@ -209,38 +293,5 @@ function BreakNotify() {
         </span>
       </span>
     </label>
-  );
-}
-
-function Privacy() {
-  const { profile, updateProfile } = useAuth();
-  const level = profile?.public_level ?? 'totals';
-  return (
-    <section className="card-section" aria-labelledby="priv-h">
-      <h2 id="priv-h" className="mc-h2">
-        What visitors see
-      </h2>
-      <p className="mc-note">
-        Anyone with the link sees the runway (your plan). Session notes, phone data and app names are never
-        public.
-      </p>
-      <fieldset className="field">
-        <legend className="sr-only">Also show visitors</legend>
-        {LEVELS.map((l) => (
-          <label key={l.id} className="check">
-            <input
-              type="radio"
-              name="public-level"
-              checked={level === l.id}
-              onChange={() => updateProfile({ public_level: l.id })}
-            />
-            <span>
-              {l.label}
-              <span className="field-hint"> {l.hint}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
-    </section>
   );
 }

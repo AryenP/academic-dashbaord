@@ -1,14 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { admin, resetDb, seedSession, signIn } from './helpers';
+import { admin, OWNER_HANDLE, resetDb, seedPlan, seedSession, signIn } from './helpers';
 
 let userId: string;
 test.beforeEach(async () => {
   userId = await resetDb();
 });
 
-test('visitors see the runway, no app nav, and a sign-in prompt on private pages', async ({ page }) => {
+test('visitors see the landing page, no app nav, and a sign-in prompt on private pages', async ({ page }) => {
   await page.goto('./');
-  await expect(page.getByRole('heading', { name: 'Midterm runway' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your runway to every exam.' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Main' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
   await page.goto('./#/focus');
@@ -75,17 +75,18 @@ test('ending a real session saves the rating and note, and the log shows it', as
 });
 
 test('log: add time by hand, edit it, export CSV, delete it', async ({ page }) => {
+  await seedPlan(userId);
   await signIn(page);
   await page.goto('./#/log');
   await expect(page.getByText('No sessions yet.')).toBeVisible();
   await page.getByRole('button', { name: 'Add time' }).first().click();
   const form = page.getByRole('form', { name: 'Add study time' });
-  await form.getByLabel('Course').selectOption('CSE 151A');
+  await form.getByLabel('Course').selectOption('CSE 12');
   await form.getByLabel('Minutes').fill('45');
   await form.getByLabel('Note (optional)').fill('library, no laptop');
   await form.getByRole('button', { name: 'Add' }).click();
   const item = page.locator('.log-item').first();
-  await expect(item).toContainText('CSE 151A');
+  await expect(item).toContainText('CSE 12');
   await expect(item).toContainText('45 min');
   await expect(item).toContainText('Added by hand');
 
@@ -98,7 +99,7 @@ test('log: add time by hand, edit it, export CSV, delete it', async ({ page }) =
   await page.getByRole('button', { name: 'CSV' }).click();
   const file = await (await download).path();
   const csv = (await import('node:fs')).readFileSync(file, 'utf8');
-  expect(csv).toContain('CSE 151A,custom,manual,70');
+  expect(csv).toContain('CSE 12,custom,manual,70');
   expect(csv).toContain('library, no laptop');
 
   page.once('dialog', (d) => d.accept());
@@ -126,23 +127,37 @@ test('runway shows studied time and readiness for the owner, and totals for visi
   page,
   browser,
 }) => {
-  await seedSession(userId, { startedMinAgo: 90, lengthMin: 60, course: 'DSC 140A' });
+  // A finished hour this morning, so it draws inside today's column whatever the time of day.
+  const nine = new Date();
+  nine.setHours(9, 0, 0, 0);
+  await seedSession(userId, {
+    course: 'MATH 20C',
+    started_at: nine.toISOString(),
+    ended_at: new Date(nine.getTime() + 60 * 60_000).toISOString(),
+  });
+  await seedPlan(userId);
   await signIn(page);
   await page.goto('./');
   await expect(page.locator('.rw-day.is-today .rw-actual').first()).toBeVisible();
   await expect(page.locator('.cp-ready').first()).toContainText('h actually studied');
 
+  // Sharing is off by default: the share page shows nothing.
   const visitor = await browser.newPage();
+  await visitor.goto(`./#/u/${OWNER_HANDLE}`);
+  await expect(visitor.getByRole('heading', { name: 'Nothing here.' })).toBeVisible();
+
+  await admin.from('profiles').update({ share_level: 'totals' }).eq('id', userId);
   await visitor.goto('./');
+  await visitor.goto(`./#/u/${OWNER_HANDLE}`);
   await expect(visitor.locator('.rw-day.is-today .rw-actual.is-total')).toBeVisible();
   await expect(visitor.locator('.cp-ready').first()).toContainText('h actually studied');
 
-  await admin.from('profiles').update({ public_level: 'readiness' }).eq('id', userId);
+  await admin.from('profiles').update({ share_level: 'readiness' }).eq('id', userId);
   await visitor.reload();
   await expect(visitor.locator('.cp-ready').first()).toContainText('h actually studied');
   await expect(visitor.locator('.rw-actual')).toHaveCount(0);
 
-  await admin.from('profiles').update({ public_level: 'runway' }).eq('id', userId);
+  await admin.from('profiles').update({ share_level: 'runway' }).eq('id', userId);
   await visitor.reload();
   await expect(visitor.locator('.rw-actual')).toHaveCount(0);
   await expect(visitor.locator('.cp-ready')).toHaveCount(0);

@@ -107,7 +107,7 @@ test('a visitor never sees phone data', async ({ page }) => {
   await useToken();
   await post({ token: TOKEN, app: 'Instagram', kind: 'open' });
   await page.goto('./');
-  await expect(page.getByRole('heading', { name: 'Midterm runway' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your runway to every exam.' })).toBeVisible();
   await expect(page.getByText('Instagram')).toHaveCount(0);
   await page.goto('./#/setup/phone');
   await expect(page.getByRole('heading', { name: 'Sign in to set up phone tracking.' })).toBeVisible();

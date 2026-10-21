@@ -1,14 +1,15 @@
 import { test } from '@playwright/test';
 import { SCHEMES, SIZES } from '../e2e/fixtures';
 import { connectedSpotify } from './fakeSpotify';
-import { admin, resetDb, seedSession, signIn } from './helpers';
+import { admin, resetDb, seedPlan, seedSession, signIn } from './helpers';
 
 // Screenshots of the signed-in views with a week of realistic sessions, for review after each phase.
 // Written to tests/e2e/__screenshots__/ (git-ignored).
 
-const COURSES = ['DSC 140A', 'DSC 102', 'CSE 151A', 'DSC 106'];
+const COURSES = ['MATH 20C', 'CSE 12', 'COGS 1', 'HIST 10'];
 
 async function seedWeek(userId: string) {
+  await seedPlan(userId);
   const rows = [];
   for (let d = 1; d <= 6; d++)
     for (let k = 0; k < 2; k++) {
@@ -28,7 +29,7 @@ async function seedWeek(userId: string) {
       });
     }
   await admin.from('sessions').insert(rows);
-  await seedSession(userId, { startedMinAgo: 150, lengthMin: 50, course: 'DSC 140A' });
+  await seedSession(userId, { startedMinAgo: 150, lengthMin: 50, course: 'MATH 20C' });
   await admin
     .from('profiles')
     .update({ phone_token_hash: 'x'.repeat(64) })
@@ -73,7 +74,7 @@ for (const s of SIZES)
         await shot(v.name);
       }
       // A running session, its break due, and a break.
-      await seedSession(userId, { startedMinAgo: 18, course: 'DSC 140A' });
+      await seedSession(userId, { startedMinAgo: 18, course: 'MATH 20C' });
       await page.goto('./#/focus');
       await page.getByRole('timer').waitFor();
       await shot('focus-running');

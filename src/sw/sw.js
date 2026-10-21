@@ -3,7 +3,6 @@
 //
 //   pages       network first, falling back to the cached app shell
 //   /assets/*   cache first (file names are content-hashed, so they never change)
-//   data.json   network first, falling back to the last plan seen
 //
 // Everything else (Supabase, Spotify) goes straight to the network.
 
@@ -16,7 +15,7 @@ self.addEventListener('install', (event) => {
     (async () => {
       const cache = await caches.open(CACHE);
       // Every file in the build, so views that haven't been opened yet work offline too.
-      await cache.addAll(['./', 'data.json', 'manifest.webmanifest', ...PRECACHE]);
+      await cache.addAll(['./', 'manifest.webmanifest', ...PRECACHE]);
       await self.skipWaiting();
     })(),
   );
@@ -40,8 +39,6 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(req, './'));
   } else if (url.pathname.includes('/assets/')) {
     event.respondWith(cacheFirst(req));
-  } else if (url.pathname.endsWith('/data.json')) {
-    event.respondWith(networkFirst(req, 'data.json'));
   }
 });
 

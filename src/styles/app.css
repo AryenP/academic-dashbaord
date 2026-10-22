@@ -267,6 +267,15 @@ textarea {
   gap: var(--gap-md);
   align-items: flex-end;
 }
+/* Text or a field beside buttons: it keeps a readable width, so on a phone it takes the whole row
+   and the buttons drop below it instead of squeezing it into a column. */
+.form-row > .grow {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+.form-row > p {
+  margin: 0;
+}
 .form-error {
   color: var(--color-bad);
   font-size: var(--fs-caption);

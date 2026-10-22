@@ -319,6 +319,107 @@ describe('deleting an account', () => {
     const r = await anon.rpc('delete_my_account');
     expect(r.error).not.toBeNull();
   });
+
+  it('cascades to every table added since v1, and leaves user B alone', async () => {
+    const d = await signedIn('dave@ucsd.edu');
+    const seed = async (who: string) => {
+      const course = await admin
+        .from('courses')
+        .insert({ user_id: who, code: 'DSC 140A', color: 1 })
+        .select('id')
+        .single();
+      const src = await admin
+        .from('calendar_sources')
+        .insert({ user_id: who, kind: 'ics_upload', label: 'Upload' })
+        .select('id')
+        .single();
+      const item = await admin
+        .from('plan_items')
+        .insert({
+          user_id: who,
+          course_id: course.data!.id,
+          source_id: src.data!.id,
+          kind: 'exam',
+          title: 'Midterm',
+          start_at: '2026-11-03T22:00:00Z',
+          end_at: '2026-11-03T23:00:00Z',
+        })
+        .select('id')
+        .single();
+      await admin.from('events').insert({
+        user_id: who,
+        source_id: src.data!.id,
+        uid: 'mt@x',
+        hash: 'h',
+        title: 'Midterm',
+        start_at: '2026-11-03T22:00:00Z',
+        end_at: '2026-11-03T23:00:00Z',
+        kind: 'exam',
+        plan_item_id: item.data!.id,
+      });
+      const session = await admin
+        .from('sessions')
+        .insert({ user_id: who, course: 'DSC 140A', mode: 'pomodoro', plan_item_id: item.data!.id })
+        .select('id')
+        .single();
+      await admin.from('session_breaks').insert({ session_id: session.data!.id, kind: 'short' });
+      await admin.from('phone_events').insert({ user_id: who, app: 'Instagram', kind: 'open' });
+      await admin
+        .from('access_tokens')
+        .insert({ user_id: who, purpose: 'feed', token_hash: who.replace(/-/g, '') + who.replace(/-/g, '') });
+      await admin.from('signals').insert({ user_id: who, day: '2026-10-20', kind: 'steps', value: 5000 });
+      await admin
+        .from('weekly_reviews')
+        .insert({ user_id: who, week: '2026-10-19', text: 'A week.', model: 'test' });
+      await admin.from('ai_usage').insert({ user_id: who, month: '2026-10-01', calls: 1, cents: 1 });
+    };
+    await seed(d.id);
+    await seed(b.id);
+    // Friends both ways, so a row where Dave is the friend goes too.
+    await admin.from('friends').insert([
+      { user_id: d.id, friend_id: b.id, status: 'accepted' },
+      { user_id: b.id, friend_id: d.id, status: 'accepted' },
+      { user_id: b.id, friend_id: a.id, status: 'requested' },
+    ]);
+
+    const tables = [
+      'courses',
+      'calendar_sources',
+      'plan_items',
+      'events',
+      'sessions',
+      'phone_events',
+      'access_tokens',
+      'signals',
+      'weekly_reviews',
+      'ai_usage',
+    ] as const;
+    const count = async (table: (typeof tables)[number], who: string) =>
+      (await admin.from(table).select('*', { count: 'exact', head: true }).eq('user_id', who)).count;
+    const breaks = async (who: string) =>
+      (await admin.from('session_breaks').select('id, sessions!inner(user_id)').eq('sessions.user_id', who))
+        .data!.length;
+    for (const t of tables) expect(await count(t, d.id), t).toBe(1);
+    expect(await breaks(d.id)).toBe(1);
+
+    const r = await d.db.rpc('delete_my_account');
+    expect(r.error).toBeNull();
+
+    for (const t of tables) expect(await count(t, d.id), `${t} after delete`).toBe(0);
+    expect(await breaks(d.id)).toBe(0);
+    const friends = await admin
+      .from('friends')
+      .select('user_id, friend_id')
+      .or(`user_id.eq.${d.id},friend_id.eq.${d.id}`);
+    expect(friends.data).toEqual([]);
+    // User B keeps everything, including the request that didn't involve Dave.
+    for (const t of tables) expect(await count(t, b.id), `${t} of B`).toBe(1);
+    expect(await breaks(b.id)).toBe(1);
+    expect((await admin.from('friends').select('*').eq('user_id', b.id)).data).toHaveLength(1);
+    // Tidy up so the tests after this one see Bob as before.
+    for (const t of tables) await admin.from(t).delete().eq('user_id', b.id);
+    await admin.from('friends').delete().eq('user_id', b.id);
+  });
 });
 
 describe('phone events', () => {

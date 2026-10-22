@@ -28,3 +28,12 @@ docs/support-ticket-*.md
 .ralph/docs/generated/*
 !.ralph/docs/generated/.gitkeep
 .ralph_backup_*
+.ralph/live.log
+.ralph/.loop_start_sha
+.ralph/.token_count
+.ralph/.call_count
+.ralph/status.json
+.ralph/progress.json
+.ralph/.session*
+.ralph/.circuit*
+.ralph/*.log

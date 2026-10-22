@@ -3,38 +3,26 @@
   "name": "Runway for Gradescope and Canvas",
   "version": "0.1.1",
   "description": "Sends your Gradescope and Canvas deadlines, submission status and (only if you turn it on) released scores to your Runway runway.",
-  "permissions": [
-    "storage"
-  ],
+  "permissions": ["storage"],
   "host_permissions": [
     "https://www.gradescope.com/*",
     "https://*.instructure.com/*",
     "https://uhqurcspebdxtkalbduc.supabase.co/*"
   ],
-  "optional_host_permissions": [
-    "https://*/*"
-  ],
+  "optional_host_permissions": ["https://*/*"],
   "background": {
     "service_worker": "background.js",
     "type": "module"
   },
   "content_scripts": [
     {
-      "matches": [
-        "https://www.gradescope.com/*"
-      ],
-      "js": [
-        "content.js"
-      ],
+      "matches": ["https://www.gradescope.com/*"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     },
     {
-      "matches": [
-        "https://*.instructure.com/courses/*/assignments*"
-      ],
-      "js": [
-        "content.js"
-      ],
+      "matches": ["https://*.instructure.com/courses/*/assignments*"],
+      "js": ["content.js"],
       "run_at": "document_idle"
     }
   ],
@@ -47,13 +35,8 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "parsers.js"
-      ],
-      "matches": [
-        "https://www.gradescope.com/*",
-        "https://*.instructure.com/*"
-      ]
+      "resources": ["parsers.js"],
+      "matches": ["https://www.gradescope.com/*", "https://*.instructure.com/*"]
     }
   ]
 }

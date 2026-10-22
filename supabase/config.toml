@@ -426,3 +426,7 @@ enabled = true
 # Called by iPhone Shortcuts, which authenticate with the personal phone token in the body, not a JWT.
 [functions.phone-event]
 verify_jwt = false
+
+# Called by the "Runway nightly" iPhone Shortcut with the extension token in x-runway-token, not a JWT.
+[functions.signals]
+verify_jwt = false

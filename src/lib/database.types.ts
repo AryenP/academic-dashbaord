@@ -1040,6 +1040,7 @@ export type Database = {
           timezone: string;
         }[];
       };
+      signal_patterns: { Args: { p_user: string }; Returns: Json };
       signup_policy: { Args: Record<PropertyKey, never>; Returns: Json };
       source_url: { Args: { p_source: string }; Returns: string };
       start_break: {

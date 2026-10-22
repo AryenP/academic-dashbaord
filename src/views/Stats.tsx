@@ -1,5 +1,6 @@
 import { useMemo, type CSSProperties } from 'react';
 import { FocusStats } from '../components/FocusStats';
+import { Patterns } from '../components/Patterns';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
 import { courseVars } from '../lib/courses';
@@ -86,6 +87,7 @@ export function Stats() {
         </div>
       </section>
       <FocusStats today={today} />
+      <Patterns />
     </div>
   );
 }

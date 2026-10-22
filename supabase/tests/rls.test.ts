@@ -895,3 +895,65 @@ describe('signals', () => {
     for (const row of bad) expect((await a.db.from('signals').insert(row as never)).error).not.toBeNull();
   });
 });
+
+describe('patterns', () => {
+  const day = (n: number) => new Date(Date.UTC(2026, 9, 1 + n)).toISOString().slice(0, 10);
+  const at = (d: string, h: number) => new Date(Date.parse(`${d}T00:00:00Z`) + h * 3_600_000).toISOString();
+  const session = (d: string, h: number, focus: number, hours = 1) => ({
+    course: 'X',
+    mode: 'flow' as const,
+    started_at: at(d, h),
+    ended_at: at(d, h + hours),
+    focus_pct: focus,
+  });
+
+  it('are private, and need a week of days before they say anything', async () => {
+    await a.db.from('profiles').update({ timezone: 'UTC' }).eq('id', a.id);
+    expect((await b.db.rpc('signal_patterns', { p_user: a.id })).error).not.toBeNull();
+    expect((await anon.rpc('signal_patterns', { p_user: a.id })).error).not.toBeNull();
+    await admin.from('sessions').delete().eq('user_id', a.id);
+    const empty = (await a.db.rpc('signal_patterns', { p_user: a.id })).data as { days: number };
+    expect(empty.days).toBe(0);
+  });
+
+  it('group sessions by late night, sleep, exercise and place', async () => {
+    await a.db.from('profiles').update({ timezone: 'UTC' }).eq('id', a.id);
+    await admin.from('sessions').delete().eq('user_id', a.id);
+    await admin.from('signals').delete().eq('user_id', a.id);
+    await admin.from('sessions').delete().eq('user_id', b.id);
+    const rows = [];
+    const sigs = [];
+    for (let i = 0; i < 8; i++) {
+      const d = day(i);
+      const good = i % 2 === 0; // alternate well-slept, exercised, library days
+      rows.push(session(d, 10, good ? 70 : 50, good ? 2 : 1));
+      if (i < 4) rows.push(session(d, 23, 40, 0.5)); // four late sessions
+      sigs.push({ day: d, kind: 'sleep_h', value: good ? 8 : 5 });
+      sigs.push({ day: d, kind: 'exercise_min', value: good ? 45 : 0 });
+      sigs.push({ day: d, kind: 'place', label: good ? 'the library' : 'home' });
+    }
+    expect((await a.db.from('sessions').insert(rows)).error).toBeNull();
+    expect((await a.db.from('signals').insert(sigs)).error).toBeNull();
+    const f = (await a.db.rpc('signal_patterns', { p_user: a.id })).data as {
+      days: number;
+      late: { n: number; avg: number; other_n: number; other_avg: number };
+      sleep: { good_n: number; good_avg: number; poor_n: number; poor_avg: number };
+      exercise: { active_days: number; active_hours: number; rest_days: number; rest_hours: number };
+      places: { label: string; n: number; avg: number }[];
+    };
+    expect(f.days).toBe(8);
+    expect(f.late.n).toBe(4);
+    expect(Number(f.late.avg)).toBe(40);
+    expect(f.late.other_n).toBe(8);
+    expect(Number(f.late.other_avg)).toBe(60);
+    expect([f.sleep.good_n, f.sleep.poor_n]).toEqual([6, 6]); // late sessions count on their day too
+    expect(Number(f.sleep.good_avg)).toBeCloseTo(60, 5); // (70,40,70,40,70,70) / 6
+    expect(Number(f.sleep.poor_avg)).toBeCloseTo(46.67, 1);
+    expect([f.exercise.active_days, f.exercise.rest_days]).toEqual([4, 4]);
+    expect(Number(f.exercise.active_hours)).toBeCloseTo(2.25, 5);
+    expect(Number(f.exercise.rest_hours)).toBeCloseTo(1.25, 5);
+    expect(f.places.map((p) => p.label)).toEqual(['the library', 'home']);
+    // user B sees none of it through their own call
+    expect(((await b.db.rpc('signal_patterns', { p_user: b.id })).data as { days: number }).days).toBe(0);
+  });
+});

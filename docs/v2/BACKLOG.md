@@ -5,7 +5,7 @@ written so that one item is one sitting. Tick items with `[x]` and date them und
 deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). House rules: `CLAUDE.md`.
 
 ## High priority
-- [ ] `signals` Edge Function: POST one coarse summary row with a per-user token (same lookup as `import-items`, `token_owner`); validates kinds and ranges, upserts per day; Deno tests; header listed in the shared CORS allow-list.
+- [x] 2026-10-22 · `signals` Edge Function: token-authenticated POST of coarse daily rows, validated and upserted, Deno-tested, deployed.
 - [ ] Connect guide for the iPhone Shortcut ("Runway nightly"): a card under Connect that explains, step by step with SVG diagrams like `src/connect/guides.tsx`, how to build the Shortcut with *Find Health Samples* and a *Get Contents of URL* POST to the signals function; the token comes from Settings → Extension. Screenshots at 390×844 and 1440×900, light and dark.
 - [ ] Stats "Patterns": plain-words correlations between signals and session focus % / hours ("focus after 11 PM tends to average 40 %", "mornings after a workout tend to run 20 points higher"); a SQL function `signal_patterns(p_user)` with a minimum of 7 days of data before a sentence appears; wording always "tends to", never "because"; unit tests for the sentence builder.
 - [ ] Extension packaging: `npm run ext:zip` builds `extension/dist/runway-extension-<version>.zip` from the manifest version; `extension/STORE.md` with the Chrome Web Store listing text, single-purpose description, permissions justification and privacy answers (no remote code, data sent only to the user's own Runway account, grades off by default).

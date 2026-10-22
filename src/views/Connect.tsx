@@ -220,6 +220,7 @@ function PasteBox({ guide }: { guide: Guide }) {
   const [checking, setChecking] = useState(false);
   const [result, setResult] = useState<Validation | null>(null);
   const [adding, setAdding] = useState(false);
+  const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const checkedFor = useRef('');
 
@@ -248,8 +249,15 @@ function PasteBox({ guide }: { guide: Guide }) {
     setError(null);
     try {
       const { result: r } = await add(guide.kind, guide.name, url.trim());
-      if (!r.ok) setError(r.error ?? 'The first sync failed. Check Settings → Calendars.');
-      navigate(r.ok ? '/courses?read=1' : '/', { replace: true });
+      if (r.ok) {
+        navigate('/courses?read=1', { replace: true });
+        return;
+      }
+      // Saved, not yet synced. The scheduled sync finishes the job; don't invite a second paste.
+      setAdded(true);
+      setError(
+        `${r.error ?? 'The first sync did not finish.'} The calendar is saved, and Runway retries every 15 minutes: check back from Settings → Calendars.`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not add that calendar.');
     } finally {
@@ -289,9 +297,15 @@ function PasteBox({ guide }: { guide: Guide }) {
       )}
       {result?.ok && <Found v={result} />}
       <div className="row">
-        <button className="btn btn-primary" disabled={checking || adding || !url.trim()}>
-          {adding ? 'Adding…' : result?.ok ? 'Add this calendar' : 'Check'}
-        </button>
+        {added ? (
+          <button type="button" className="btn btn-primary" onClick={() => navigate('/', { replace: true })}>
+            Continue
+          </button>
+        ) : (
+          <button className="btn btn-primary" disabled={checking || adding || !url.trim()}>
+            {adding ? 'Adding…' : result?.ok ? 'Add this calendar' : 'Check'}
+          </button>
+        )}
       </div>
       {error && <p className="form-error">{error}</p>}
     </form>

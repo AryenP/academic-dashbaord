@@ -40,10 +40,16 @@ export interface SyncResult {
 const SELECT =
   'id, user_id, kind, label, host, status, last_synced_at, last_error, next_sync_at, event_count, created_at';
 
-async function invoke<T>(name: string, body: Record<string, unknown>): Promise<T> {
+// A function call must settle: the gateway has had spells where a request never answers, and a
+// button stuck on "Adding…" is worse than an error. Syncs get longer than checks.
+const TIMEOUT_MS = 45_000;
+
+async function invoke<T>(name: string, body: Record<string, unknown>, timeout = TIMEOUT_MS): Promise<T> {
   if (!supabase) throw new Error('The backend is not set up.');
-  const { data, error } = await supabase.functions.invoke(name, { body });
+  const { data, error } = await supabase.functions.invoke(name, { body, timeout });
   if (error) {
+    if (/abort|timed? ?out/i.test(error.message))
+      throw new Error('Runway did not hear back from the server in time.');
     // Supabase wraps non-2xx answers; the body still carries the message.
     const ctx = (error as { context?: Response }).context;
     if (ctx && typeof ctx.json === 'function') {
@@ -114,10 +120,18 @@ export function useSources() {
       });
       if (error) throw new Error(error.message);
       const source = data as unknown as SourceRow;
-      const result = await sync(source.id);
+      // The calendar is saved even if its first sync fails: the scheduled sync (every 15 minutes)
+      // picks it up, so the person isn't asked to paste the address again.
+      let result: SyncResult;
+      try {
+        result = await sync(source.id);
+      } catch (e) {
+        await refresh();
+        result = { ok: false, error: e instanceof Error ? e.message : 'The first sync failed.' };
+      }
       return { source, result };
     },
-    [sync],
+    [sync, refresh],
   );
 
   const upload = useCallback(

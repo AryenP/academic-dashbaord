@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { SignInNeeded } from '../components/SignInNeeded';
+import { SignalsSetup } from '../components/SignalsSetup';
 import { GUIDES, type Guide } from '../connect/guides';
 import { useAuth } from '../lib/auth';
 import { useSources, type Validation } from '../lib/sources';
@@ -83,6 +84,8 @@ export function Connect() {
       </div>
 
       <GuidePanel key={guide.id} guide={guide} />
+
+      <SignalsSetup where="connect" />
 
       <p className="cn-skip">
         <Link to="/">Skip for now</Link>. You can add things by hand, and come back to this from Settings.

@@ -2035,3 +2035,70 @@ kbd {
   padding-top: var(--gap-sm);
   border-top: 1px solid var(--color-border-line);
 }
+
+/* Phone signals card (Connect, Settings) */
+.cn-more > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+}
+.cn-more > summary::-webkit-details-marker {
+  display: none;
+}
+.cn-more > summary::before {
+  content: '';
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid var(--color-fg-muted);
+  border-bottom: 2px solid var(--color-fg-muted);
+  transform: rotate(-45deg);
+  margin-right: 0.35rem;
+  transition: transform 150ms;
+}
+.cn-more[open] > summary::before {
+  transform: rotate(45deg);
+}
+.cn-more > summary .mc-h2 {
+  margin: 0;
+}
+.cn-more[open] > summary {
+  margin-bottom: 0.75rem;
+}
+.sig-check {
+  margin-top: 1rem;
+}
+.sig-check .row {
+  justify-content: space-between;
+  align-items: center;
+}
+.sig-recent {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+.sig-recent li {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr auto;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--color-border-line);
+}
+.sig-day {
+  color: var(--color-fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+.sig-val {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+}
+.mc-h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}

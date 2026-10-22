@@ -1,7 +1,7 @@
 // The signals logic, separate from Deno.serve so it can be tested with a fake database.
 //
 // The "Runway nightly" iPhone Shortcut POSTs one coarse summary of the day (hours slept, exercise
-// minutes, steps, or a place label) with the token from Settings → Extension in the x-runway-token
+// minutes, steps, or a place label) with the shortcut token from Settings in the x-runway-token
 // header. A small array is accepted too, so the Shortcut can send the night's summaries in one call.
 // One row per person, day and kind: posting the same day again updates it. No raw samples, no
 // coordinates; the ranges below are also check constraints on the table (migration 0012).
@@ -97,7 +97,8 @@ export async function handle(req: Request, store: Store, now = new Date()): Prom
       {
         ok: false,
         code: 'token',
-        message: "That token isn't valid any more. Make a new one in Settings → Extension.",
+        message:
+          "That token isn't valid any more. Make a new one in Settings, under “Sleep and exercise from your iPhone”.",
       },
       401,
     );

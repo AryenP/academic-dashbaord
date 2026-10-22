@@ -690,6 +690,10 @@ describe('planning, feed tokens and submissions', () => {
     ).toBe(a.id);
     expect((await admin.rpc('token_owner', { p_purpose: 'feed', p_token_hash: 'nope' })).data).toBeNull();
     // Making another replaces the first.
+    // The Shortcut has its own purpose, so one token can be replaced without touching the other.
+    const sc = await a.db.rpc('make_access_token', { p_purpose: 'shortcut' });
+    expect(sc.error).toBeNull();
+    expect((await a.db.rpc('make_access_token', { p_purpose: 'watch' })).error).not.toBeNull();
     const t2 = (await a.db.rpc('make_access_token', { p_purpose: 'feed' })).data as string;
     expect(t2).not.toBe(token);
     expect(

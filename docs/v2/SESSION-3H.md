@@ -134,8 +134,83 @@ Deploy `draft-plan`.
   didn't, with commit hashes.
 - Append the report below to `docs/v2/SESSION-3H.md` under "## Report".
 
+## 9 · Then dream, and build the best of it (the rest of the time, and keep going)
+
+When the list above is done, don't stop. Think like a child who has just been told what Runway is
+and has no idea what apps "usually" do. Ask the wide questions. What if the runway were the only
+screen? What if the app knew when you were tired? What if studying felt like flying somewhere? What
+would a student who hates planning apps still open every morning? What could the phone, the
+calendar, the syllabus, the classmates and the music do *together* that none does alone? Write the
+questions down before answering them.
+
+Rules for this phase, and they are the only limits:
+
+- **Write before building.** Create `docs/v2/IDEAS.md`: every idea, one line each, however wild,
+  with a one-word verdict after you've thought: *build now*, *build later*, *needs Aryen*, *no*
+  (with the reason: breaks privacy, needs money, isn't Runway). Aim for fifty lines before you
+  pick. Cheap ideas and huge ideas side by side.
+- **Then build the best two or three, completely.** Small, finished, tested, documented, shipped
+  beats large and half done. Each one gets the same treatment as items 1–8: tests, RLS where there
+  is data, 375 px, light and dark, axe, a DECISIONS line, a commit, a push.
+- **The principles still hold.** Private by default and enforced by RLS. The person confirms
+  anything the AI proposes. "Tends to", never "because". Plain words, no praise, no emoji, no
+  gamification that shames. Nothing that needs an account, a key or money Aryen doesn't have yet:
+  those go in IDEAS.md as *needs Aryen* with exactly what they'd need to do.
+- **Keep the identity.** Big Shoulders Display numerals, course colors, the red hatched exams, the
+  calm focus screen. New screens should look like they were always there.
+- **No tracking, no analytics, no third party that sees the data.** Runway's whole pitch is that
+  it is the student's own.
+
+Seeds, to start the thinking, not to limit it:
+
+- **The runway as a living thing.** It only draws. What if it breathed: the current block glows,
+  the past fades, a day that went to plan looks different from one that didn't, the whole strip
+  tilts toward the next exam like a runway lights up at night.
+- **A forecast, not a score.** Readiness today is hours done ÷ hours planned. With past exams,
+  grades from the extension and focus history, Runway could say "at this pace you tend to reach
+  about 80 % of the prep by exam day" with an honest range, and show what one more block changes.
+  A "what if" you can drag.
+- **Study together, from free time.** Classmates already match by course. Their free slots are
+  computable. "You and Priya are both free Tuesday 3–5 for DSC 140A; propose it?" Opt-in both ways,
+  nothing shown until both agree.
+- **Ten seconds after a session.** "What did you get?" A sentence or a voice note. Before the exam,
+  Runway turns those into questions to answer, spaced out. The person's words, never scraped.
+- **The syllabus knows the grade.** The syllabus reader already gets weights. "What do I need on
+  the final to keep an A?" is arithmetic the student does on a napkin now.
+- **Boarding passes.** Every exam is a flight: a card with the gate (room), departure (time),
+  what's packed (hours), what's left. A shareable image of it (there is an OG image script already).
+- **A second screen.** A kiosk page: no nav, the current block, the countdown, the next exam, in
+  huge numerals, for an iPad on the desk or a browser on a TV. It already exists as data.
+- **Sound without files.** Brown noise, rain, a café, generated in the browser with Web Audio,
+  tied to the session: starts with it, pauses on breaks. No assets, no licensing.
+- **Guard the session.** The extension could, if the student turns it on, grey out the sites they
+  name during a session (declarativeNetRequest, their list, their choice), and report nothing.
+- **Push, not polling.** Web push for "your block starts in 10 minutes" and "you planned 3 h today
+  and it's 6 PM". VAPID keys can be generated and stored in Vault; a function sends; the sync cron
+  triggers. The student opts in per device.
+- **Your term, wrapped.** At the end of a term: hours, focus, the best week, the exam you turned
+  around, what tended to go with your best sessions, in the runway's own style, shareable or not.
+- **Learn from the drops.** The planner proposes; the student drops some. Which ones? Morning blocks?
+  Blocks over two hours? The allocator could learn those preferences per person, quietly.
+- **A command palette.** Cmd-K: start a session on DSC 140A, add a deadline, jump to Friday,
+  draft a plan. Keyboard-only use of the whole app.
+- **Android has no Shortcuts.** What's the honest Android route for phone focus and signals? Tasker,
+  MacroDroid, a tiny companion page? Document it, build the receiving side if it's the same.
+- **The runway narrated.** A screen-reader-first version of the runway: "Tuesday: two blocks for
+  DSC 140A, 9 to 10:30 and 3 to 4:30, a deadline at midnight." Also the basis for a voice assistant.
+- **Weather.** Not literal. The week's shape as a forecast: "heavy Thursday, clear weekend, storm
+  on the 26th". Students glance; they don't read tables.
+- **Runway for the professor.** Opt-in, aggregated, anonymous: "your class tends to start studying
+  4 days before the midterm". Never individuals. Probably *needs Aryen*; think it through anyway.
+- **What if the first minute were different?** The landing page, sign-up and Connect are the whole
+  product for a new student. Watch the new-user test's screenshots and ask what a nervous
+  first-year would feel at each step.
+
+When you run out of time, leave IDEAS.md sorted by verdict, the repo green, and the report honest
+about which dream you built and which you only wrote down.
+
 ## Report format
 
-For each item: done / partly / skipped, the commit hash, what was verified (which suites, which
+For each item, including the dream builds: done / partly / skipped, the commit hash, what was verified (which suites, which
 screenshots), and anything Aryen must do or decide. Then three lines at most on what you'd do
 next. No praise, no summary of the rules.

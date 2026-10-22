@@ -50,3 +50,25 @@ test('sign-in and privacy pages load from the landing page', async ({ page }) =>
   await page.goto('./#/privacy');
   await expect(page.getByRole('heading', { name: 'Privacy' })).toBeVisible();
 });
+
+test('how it works has four steps, the last one for the phone signals', async ({ page, request }) => {
+  await page.goto('./');
+  const steps = page.locator('.ld-steps li');
+  await expect(steps).toHaveCount(4);
+  await expect(steps.nth(3)).toContainText('sleep');
+  await expect(steps.nth(3)).toContainText('tends to');
+  // The step is in the prerendered HTML too.
+  const html = await (await request.get('./')).text();
+  expect(html).toContain('Let your phone fill in the rest.');
+  // Google is mentioned exactly when the build has it wired.
+  const google = process.env.VITE_GOOGLE_SIGNIN === 'true';
+  await expect(page.getByRole('link', { name: 'or continue with Google' })).toHaveCount(google ? 2 : 0);
+});
+
+test('the landing page does not scroll sideways on a phone', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('./');
+  await expect(page.locator('.rw-day')).toHaveCount(12);
+  const w = await page.evaluate(() => document.documentElement.scrollWidth);
+  expect(w).toBe(375);
+});

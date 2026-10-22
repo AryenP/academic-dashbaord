@@ -4,6 +4,7 @@ import { Checkpoints } from '../components/Checkpoints';
 import { setCourseSlots } from '../lib/courses';
 import { daysUntil, isPast } from '../lib/plan';
 import { useNow } from '../lib/useNow';
+import { GOOGLE_SIGNIN } from '../lib/flags';
 import { demoPlan, DEMO_COURSES } from './demo';
 
 // The landing page. Signed-out visitors see this at the site root: the hero is a live demo runway
@@ -53,6 +54,11 @@ export function Landing({ static: isStatic = false }: { static?: boolean }) {
               <a href={SIGNUP} className="btn btn-primary btn-big">
                 Sign up with your school email
               </a>
+              {GOOGLE_SIGNIN && (
+                <a href={SIGNUP} className="ld-more">
+                  or continue with Google
+                </a>
+              )}
               <a href="#how" className="ld-more">
                 How it works
               </a>
@@ -93,6 +99,13 @@ export function Landing({ static: isStatic = false }: { static?: boolean }) {
               <span>
                 <b>Run your sessions.</b> One tap starts the block you should be doing now. Breaks, music, and
                 a timer that survives a dead battery.
+              </span>
+            </li>
+            <li>
+              <span>
+                <b>Let your phone fill in the rest.</b> Once a day an iPhone Shortcut sends last night's
+                sleep, your exercise and your steps, nothing finer. Stats says what tends to go with a good
+                session.
               </span>
             </li>
           </ol>
@@ -136,9 +149,16 @@ export function Landing({ static: isStatic = false }: { static?: boolean }) {
 
         <section className="ld-end" aria-label="Sign up">
           <p className="ld-end-h">Connect your calendar. See your runway in a minute.</p>
-          <a href={SIGNUP} className="btn btn-primary btn-big">
-            Sign up with your school email
-          </a>
+          <p className="ld-cta">
+            <a href={SIGNUP} className="btn btn-primary btn-big">
+              Sign up with your school email
+            </a>
+            {GOOGLE_SIGNIN && (
+              <a href={SIGNUP} className="ld-more">
+                or continue with Google
+              </a>
+            )}
+          </p>
         </section>
       </main>
 

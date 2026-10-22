@@ -45,6 +45,12 @@
   display: grid;
   gap: clamp(24px, 4vw, 40px);
 }
+/* Grid items default to min-width: auto, which let the demo runway's twelve columns set the hero's
+   width on a phone and push the page sideways. The runway scrolls inside its own box instead. */
+.ld-hero > *,
+.ld-board > * {
+  min-width: 0;
+}
 .ld-h1 {
   font-family: var(--font-display);
   font-weight: 800;

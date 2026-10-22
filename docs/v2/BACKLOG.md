@@ -13,8 +13,8 @@ deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). Ho
 
 ## Medium priority
 - [x] 2026-10-22 · Planner respects signals: `preferredHours` from two weeks of focus history; good hours get first pick within a day; Deno-tested; no change without history.
-- [ ] Lighthouse: `npm run lighthouse` runs mobile audits on the landing page and `#/signin` from the built `dist/` and fails below performance 90 / accessibility 100; fix whatever it finds.
-- [ ] Weekly review mentions signals when present (late nights, sleep hours) with the same "tends to" rule; extend `WeekFacts` and its Deno test.
+- [x] 2026-10-22 · Lighthouse: `npm run lighthouse` (mobile, landing + sign-in, bars 90/100); first run 99/100 and 97/100.
+- [x] 2026-10-22 · Weekly review mentions signals when present, "tends to" only; WeekFacts extended; Deno test added.
 - [x] 2026-10-22 · Settings → Account shows the linked sign-in methods.
 
 ## Low priority

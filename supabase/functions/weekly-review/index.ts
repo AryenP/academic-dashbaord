@@ -123,6 +123,15 @@ export async function weekFacts(
         ) / 10,
     }));
   const streak = (must(await db.rpc('streak_days', { p_user: userId })) as number) ?? 0;
+  const signals = must(
+    await db
+      .from('signals')
+      .select('day, kind, value')
+      .eq('user_id', userId)
+      .gte('day', week)
+      .lte('day', weekEnd),
+  ) as { day: string; kind: string; value: number | string | null }[];
+  const sleeps = signals.filter((x) => x.kind === 'sleep_h' && x.value != null).map((x) => Number(x.value));
   const r1 = (n: number) => Math.round(n * 10) / 10;
   const pick = (s: (typeof sessions)[number] | undefined) =>
     s
@@ -156,6 +165,9 @@ export async function weekFacts(
         .filter((s) => Number(localIso(s.started_at, tz).slice(11, 13)) >= 23)
         .reduce((t, s) => t + minutes(s), 0),
     ),
+    sleep_avg_h: sleeps.length ? r1(sleeps.reduce((a, b) => a + b, 0) / sleeps.length) : null,
+    exercise_days: signals.filter((x) => x.kind === 'exercise_min' && Number(x.value) >= 30).length,
+    signal_days: new Set(signals.map((x) => x.day)).size,
   };
 }
 

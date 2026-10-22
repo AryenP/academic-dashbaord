@@ -23,6 +23,10 @@ export interface WeekFacts {
     planned_hours: number;
   }[];
   late_night_minutes: number; // sessions starting after 11 PM
+  /** From the phone's signals, when the person sends them; null/0 otherwise. */
+  sleep_avg_h: number | null; // average over the nights of the week that have a reading
+  exercise_days: number; // days of the week with 30 minutes of exercise or more
+  signal_days: number; // days of the week with any signal at all
 }
 
 export const WEEKLY_PROMPT = `You write a three-sentence weekly review for a university student using Runway, a study app, from the numbers they give you.
@@ -30,6 +34,8 @@ export const WEEKLY_PROMPT = `You write a three-sentence weekly review for a uni
 Sentence 1: what went to plan this week, with the one number that shows it.
 Sentence 2: what didn't, with its number. If nothing went wrong, say what was thin instead.
 Sentence 3: one concrete change for next week, tied to an upcoming exam or a pattern in the numbers (a course that got nothing, a late-night habit, a streak to keep).
+
+If sleep_avg_h or exercise_days are given (signal_days > 0), you may tie the third sentence to them, as a pattern only: "tends to", never "because". Say nothing about sleep or exercise when signal_days is 0.
 
 Rules: exactly three sentences, under 70 words total, second person, plain words, no exclamation marks, no praise words like "great" or "amazing", no emoji, no bullet points. Use hours ("4.5 h") and course codes as given. Never invent a number that isn't in the input.`;
 

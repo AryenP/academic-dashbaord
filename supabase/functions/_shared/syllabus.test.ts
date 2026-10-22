@@ -115,6 +115,9 @@ Deno.test('the weekly review is one short paragraph from the facts', async () =>
       { course: 'CSE 12', title: 'Midterm', days_away: 4, studied_hours: 0, planned_hours: 3 },
     ],
     late_night_minutes: 45,
+    sleep_avg_h: null,
+    exercise_days: 0,
+    signal_days: 0,
   };
   const { text } = await writeWeekly(facts, {
     model: 'claude-haiku-5-5',

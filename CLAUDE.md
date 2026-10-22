@@ -19,4 +19,4 @@ The plan is per user in the database: `courses` and `plan_items` (kind: study, d
 
 ## Tests
 
-`npm run check` (lint, format, unit, build with prerender, public browser tests). With Docker and `supabase start`: `npm run test:db`, `npm run test:fn`, `supabase functions serve --no-verify-jwt` then `npm run test:e2e:db`. Regenerate types after a migration: `npm run types`.
+`npm run check` (lint, format, unit, build with prerender, public browser tests). With Docker and `supabase start`: `npm run test:db`, `npm run test:fn`, `supabase functions serve --no-verify-jwt` then `npm run test:e2e:db`. Regenerate types after a migration: `npm run types`. `npm run lighthouse` audits the built landing and sign-in pages (mobile, bars 90/100); `npm run ext:zip` packs the extension.

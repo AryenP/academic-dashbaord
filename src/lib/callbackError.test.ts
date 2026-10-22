@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { readCallbackError, takeCallbackError } from './callbackError';
+import { clearCallbackError, readCallbackError, takeCallbackError } from './callbackError';
 
 describe('OAuth callback errors', () => {
   beforeEach(() => {
@@ -13,7 +13,7 @@ describe('OAuth callback errors', () => {
     expect(readCallbackError()).toBeNull();
   });
 
-  it('moves the message off the URL to the sign-in screen, once', () => {
+  it('moves the message off the URL to the sign-in screen, until cleared', () => {
     history.replaceState(
       null,
       '',
@@ -23,6 +23,8 @@ describe('OAuth callback errors', () => {
     expect(location.search).toBe('');
     expect(location.hash).toBe('#/signin');
     expect(readCallbackError()).toBe('Database error saving new user');
+    expect(readCallbackError()).toBe('Database error saving new user'); // reading is harmless
+    clearCallbackError();
     expect(readCallbackError()).toBeNull();
   });
 

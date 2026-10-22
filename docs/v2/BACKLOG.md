@@ -9,7 +9,7 @@ deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). Ho
 - [x] 2026-10-22 · Connect guide for the iPhone Shortcut: drawn three-step card on Connect (folded) and Settings, own token purpose, received-signals list, e2e-tested.
 - [x] 2026-10-22 · Stats "Patterns": `signal_patterns` SQL facts, plain-words sentence builder with thresholds and unit tests, section on Stats.
 - [x] 2026-10-22 · Extension packaging: `npm run ext:zip` and `extension/STORE.md` with listing, permissions and privacy answers.
-- [ ] New-user path end to end: a `tests/e2e-db` spec that creates a fresh account, lands on Connect, uploads the fixture `.ics`, reaches Courses, accepts a draft plan and sees the runway; also asserts a rejected Google callback (`?error=…`) lands on `#/signin` with the school-email message.
+- [x] 2026-10-22 · New-user path end to end: fresh account → Connect → upload → Courses → draft and accept → runway; rejected Google callback lands on sign-in with the reason.
 
 ## Medium priority
 - [ ] Planner respects signals: `draft-plan` prefers windows that have worked for this student (hours with ≥ 60 % average focus over the last 14 days get a small score bonus in `allocate`); unit test with a seeded focus history; no change when there is no history.

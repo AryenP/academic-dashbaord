@@ -19,13 +19,21 @@ export function takeCallbackError(): boolean {
   return true;
 }
 
-/** The sign-in screen reads the message once; a reload shows a clean form. */
+/** The sign-in screen reads the message; reading has no side effect, because React may render a
+ * component, throw that attempt away while something nearby suspends, and render it again. */
 export function readCallbackError(): string | null {
   try {
-    const m = sessionStorage.getItem(KEY);
-    if (m) sessionStorage.removeItem(KEY);
-    return m;
+    return sessionStorage.getItem(KEY);
   } catch {
     return null;
+  }
+}
+
+/** Called once the message is on screen, so a reload shows a clean form. */
+export function clearCallbackError(): void {
+  try {
+    sessionStorage.removeItem(KEY);
+  } catch {
+    // nothing stored
   }
 }

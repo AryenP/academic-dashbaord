@@ -4,7 +4,7 @@ import { useAuth } from '../lib/auth';
 import { hasBackend, supabase } from '../lib/supabase';
 
 import { isSchoolEmail } from '../lib/email';
-import { readCallbackError } from '../lib/callbackError';
+import { clearCallbackError, readCallbackError } from '../lib/callbackError';
 
 const GOOGLE = import.meta.env.VITE_GOOGLE_SIGNIN === 'true';
 
@@ -27,6 +27,7 @@ export function SignIn() {
     const m = readCallbackError();
     return m && friendly(m);
   });
+  useEffect(clearCallbackError, []);
   // The server says whether sign-up is school-email only (a switch in app_config). Until it
   // answers, assume it is.
   const [schoolOnly, setSchoolOnly] = useState(true);

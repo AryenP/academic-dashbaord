@@ -1,6 +1,6 @@
 # Runway
 
-Runway is a study app for students. Sign up with your school email, connect your calendar (Canvas, Google, iCloud, Outlook or an .ics file), check how Runway read it, let it draft study blocks before each exam, tick off deadlines, see classmates in your courses (opt-in both ways), run your study sessions with breaks and music, check your focus with your phone, and see how ready you actually are for each exam. It started as my own study cockpit built from my Google Calendar; v2 makes it something anyone can use.
+Runway is a study app for students. Sign up with your school email or with Google, connect the calendar you already keep (Canvas, Google, iCloud, Outlook or an .ics file), check how Runway read it, let it draft study blocks before each exam, tick off deadlines, see classmates in your courses if you both opt in, run your sessions with breaks and music, let your phone verify your focus, and see how ready you actually are for each exam. It started as my own study cockpit built from my Google Calendar; v2 is the same idea for anyone.
 
 **Live:** https://aryenp.github.io/academic-dashbaord/
 
@@ -14,12 +14,21 @@ Runway starts from the plan I already keep and closes the loop: **plan → sessi
 
 ## What it does
 
+- **Sign up and connect.** A school email or a Google account. Then paste a calendar address (or upload an .ics) and Runway fetches it every 15 minutes, finds the courses, classes, exams and deadlines in it, and builds the runway. The address is stored encrypted and never shown again.
+- **Courses: check what it read.** Title rules read most events on their own; the ones they were unsure about go to Claude, which sees titles, times and places and nothing else, and comes back with a course, a kind and a one-line reason. The Courses screen shows every reading, and anything you change there wins over the AI, which wins over the rules. Nothing the AI proposes becomes part of the plan until you confirm it.
 - **Runway.** Every day from now to the last exam, 8 AM to midnight, with study blocks in course colors and exams hatched in red. Time I actually studied is drawn as a thin bar beside the plan. Each exam shows a countdown and a readiness score: hours studied for that course before the exam ÷ hours planned.
+- **A plan when you want one.** "Draft a plan" works out your free time from everything on the runway and your settings (hours a day, not before, not after, days off) and places study blocks before each exam, sized by its weight and how much is already planned, with a reason on each. Blocks are dashed proposals until you accept them, one or all. If your own history says certain hours work for you, those get first pick. The accepted plan is also a calendar feed you can subscribe to.
+- **Deadlines and grades.** Deadlines have a status you tick off on the runway. A small browser extension reads Gradescope and Canvas pages you open and sets the status for you, and sends scores only if you switch that on. The Week page puts scores next to the hours that went into that course.
+- **Classmates and friends.** Opt in per course and see who else in that course uses Runway, with each person's hours, readiness and streak at their own sharing level. No roster: matching is school plus course code, and nobody appears unless they opted in too. Friends are added by handle and accepted by the other side.
+- **Syllabus reading.** Drop in a syllabus PDF and the exams and dated deadlines in it become proposals, each with the page and the quote it came from, accepted the same way as drafted blocks.
 - **Sessions.** One tap starts a session on whatever the calendar says I should be doing now. The timer is derived from timestamps in the database, never ticked, so it's right after a reload, after the laptop sleeps, and on my phone and laptop at the same time.
 - **Breaks.** Pomodoro, 50/10, custom, or flow (no timer, a nudge at 90 minutes). The break screen gives one concrete thing to do: water, stretch, the 20-20-20 eye rule.
 - **Phone focus.** iPhone Shortcuts automations ping Runway when I open or close an app I've marked as distracting. During a session that becomes phone time, pickups, and focus % = 1 − phone time ÷ focus time. Breaks don't count.
 - **Music.** Spotify follows the session: the focus playlist on start, the break playlist on breaks, pause at the end. It remote-controls the Spotify app already running on my phone or laptop.
-- **Log, stats, weekly review.** Every session, editable, with manual entries and CSV export. Planned vs. actual per day, focus % over time, pickups per hour, and a heatmap of my best hours.
+- **Signals and patterns.** A second Shortcut sends last night's sleep, exercise minutes and steps once a day, nothing finer. Stats turns two months of that and the sessions into plain sentences: sessions after a 7-hour night tend to score higher, that kind of thing. "Tends to", never "because".
+- **Log, stats, weekly review.** Every session, editable, with manual entries and CSV export. Planned vs. actual per day, focus % over time, pickups per hour, a heatmap of my best hours, and a three-sentence review of the week written once and kept.
+- **Sharing, your call.** Off by default. Turn it on and your share page shows your runway, or the runway plus exam readiness (study blocks without their titles), or that plus daily totals. Notes, phone data and app names are never shared at any level.
+- **Your data.** Settings → Download my data saves everything Runway holds about you as one JSON file. Delete my account removes it all at once, every table.
 - **Works offline.** It installs to the Home Screen. A whole session works without a connection, then syncs with the right times when it's back.
 
 | Focus | Break | Stats |
@@ -31,7 +40,8 @@ Runway starts from the plan I already keep and closes the loop: **plan → sessi
 ```
 Canvas / Google / iCloud / Outlook feeds ──▶ Edge Function sync-sources ──▶ Supabase Postgres ◀── the site (GitHub Pages)
             (every 15 min, GitHub Actions; addresses in Vault)              (Row Level Security)
-iPhone Shortcuts ──POST──▶ Edge Function phone-event ───────────────────────▶
+iPhone Shortcuts ──POST──▶ Edge Functions phone-event, signals ─────────────▶
+Gradescope / Canvas pages ──extension──▶ Edge Function import-items ────────▶
 Spotify app on phone/laptop ◀── Web API (PKCE) ── the site
 ```
 
@@ -49,30 +59,35 @@ Design decisions and the reasons for each are in [`docs/DECISIONS.md`](docs/DECI
 ## Tests
 
 - **Unit** (Vitest): the timer, the focus formula, stats, the offline queue, the Spotify client.
-- **Database** (Vitest against a local Supabase): RLS. Another account can't read or change your rows; share pages get only what you turned on; sign-up needs a school email; deleting an account removes everything.
+- **Database** (Vitest against a local Supabase): RLS. Another account can't read or change your rows; share pages get only what you turned on; sign-up needs a school email; deleting an account removes every row in every table, and the other person's rows stay.
 - **Edge Functions** (Deno): the iCal parser and recurrence expansion, the title rules, the sync against a fake database (first sync, 304, a renamed event, a deleted event, an override, duplicates across sources, errors), the Claude call against a fake API (request shape, caching, parsing, refusals, pricing), and the phone-event handler.
-- **Eval** (`npm run eval:classify`): a labeled set of 48 calendar events; scores the title rules, and Claude with `--ai`.
+- **Eval** (`npm run eval:classify`): a labeled set of 51 calendar events; scores the title rules (with the context pass that places a course from the events around it) and Claude with `--ai`. Rules: kind 100 %, course 66.7 %. Claude: kind 100 %, course 98.0 %.
 - **Extension** (`npm run test:ext`): the Gradescope and Canvas page parsers against saved fixtures.
-- **Browser** (Playwright): the landing page, sign-in and privacy pages, plus signed-in flows against a local Supabase with Spotify faked at the network layer: connecting a calendar (served from the test), the Courses review screen, drafting and accepting a plan, ticking deadlines, the plan feed, classmates and friends, sessions, breaks, phone tracking, sharing, offline sync, and an axe accessibility check of every view in light and dark.
+- **Browser** (Playwright): the landing page, sign-in and privacy pages, plus signed-in flows against a local Supabase with Spotify faked at the network layer: a new account from sign-in to runway, connecting a calendar (served from the test), the Courses review screen, drafting and accepting a plan, ticking deadlines, the plan feed, classmates and friends, sessions, breaks, phone tracking, the signals Shortcut, sharing, downloading your data, offline sync, screenshots at 390 and 1440 in light and dark, and an axe accessibility check of every view.
 
-Lighthouse on mobile: 96 performance, 100 accessibility.
+Lighthouse on mobile (`npm run lighthouse`): landing 99 performance, 100 accessibility; sign-in 97 and 100.
 
 ## Run it yourself
 
 ```sh
 npm install
 npm run dev          # http://127.0.0.1:5173/academic-dashbaord/  (landing page only, no backend needed)
-npm run check        # lint, format, unit tests, build (with the prerendered landing page), browser tests
+npm run check        # lint, format, unit tests, build (with the prerendered landing page), public browser tests
 ```
 
 With the backend (needs Docker and the Supabase CLI):
 
 ```sh
-supabase start                          # local Postgres, Auth, Realtime
-echo 'SYNC_KEY=local' > .env.functions.local && supabase functions serve --no-verify-jwt --env-file .env.functions.local
-# put the local URL and anon key in .env.local as VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
-npm run test:db && npm run test:fn && npm run test:e2e:db
+supabase start && supabase db reset    # local Postgres, Auth, Vault, with every migration applied
+npm run types                           # regenerate src/lib/database.types.ts after a migration
+npm run test:db                         # the RLS suite
+npm run test:fn                         # the Edge Function and extension tests (Deno)
+supabase functions serve --no-verify-jwt --env-file .env.functions.local   # in another terminal
+npm run test:e2e:db                     # the signed-in browser suite, screenshots included
+npm run eval:classify                   # the title rules on the labeled set; add --ai for Claude
 ```
+
+`.env.functions.local` holds `SYNC_KEY=local` and, for the AI paths, `ANTHROPIC_API_KEY`; `.env.local` holds the local `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`. Both are git-ignored. `npm run lighthouse` audits the built landing and sign-in pages; `npm run ext:zip` packs the extension.
 
 ### Deploying your own
 

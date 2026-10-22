@@ -55,12 +55,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!supabase) return;
-    supabase.auth.getSession().then(({ data }) => {
-      setUser(data.session?.user ?? null);
+    // getSession can hang: a refresh that never returns, or the cross-tab lock held by a stuck
+    // tab. The app must not wait on it forever, so after a few seconds it opens as signed out and
+    // catches up through onAuthStateChange if the session turns up later.
+    const giveUp = setTimeout(() => {
+      console.warn('Runway: the session check is taking too long; opening signed out for now.');
       setReady(true);
-    });
+    }, 4000);
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setUser(data.session?.user ?? null))
+      .catch(() => setUser(null))
+      .finally(() => {
+        clearTimeout(giveUp);
+        setReady(true);
+      });
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user ?? null));
-    return () => data.subscription.unsubscribe();
+    return () => {
+      clearTimeout(giveUp);
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -87,7 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    await supabase?.auth.signOut();
+    // This device only: signing out here must not kill the session in another browser.
+    await supabase?.auth.signOut({ scope: 'local' });
   }, []);
 
   const updateProfile = useCallback<AuthValue['updateProfile']>(

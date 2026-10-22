@@ -30,7 +30,7 @@ Worked from [SESSION-3H.md](./SESSION-3H.md); the report is at the end of that f
 - [x] Landing page: Google in the call to action, a Phase 5 step, no sideways scroll at 390 px (`07b0149`).
 - [x] README for v2 with fresh screenshots (`f94c69d`).
 - [x] The model planner gets the student's good hours (`964c6e5`).
-- [ ] Dream phase: see [IDEAS.md](./IDEAS.md); what was built is listed in the report.
+- [x] Dream phase: `#/now` second screen, the week in words, the forecast line (`7fc86b5`); the rest in [IDEAS.md](./IDEAS.md).
 
 ## Needs Aryen (accounts, money, or sign-off)
 - [ ] Turn the school-email rule back on before launch: `update app_config set value = 'true' where key = 'school_email_only'`.

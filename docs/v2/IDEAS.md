@@ -16,11 +16,11 @@ Aryen_ (an account, a key, money or a sign-off), _no_ (with the reason).
 - What would Runway say out loud, if it had to?
 - What would it never do, even if asked? (Rank you. Nag you. Tell anyone.)
 
-## Build now
+## Built tonight
 
-- A second screen: `#/now`, no nav, the current block, a countdown, the next exam, in the runway's numerals; for an iPad on the desk or a browser on a TV. _build now_ (it is already data)
-- The runway narrated: the week as sentences, "Tuesday: two blocks for DSC 140A, 9 to 10:30 and 3 to 4:30, a deadline at midnight", under the runway for screen readers and for anyone who would rather read. _build now_ (pure function, tests)
-- Weather: the week's shape in one line, "heavy Thursday, clear weekend, exam Sunday", next to the headline. _build now_ (pure function, tests)
+- A second screen: `#/now`, no nav, the current block, a countdown, the next exam, in the runway's numerals; for an iPad on the desk or a browser on a TV. _built_ (`#/now`, see the report)
+- The runway narrated: the week as sentences, "Tuesday: two blocks for DSC 140A, 9 to 10:30 and 3 to 4:30, a deadline at midnight", under the runway for screen readers and for anyone who would rather read. _built_ (under the runway)
+- Weather: the week's shape in one line, "heavy Thursday, clear weekend, exam Sunday", next to the headline. _built_ (under the runway)
 
 ## Build later
 

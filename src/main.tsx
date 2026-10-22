@@ -6,6 +6,7 @@ import './styles/tokens.css';
 import './styles/runway.css';
 import './styles/app.css';
 import './styles/landing.css';
+import { takeCallbackError } from './lib/callbackError';
 
 // Two entry points share this bundle:
 //   - signed out at the site root: the landing page (prerendered into index.html at build time,
@@ -55,6 +56,8 @@ async function render() {
   }
 }
 
+// A failed OAuth callback lands on the sign-in screen with its message, not on the landing page.
+takeCallbackError();
 window.addEventListener('hashchange', render);
 render();
 

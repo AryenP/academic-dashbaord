@@ -4,6 +4,7 @@ import { useAuth } from '../lib/auth';
 import { hasBackend, supabase } from '../lib/supabase';
 
 import { isSchoolEmail } from '../lib/email';
+import { readCallbackError } from '../lib/callbackError';
 
 const GOOGLE = import.meta.env.VITE_GOOGLE_SIGNIN === 'true';
 
@@ -11,7 +12,7 @@ const GOOGLE = import.meta.env.VITE_GOOGLE_SIGNIN === 'true';
 function friendly(message: string): string {
   if (/rate limit/i.test(message))
     return 'Too many sign-in emails in a short time. The last link Runway sent you still works for an hour, so check your inbox (and spam). Otherwise try again in a little while.';
-  if (/database error|school email/i.test(message))
+  if (/database error|school email|saving new user/i.test(message))
     return 'Runway is for students: use your school email, the one ending in .edu.';
   if (/network|fetch/i.test(message))
     return "Runway couldn't reach the sign-in service. Check your connection and try again.";
@@ -22,7 +23,10 @@ export function SignIn() {
   const { user, ready, signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    const m = readCallbackError();
+    return m && friendly(m);
+  });
 
   if (!ready) return null;
   if (user) return <Navigate to="/" replace />;

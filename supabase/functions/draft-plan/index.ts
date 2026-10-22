@@ -8,6 +8,7 @@ import {
   draftWithClaude,
   freeSlots,
   hoursNeeded,
+  preferredHours,
   settingsFrom,
   validate,
   type Block,
@@ -154,7 +155,17 @@ Deno.serve(async (req) => {
       dropped = v.dropped;
     }
     if (!blocks.length) {
-      blocks = allocate(exams, slots, settings, now);
+      // Hours that have worked for this student in the last two weeks get first pick within a day.
+      const recent = must(
+        await db
+          .from('sessions')
+          .select('started_at, focus_pct')
+          .eq('user_id', who.id)
+          .not('ended_at', 'is', null)
+          .not('focus_pct', 'is', null)
+          .gte('started_at', new Date(now - 14 * 864e5).toISOString()),
+      ) as { started_at: string; focus_pct: number | string | null }[];
+      blocks = allocate(exams, slots, settings, now, { hours: preferredHours(recent, tz), tz });
       by = 'rules';
     }
 

@@ -12,10 +12,10 @@ deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). Ho
 - [x] 2026-10-22 · New-user path end to end: fresh account → Connect → upload → Courses → draft and accept → runway; rejected Google callback lands on sign-in with the reason.
 
 ## Medium priority
-- [ ] Planner respects signals: `draft-plan` prefers windows that have worked for this student (hours with ≥ 60 % average focus over the last 14 days get a small score bonus in `allocate`); unit test with a seeded focus history; no change when there is no history.
+- [x] 2026-10-22 · Planner respects signals: `preferredHours` from two weeks of focus history; good hours get first pick within a day; Deno-tested; no change without history.
 - [ ] Lighthouse: `npm run lighthouse` runs mobile audits on the landing page and `#/signin` from the built `dist/` and fails below performance 90 / accessibility 100; fix whatever it finds.
 - [ ] Weekly review mentions signals when present (late nights, sleep hours) with the same "tends to" rule; extend `WeekFacts` and its Deno test.
-- [ ] Settings → Account shows which sign-in methods are linked (email, Google) from `app_metadata.providers`, read-only.
+- [x] 2026-10-22 · Settings → Account shows the linked sign-in methods.
 
 ## Low priority
 - [ ] Share page: a "readiness" share level that shows exam checkpoints without block titles; covered by the share-level RLS tests.

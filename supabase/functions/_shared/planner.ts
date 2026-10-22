@@ -126,8 +126,45 @@ export function hoursNeeded(exams: Exam[], now: number): Map<string, number> {
   return out;
 }
 
-/** Deterministic placement: earlier exams first, spread across days, longest slots first. */
-export function allocate(exams: Exam[], slots: Slot[], s: PlanSettings, now: number): Block[] {
+/** Hours of the day (local) that have worked for this student: at least two measured sessions in
+ * the last two weeks starting in that hour, averaging 60 % focus or more. Empty when there is no
+ * history, and the allocator then behaves exactly as before. */
+export function preferredHours(
+  sessions: { started_at: string; focus_pct: number | string | null }[],
+  tz: string,
+): Set<number> {
+  const byHour = new Map<number, { n: number; sum: number }>();
+  for (const x of sessions) {
+    if (x.focus_pct == null) continue;
+    const h = Number(localIso(x.started_at, tz).slice(11, 13));
+    const e = byHour.get(h) ?? { n: 0, sum: 0 };
+    e.n++;
+    e.sum += Number(x.focus_pct);
+    byHour.set(h, e);
+  }
+  const out = new Set<number>();
+  for (const [h, e] of byHour) if (e.n >= 2 && e.sum / e.n >= 60) out.add(h);
+  return out;
+}
+
+export interface Preference {
+  hours: Set<number>;
+  tz: string;
+}
+
+/** Deterministic placement: earlier exams first, spread across days, and within a day the slots
+ * that start in one of the student's good hours first (a small bonus, never a constraint). */
+export function allocate(
+  exams: Exam[],
+  slots: Slot[],
+  s: PlanSettings,
+  now: number,
+  prefer?: Preference,
+): Block[] {
+  const good = (sl: Slot) =>
+    !!prefer &&
+    prefer.hours.size > 0 &&
+    prefer.hours.has(Number(localIso(sl.start, prefer.tz).slice(11, 13)));
   const need = hoursNeeded(exams, now);
   const byDay = new Map<string, number>(); // minutes already placed that day
   const used: [number, number][] = [];
@@ -140,7 +177,12 @@ export function allocate(exams: Exam[], slots: Slot[], s: PlanSettings, now: num
     const examT = Date.parse(x.start_at);
     const candidates = slots
       .filter((sl) => Date.parse(sl.start) < examT)
-      .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+      .sort(
+        (a, b) =>
+          a.day.localeCompare(b.day) ||
+          Number(good(b)) - Number(good(a)) ||
+          Date.parse(a.start) - Date.parse(b.start),
+      );
     for (const sl of candidates) {
       if (minutesLeft <= 0) break;
       const dayUsed = byDay.get(sl.day) ?? 0;
@@ -165,7 +207,7 @@ export function allocate(exams: Exam[], slots: Slot[], s: PlanSettings, now: num
         title: `Study for ${x.title}${n > 1 ? ` (${n})` : ''}`,
         start_at: new Date(a).toISOString(),
         end_at: new Date(end).toISOString(),
-        reason: `${x.weight != null ? `${x.weight} % of the grade, ` : ''}${daysOut} ${daysOut === 1 ? 'day' : 'days'} out, ${Math.round(((need.get(x.id) ?? 0) * 60 - minutesLeft + len) / 6) / 10} of ${need.get(x.id)} h placed`,
+        reason: `${x.weight != null ? `${x.weight} % of the grade, ` : ''}${daysOut} ${daysOut === 1 ? 'day' : 'days'} out, ${Math.round(((need.get(x.id) ?? 0) * 60 - minutesLeft + len) / 6) / 10} of ${need.get(x.id)} h placed${good(sl) ? ', an hour that has worked for you' : ''}`,
       });
     }
   }

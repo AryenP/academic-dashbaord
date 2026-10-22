@@ -39,6 +39,14 @@ export function Settings() {
   );
 }
 
+const METHOD_NAMES: Record<string, string> = { email: 'email link', google: 'Google' };
+/** The ways this account can sign in, in plain words, from what Supabase records on the user. */
+export function signInMethods(providers: unknown): string[] {
+  const list = Array.isArray(providers) ? providers.filter((p): p is string => typeof p === 'string') : [];
+  const names = list.map((p) => METHOD_NAMES[p] ?? p);
+  return names.length ? names : ['email link'];
+}
+
 const ZONES: string[] = (() => {
   try {
     return (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('timeZone');
@@ -66,6 +74,10 @@ function Account() {
       <div className="form-row">
         <p className="grow">
           Signed in as <b>{user!.email}</b>
+          <span className="field-hint">
+            {' '}
+            Sign-in methods: {signInMethods(user!.app_metadata?.providers).join(', ')}.
+          </span>
         </p>
         <button className="btn btn-quiet" onClick={signOut}>
           Sign out

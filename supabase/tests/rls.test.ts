@@ -255,6 +255,23 @@ describe('sharing by handle', () => {
 
   it("'readiness' adds prep minutes, 'totals' adds daily totals in the person's timezone", async () => {
     await a.db.from('profiles').update({ share_level: 'readiness' }).eq('id', a.id);
+    // Study blocks are drawn but not named at this level; exams and deadlines keep their titles.
+    const shared = (await anon.rpc('share_plan', { p_handle: 'alice' })).data as {
+      kind: string;
+      title: string;
+      location: string;
+    }[];
+    expect(shared.length).toBeGreaterThan(0);
+    for (const r of shared.filter((r) => r.kind === 'study'))
+      expect([r.title, r.location]).toEqual(['Study', '']);
+    expect(shared.some((r) => r.kind !== 'study' && r.title !== 'Study')).toBe(true);
+    await a.db.from('profiles').update({ share_level: 'runway' }).eq('id', a.id);
+    const open = (await anon.rpc('share_plan', { p_handle: 'alice' })).data as {
+      kind: string;
+      title: string;
+    }[];
+    expect(open.filter((r) => r.kind === 'study').some((r) => r.title !== 'Study')).toBe(true);
+    await a.db.from('profiles').update({ share_level: 'readiness' }).eq('id', a.id);
     const prep = await anon.rpc('public_prep_minutes', {
       p_handle: 'alice',
       p_exams: [{ course: 'DSC 140A', before: '2026-10-26T17:00:00-07:00' }],

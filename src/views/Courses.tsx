@@ -10,6 +10,9 @@ import { supabase } from '../lib/supabase';
 import { usePlan } from '../lib/usePlan';
 import { localIso, whenLabel } from '../lib/planBuild';
 
+// Spoken names for the six color slots, in tokens.css order.
+const COLOR_NAMES = ['Blue', 'Teal', 'Purple', 'Orange', 'Pink', 'Gray'];
+
 // "Your courses": how Runway read the calendar, one card per course, every reading editable.
 // Changes write an override on the event and rebuild the plan for that source. This is where
 // trust gets built, and where the AI pass gets its corrections.
@@ -359,7 +362,7 @@ function CourseCard({
                 key={n}
                 role="radio"
                 aria-checked={course.color === n}
-                aria-label={`Color ${n}`}
+                aria-label={`${COLOR_NAMES[n - 1]}, color ${n}`}
                 className="cs-swatch"
                 style={{ background: `var(--course-${n})` }}
                 onClick={() => save({ color: n })}

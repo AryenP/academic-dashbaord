@@ -18,8 +18,8 @@ deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). Ho
 - [x] 2026-10-22 · Settings → Account shows the linked sign-in methods.
 
 ## Low priority
-- [ ] Share page: a "readiness" share level that shows exam checkpoints without block titles; covered by the share-level RLS tests.
-- [ ] Courses: a per-course color override (five slots plus the sixth gray) with an axe-clean picker.
+- [x] 2026-10-22 · Share page: at the readiness level study blocks show without titles (migration 0015), covered by the share-level RLS test.
+- [x] 2026-10-22 · Courses: the per-course color picker was already there; swatches now have spoken color names.
 
 ## Needs Aryen (accounts, money, or sign-off)
 - [ ] Turn the school-email rule back on before launch: `update app_config set value = 'true' where key = 'school_email_only'`.

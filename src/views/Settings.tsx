@@ -125,7 +125,11 @@ function Account() {
 const LEVELS = [
   { id: 'off', label: 'Nobody', hint: 'Your runway is private. The default.' },
   { id: 'runway', label: 'Just the runway', hint: 'Your plan and nothing else.' },
-  { id: 'readiness', label: 'Runway and exam readiness', hint: 'Prep hours per exam, no daily totals.' },
+  {
+    id: 'readiness',
+    label: 'Runway and exam readiness',
+    hint: 'Prep hours per exam, no daily totals; study blocks show without their titles.',
+  },
   {
     id: 'totals',
     label: 'Runway, readiness and daily totals',

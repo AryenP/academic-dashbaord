@@ -7,3 +7,5 @@ Reads the Gradescope course pages and Canvas assignment pages you're signed into
 **Firefox:** `about:debugging` → This Firefox → Load Temporary Add-on → `manifest.json`.
 
 Tests: `npm run test:ext` (parsers against saved page fixtures).
+
+**Store:** `npm run ext:zip` packs `extension/dist/runway-extension-<version>.zip`; the listing text, permission justifications and privacy answers are in [STORE.md](./STORE.md).

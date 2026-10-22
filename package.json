@@ -18,7 +18,8 @@
     "test:e2e:db": "playwright test -c playwright.db.config.ts",
     "types": "supabase gen types typescript --local > src/lib/database.types.ts && prettier --write src/lib/database.types.ts",
     "eval:classify": "deno run --allow-read --allow-env --allow-net scripts/eval-classify.ts",
-    "test:ext": "deno test --allow-read --allow-env --allow-net extension/test"
+    "test:ext": "deno test --allow-read --allow-env --allow-net extension/test",
+    "ext:zip": "node scripts/ext-zip.mjs"
   },
   "dependencies": {
     "@fontsource/big-shoulders-display": "^5.3.0",

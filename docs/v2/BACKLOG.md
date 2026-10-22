@@ -8,7 +8,7 @@ deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). Ho
 - [x] 2026-10-22 · `signals` Edge Function: token-authenticated POST of coarse daily rows, validated and upserted, Deno-tested, deployed.
 - [x] 2026-10-22 · Connect guide for the iPhone Shortcut: drawn three-step card on Connect (folded) and Settings, own token purpose, received-signals list, e2e-tested.
 - [x] 2026-10-22 · Stats "Patterns": `signal_patterns` SQL facts, plain-words sentence builder with thresholds and unit tests, section on Stats.
-- [ ] Extension packaging: `npm run ext:zip` builds `extension/dist/runway-extension-<version>.zip` from the manifest version; `extension/STORE.md` with the Chrome Web Store listing text, single-purpose description, permissions justification and privacy answers (no remote code, data sent only to the user's own Runway account, grades off by default).
+- [x] 2026-10-22 · Extension packaging: `npm run ext:zip` and `extension/STORE.md` with listing, permissions and privacy answers.
 - [ ] New-user path end to end: a `tests/e2e-db` spec that creates a fresh account, lands on Connect, uploads the fixture `.ics`, reaches Courses, accepts a draft plan and sees the runway; also asserts a rejected Google callback (`?error=…`) lands on `#/signin` with the school-email message.
 
 ## Medium priority

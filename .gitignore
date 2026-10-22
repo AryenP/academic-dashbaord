@@ -13,3 +13,6 @@ supabase/.temp/
 dist-db/
 .env.functions.local
 docs/support-ticket-*.md
+
+# packed extension
+extension/dist/

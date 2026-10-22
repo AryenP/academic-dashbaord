@@ -123,6 +123,18 @@ Deno.serve(async (req) => {
       }[]
     )[0];
     const apiKey = await appSecret(db, 'ANTHROPIC_API_KEY');
+    // Hours that have worked for this student in the last two weeks: a hint to the model, first
+    // pick within a day for the allocator.
+    const recent = must(
+      await db
+        .from('sessions')
+        .select('started_at, focus_pct')
+        .eq('user_id', who.id)
+        .not('ended_at', 'is', null)
+        .not('focus_pct', 'is', null)
+        .gte('started_at', new Date(now - 14 * 864e5).toISOString()),
+    ) as { started_at: string; focus_pct: number | string | null }[];
+    const preferred = preferredHours(recent, tz);
     if (budget?.enabled && Number(budget.user_left) > 0 && Number(budget.global_left) > 0 && apiKey) {
       model = String(
         (
@@ -132,7 +144,12 @@ Deno.serve(async (req) => {
         )?.value ?? 'claude-haiku-5-5',
       );
       try {
-        const r = await draftWithClaude(exams, slots, settings, { model, apiKey, timezone: tz });
+        const r = await draftWithClaude(exams, slots, settings, {
+          model,
+          apiKey,
+          timezone: tz,
+          preferredHours: preferred,
+        });
         must(
           await db.rpc('ai_record', {
             p_user: who.id,
@@ -155,17 +172,7 @@ Deno.serve(async (req) => {
       dropped = v.dropped;
     }
     if (!blocks.length) {
-      // Hours that have worked for this student in the last two weeks get first pick within a day.
-      const recent = must(
-        await db
-          .from('sessions')
-          .select('started_at, focus_pct')
-          .eq('user_id', who.id)
-          .not('ended_at', 'is', null)
-          .not('focus_pct', 'is', null)
-          .gte('started_at', new Date(now - 14 * 864e5).toISOString()),
-      ) as { started_at: string; focus_pct: number | string | null }[];
-      blocks = allocate(exams, slots, settings, now, { hours: preferredHours(recent, tz), tz });
+      blocks = allocate(exams, slots, settings, now, { hours: preferred, tz });
       by = 'rules';
     }
 

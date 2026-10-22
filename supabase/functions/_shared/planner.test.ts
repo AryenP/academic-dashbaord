@@ -179,11 +179,23 @@ Deno.test('draftWithClaude sends exams and slots in local time and parses the bl
     model: 'claude-haiku-5-5',
     apiKey: 'k',
     timezone: TZ,
+    preferredHours: new Set([15, 9]),
     fetchImpl,
   });
   const sent = JSON.parse((body.messages as { content: string }[])[0].content);
   assertEquals(sent.exams[0].start_at, '2026-10-26T17:00:00-07:00');
   assertEquals(sent.free_slots[0].start, '2026-10-21T09:00:00-07:00');
+  // The student's good hours go along, sorted, and the prompt says what to do with them.
+  assertEquals(sent.preferred_hours, [9, 15]);
+  assert((body.system as { text: string }[])[0].text.includes('preferred_hours'));
+  // Without history nothing is sent, so the cached prompt sees the same shape as before.
+  await draftWithClaude(EXAMS, slots, DEFAULT_SETTINGS, {
+    model: 'claude-haiku-5-5',
+    apiKey: 'k',
+    timezone: TZ,
+    fetchImpl,
+  });
+  assertEquals('preferred_hours' in JSON.parse((body.messages as { content: string }[])[0].content), false);
   assertEquals((body.output_config as { effort: string }).effort, 'low');
   assertEquals(blocks[0].start_at, '2026-10-21T16:00:00.000Z');
   assert(usage.cents > 0);

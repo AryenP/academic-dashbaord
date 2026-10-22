@@ -263,6 +263,7 @@ Rules, all strict:
 - Weight the hours by what the exam is worth and how little is already planned or studied. An exam worth 25 % of the grade deserves about 12 hours of prep in total across planning and studying; scale from there, minimum 3. Don't over-plan: if an exam already has enough, give it little or nothing.
 - Spread blocks across days rather than stacking one day; put the last block the day before the exam when possible; leave the hour before an exam free.
 - Earlier exams first when slots are scarce.
+- If preferred_hours is given (local hours of the day in which this student's past sessions went well), prefer slots that start in one of those hours when choosing among free slots on a day, never at the cost of the rules above.
 
 Titles are short and concrete, from the student's point of view, and build up to the exam: first blocks cover material ("Lectures 1–4 into notes"), middle blocks practice ("Practice problems, set 2"), the last block reviews ("Final review and cheat sheet"). Never use the word "Study" alone as a title.
 
@@ -298,6 +299,8 @@ export interface DraftOptions {
   model: string;
   apiKey: string;
   timezone: string;
+  /** Local hours that have worked for this student (see `preferredHours`); a hint, not a rule. */
+  preferredHours?: Iterable<number>;
   fetchImpl?: typeof fetch;
 }
 
@@ -310,10 +313,12 @@ export async function draftWithClaude(
 ): Promise<{ blocks: Block[]; usage: AiUsage }> {
   const client = new Anthropic({ apiKey: opts.apiKey, fetch: opts.fetchImpl, maxRetries: 2 });
   const tz = opts.timezone;
+  const preferred = [...(opts.preferredHours ?? [])].sort((a, b) => a - b);
   const user = JSON.stringify({
     timezone: tz,
     hours_per_day: s.hours_per_day,
     block_min: s.block_min,
+    ...(preferred.length ? { preferred_hours: preferred } : {}),
     exams: exams.map((x) => ({ ...x, start_at: localIso(x.start_at, tz) })),
     free_slots: slots.slice(0, 150).map((sl) => ({
       day: sl.day,

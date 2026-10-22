@@ -13,6 +13,8 @@ import { colorOf } from '../lib/courses';
 import { useHistory, type DayCourseMinutes } from '../lib/history';
 import { useLiveSession } from '../lib/liveSession';
 import { daysUntil, isNow, isPast, type ExamPrep, type PlanData } from '../lib/plan';
+import { narrate } from '../lib/narrate';
+import { forecast } from '../lib/weather';
 import type { Session } from '../lib/supabase';
 import { ago, useSources } from '../lib/sources';
 import { useNow, usePlan } from '../lib/usePlan';
@@ -101,6 +103,7 @@ export function RunwayPage({
 }: RunwayPageProps) {
   const now = useNow();
   const t = data.totals[0];
+  const shape = useMemo(() => forecast(data.plan, now), [data.plan, now]);
   const actuals = useMemo(() => buildActuals(sessions, totals, live, now), [sessions, totals, live, now]);
   const ready = useMemo(
     () =>
@@ -124,7 +127,7 @@ export function RunwayPage({
             <p className="mc-sub">
               <b>{t.study_hours}</b> study hours across <b>{t.study_blocks}</b> blocks, with{' '}
               <b>{t.deadlines}</b> deadlines to clear around <b>{t.exams}</b>{' '}
-              {t.exams === 1 ? 'exam' : 'exams'}.
+              {t.exams === 1 ? 'exam' : 'exams'}.{shape && <span className="mc-forecast"> {shape}</span>}
             </p>
           )}
         </header>
@@ -137,6 +140,7 @@ export function RunwayPage({
             <section className="mc-runway-wrap" id="runway">
               <Runway plan={data.plan} now={now} actuals={actuals} />
               <Key courses={data.courses} actual={actuals.spans.size > 0 || actuals.dayMinutes.size > 0} />
+              <WeekInWords plan={data.plan} now={now} />
             </section>
 
             <section className="mc-panels">
@@ -156,6 +160,24 @@ export function RunwayPage({
       </div>
       {foot && <p className="mc-foot">{foot}</p>}
     </>
+  );
+}
+
+/** The same week as sentences, for screen readers and for anyone who would rather read. */
+function WeekInWords({ plan, now }: { plan: PlanData['plan']; now: number }) {
+  const days = useMemo(() => narrate(plan, now), [plan, now]);
+  return (
+    <details className="mc-words">
+      <summary>The week in words</summary>
+      <dl>
+        {days.map((d) => (
+          <div key={d.day}>
+            <dt>{d.heading}</dt>
+            <dd>{d.text}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
   );
 }
 

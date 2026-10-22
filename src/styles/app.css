@@ -511,6 +511,119 @@ textarea {
   display: none;
 }
 
+/* ── the second screen (#/now) ───────────────────────────────────────────── */
+.app-root.is-kiosk .top,
+.app-root.is-kiosk .mc-foot {
+  display: none;
+}
+.ks {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--gap-md);
+  padding: clamp(24px, 6vw, 72px) var(--gutter, 16px);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.ks-what {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--gap-md);
+  font-size: clamp(1.2rem, 3vw, 2rem);
+}
+.ks-course {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--c-ink, var(--c));
+  font-size: clamp(1.6rem, 4vw, 2.75rem);
+}
+.ks-when {
+  color: var(--color-fg-muted);
+}
+.ks-num {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(6rem, 28vw, 20rem);
+  line-height: 0.85;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.ks-num.is-ahead {
+  color: var(--color-fg-muted);
+}
+.ks-sub,
+.ks-next {
+  margin: 0;
+  color: var(--color-fg-muted);
+  font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+}
+.ks-next b {
+  color: var(--color-fg);
+}
+.ks-exam {
+  margin: var(--gap-lg) 0 0;
+  padding-top: var(--gap-md);
+  border-top: 1px solid var(--color-border-line);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--gap-md);
+  font-size: clamp(1.05rem, 2.2vw, 1.4rem);
+}
+.ks-exam b {
+  color: var(--c-ink, var(--c));
+}
+.ks-exam-n {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 4rem);
+  line-height: 1;
+  color: var(--color-critical);
+}
+.ks-foot {
+  margin: var(--gap-lg) 0 0;
+  font-size: var(--fs-caption);
+}
+.ks-foot a {
+  color: var(--color-fg-muted);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ks-num {
+    transition: color 300ms;
+  }
+}
+
+/* the week in words, and its forecast line */
+.mc-forecast {
+  color: var(--color-fg-muted);
+}
+.mc-words {
+  margin-top: var(--gap-sm);
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+}
+.mc-words summary {
+  cursor: pointer;
+  color: var(--color-fg);
+}
+.mc-words dl {
+  margin: var(--gap-sm) 0 0;
+  display: grid;
+  gap: 6px;
+  max-width: 70ch;
+}
+.mc-words dt {
+  font-weight: 600;
+  color: var(--color-fg);
+}
+.mc-words dd {
+  margin: 0;
+}
+
 /* ── runway: actual time and readiness ───────────────────────────────────── */
 .rw-day.has-actual .rw-block {
   right: 9px;

@@ -17,6 +17,7 @@ const VIEWS = [
   './#/courses',
   './#/friends',
   './#/review',
+  './#/now',
 ];
 const PUBLIC = ['./', './#/signin', './#/privacy', `./#/u/${OWNER_HANDLE}`];
 

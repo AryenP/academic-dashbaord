@@ -51,6 +51,7 @@ const VIEWS = [
   { name: 'focus-start', path: './#/focus' },
   { name: 'connect', path: './#/connect' },
   { name: 'courses', path: './#/courses' },
+  { name: 'now', path: './#/now' },
 ];
 
 for (const s of SIZES)

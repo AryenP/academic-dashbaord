@@ -55,13 +55,14 @@ export function Shell({ children }: { children: ReactNode }) {
   const { user, ready } = useAuth();
   const { pathname } = useLocation();
   const focus = pathname === '/focus';
+  const kiosk = pathname === '/now';
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
   return (
-    <div className={`app-root${focus ? ' is-focus' : ''}`}>
+    <div className={`app-root${focus ? ' is-focus' : ''}${kiosk ? ' is-kiosk' : ''}`}>
       <header className="top">
         <Link to="/" className="wordmark" aria-label="Runway home">
           Runway

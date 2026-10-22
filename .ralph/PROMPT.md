@@ -7,10 +7,10 @@ v1 and v2 Phases 0–4 are live (2026-10-22). Your job is the open v2 backlog: P
 (coarse daily sleep/exercise/steps/place summaries from an iPhone Shortcut, turned into plain-words
 focus patterns), extension packaging, an end-to-end new-user test, quality gates and small UI items.
 
-**Where the code is:** the app repo is `/Users/AryenP/Downloads/academic-dashbaord` (call it `APP/`),
+**Where the code is:** this repo, `/Users/AryenP/Downloads/academic-dashbaord` (the current directory),
 a React 19 + Vite + TypeScript PWA on Supabase (Postgres + RLS, Auth, Vault, Deno Edge Functions).
-This Ralph workspace (`APP/BACKLOG/`) only holds `.ralph/` and `BACKLOG.md`. Do all implementation,
-tests and commits in `APP/`. Read `APP/CLAUDE.md` (house rules) before your first change.
+`.ralph/` lives at the repo root. Do all implementation, tests and commits here.
+Read `CLAUDE.md` (house rules) before your first change; it wins over this file.
 
 ## Current Objectives
 1. **Phase 5 data path** — `signals` table (migration `0012_signals.sql`, own-rows RLS, cascade, RLS
@@ -27,15 +27,15 @@ tests and commits in `APP/`. Read `APP/CLAUDE.md` (house rules) before your firs
 
 ## Key Principles
 - ONE task per loop — pick the top unchecked item in `.ralph/fix_plan.md` (High before Medium before Low)
-- Search the codebase before assuming something isn't implemented (`APP/src`, `APP/supabase`, `APP/extension`)
+- Search the codebase before assuming something isn't implemented (`src`, `supabase`, `extension`)
 - Reuse what exists: `import-items` for the token lookup, `_shared/auth.ts` for CORS,
   `src/connect/guides.tsx` for guide diagrams, `_shared/planner.ts` `allocate`, `_shared/weekly.ts` `WeekFacts`
 - Use subagents for expensive operations (file searching, analysis)
 - Write focused tests for what you build, with clear names
-- Update `.ralph/fix_plan.md` with your learnings, and tick the matching line in `APP/docs/v2/BACKLOG.md`
+- Update `.ralph/fix_plan.md` with your learnings, and tick the matching line in `docs/v2/BACKLOG.md`
   with `[x]` and the date under Completed
-- Every deviation from the spec gets one line in `APP/docs/DECISIONS.md`
-- Commit working changes in `APP/` with short imperative conventional messages (`feat:`, `fix:`, `docs:`,
+- Every deviation from the spec gets one line in `docs/DECISIONS.md`
+- Commit working changes in `` with short imperative conventional messages (`feat:`, `fix:`, `docs:`,
   `chore:`) — **no AI attribution** (no `Co-Authored-By`, no "Generated with")
 - **Do not push `main`** (it deploys) and do not run `supabase db push` or `supabase config push`:
   commit locally and leave deploys to Aryen
@@ -62,7 +62,7 @@ When performing cleanup, refactoring, or restructuring tasks:
 
 ## Execution Guidelines
 - Before making changes: search the codebase using subagents
-- After implementation, run the ESSENTIAL checks for what you touched (from `APP/`):
+- After implementation, run the ESSENTIAL checks for what you touched (from ``):
   - Frontend / unit: `npm run lint`, `npm run test`, and `npm run check` before ticking a UI task
   - Edge Functions / Deno: `npm run test:fn`
   - Database / RLS (needs Docker + `supabase start`): `supabase db reset` to apply the new migration
@@ -131,14 +131,14 @@ wearable OAuth apps (Fitbit, Oura), Runway v3 native iOS wrapper, and any deploy
 push`, `supabase config push`). If a task can't finish without one of these, mark it BLOCKED with what's needed.
 
 ## Success Criteria
-- Every High, Medium and Low item in `.ralph/fix_plan.md` is `[x]`, and ticked/dated in `APP/docs/v2/BACKLOG.md`.
+- Every High, Medium and Low item in `.ralph/fix_plan.md` is `[x]`, and ticked/dated in `docs/v2/BACKLOG.md`.
 - `npm run check` passes; with local Supabase, `npm run test:db`, `npm run test:fn` and `npm run test:e2e:db` pass.
 - A Shortcut POST with a valid token stores (and re-POSTs update) one row per day per kind; bad token → 401,
   bad kind/range → 400; user B can't read user A's signals; deleting an account removes its signals.
 - Stats shows "tends to" pattern sentences only after 7 days of data, and nothing ever says "because".
 - `npm run ext:zip` produces a versioned zip; `STORE.md` answers every store question.
 - The new-user e2e passes; `npm run lighthouse` passes at perf ≥ 90 / a11y 100.
-- Each deviation from the spec has a line in `APP/docs/DECISIONS.md`; v1 tests still pass.
+- Each deviation from the spec has a line in `docs/DECISIONS.md`; v1 tests still pass.
 
 ## 🎯 Status Reporting (CRITICAL - Ralph needs this!)
 
@@ -375,13 +375,13 @@ RECOMMENDATION: Blocked on [specific dependency] - need [what's needed]
 ---
 
 ## File Structure
-- `.ralph/` (this workspace, `APP/BACKLOG/.ralph/`): Ralph configuration and documentation
+- `.ralph/` (at the repo root): Ralph configuration and documentation
   - `specs/requirements.md`: detailed technical specification for the backlog
   - `fix_plan.md`: prioritized TODO list (tick items here)
   - `AGENT.md`: build and run instructions
   - `PROMPT.md`: this file
   - `logs/`: loop execution logs
-- `APP/` = `/Users/AryenP/Downloads/academic-dashbaord`: the app (all code changes and commits go here)
+- the repo root `/Users/AryenP/Downloads/academic-dashbaord`: the app (all code changes and commits go here)
   - `src/` frontend (`src/connect/guides.tsx`, `src/lib/planBuild.ts`, `src/lib/database.types.ts`, Stats, Settings)
   - `supabase/migrations/` SQL (next `0012`), `supabase/functions/` Edge Functions (`_shared/auth.ts`,
     `_shared/planner.ts`, `_shared/weekly.ts`), `supabase/tests/rls.test.ts`

@@ -3,7 +3,7 @@
 # Documentation: https://github.com/frankbria/ralph-claude-code
 
 # Project identification
-PROJECT_NAME="BACKLOG"
+PROJECT_NAME="runway"
 PROJECT_TYPE="generic"
 
 # Claude Code CLI command

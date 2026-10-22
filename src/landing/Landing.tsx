@@ -32,7 +32,7 @@ export function Landing({ static: isStatic = false }: { static?: boolean }) {
         </a>
         <nav aria-label="Site">
           <a href="#how">How it works</a>
-          <a href="#/privacy">Privacy</a>
+          <a href="privacy.html">Privacy</a>
           <a href={SIGNUP} className="btn btn-quiet">
             Sign in
           </a>
@@ -129,7 +129,7 @@ export function Landing({ static: isStatic = false }: { static?: boolean }) {
               the database is locked to your account. Delete your account and everything goes with it.
             </p>
             <p>
-              <a href="#/privacy">Read the privacy page</a>
+              <a href="privacy.html">Read the privacy page</a>
             </p>
           </div>
         </section>
@@ -144,7 +144,7 @@ export function Landing({ static: isStatic = false }: { static?: boolean }) {
 
       <footer className="ld-foot">
         <span>Runway</span>
-        <a href="#/privacy">Privacy</a>
+        <a href="privacy.html">Privacy</a>
         <a href="https://github.com/AryenP/academic-dashbaord">Source on GitHub</a>
       </footer>
     </div>

@@ -27,6 +27,16 @@ test('the prerendered page has the headline before any script runs', async ({ re
   expect(html).toContain('ld-board-static');
 });
 
+test('the privacy page exists at a plain URL, styled, without JavaScript', async ({ page }) => {
+  await page.goto('./privacy.html');
+  await expect(page.getByRole('heading', { name: 'Privacy' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Deleting everything' })).toBeVisible();
+  const font = await page.locator('h1').evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(font).toContain('Big Shoulders');
+  await page.getByRole('link', { name: 'Back to Runway' }).click();
+  await expect(page.getByRole('heading', { name: 'Your runway to every exam.' })).toBeVisible();
+});
+
 test('hovering a demo block shows its details', async ({ page }) => {
   await page.goto('./');
   await page.locator('.rw-block.is-now').hover();

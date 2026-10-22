@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { hasBackend, supabase } from '../lib/supabase';
@@ -27,6 +27,16 @@ export function SignIn() {
     const m = readCallbackError();
     return m && friendly(m);
   });
+  // The server says whether sign-up is school-email only (a switch in app_config). Until it
+  // answers, assume it is.
+  const [schoolOnly, setSchoolOnly] = useState(true);
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.rpc('signup_policy').then(({ data }) => {
+      const p = data as { school_email_only?: boolean } | null;
+      if (p && p.school_email_only === false) setSchoolOnly(false);
+    });
+  }, []);
 
   if (!ready) return null;
   if (user) return <Navigate to="/" replace />;
@@ -34,7 +44,7 @@ export function SignIn() {
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     const addr = email.trim();
-    if (!isSchoolEmail(addr)) {
+    if (schoolOnly && !isSchoolEmail(addr)) {
       setError('Runway is for students: use your school email, the one ending in .edu.');
       return;
     }
@@ -71,14 +81,15 @@ export function SignIn() {
       ) : (
         <section className="card-section" aria-labelledby="signin-h">
           <h2 id="signin-h" className="mc-h2">
-            With your school email
+            {schoolOnly ? 'With your school email' : 'With your email'}
           </h2>
           <p className="mc-note">
             No password. You'll get a link by email; the same link signs you up the first time.
+            {!schoolOnly && ' Any address works while Runway is in testing.'}
           </p>
           <form className="form-row" onSubmit={submit}>
             <label className="field grow">
-              <span className="field-label">School email</span>
+              <span className="field-label">{schoolOnly ? 'School email' : 'Email'}</span>
               <input
                 type="email"
                 required
@@ -98,14 +109,18 @@ export function SignIn() {
               <button type="button" className="btn btn-quiet" onClick={google}>
                 Continue with Google
               </button>
-              <span className="field-hint">Use your school Google account.</span>
+              <span className="field-hint">
+                {schoolOnly ? 'Use your school Google account.' : 'Any Google account works for now.'}
+              </span>
             </p>
           )}
           {error && <p className="form-error">{error}</p>}
-          <p className="field-hint">
-            Why school email only? It keeps Runway to students, and it's how Runway finds your school's Canvas
-            and, later, your classmates. See the <Link to="/privacy">privacy page</Link>.
-          </p>
+          {schoolOnly && (
+            <p className="field-hint">
+              Why school email only? It keeps Runway to students, and it's how Runway finds your school's
+              Canvas and, later, your classmates. See the <Link to="/privacy">privacy page</Link>.
+            </p>
+          )}
         </section>
       )}
     </div>

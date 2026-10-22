@@ -1009,6 +1009,7 @@ export type Database = {
           timezone: string;
         }[];
       };
+      signup_policy: { Args: Record<PropertyKey, never>; Returns: Json };
       source_url: { Args: { p_source: string }; Returns: string };
       start_break: {
         Args: { p_at?: string; p_kind?: string; p_session: string };

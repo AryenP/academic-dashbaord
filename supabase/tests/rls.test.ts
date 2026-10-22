@@ -50,6 +50,22 @@ describe('sign-up', () => {
     await admin.auth.admin.deleteUser(ok.data.user!.id);
   });
 
+  it('takes any email while school_email_only is off, and the form can ask', async () => {
+    const policy = await anon.rpc('signup_policy');
+    expect(policy.data).toEqual({ school_email_only: true });
+    await admin.from('app_config').update({ value: false }).eq('key', 'school_email_only');
+    try {
+      expect((await anon.rpc('signup_policy')).data).toEqual({ school_email_only: false });
+      const r = await admin.auth.admin.createUser({ email: 'tester@gmail.com', password: 'x'.repeat(12) });
+      expect(r.error).toBeNull();
+      await admin.auth.admin.deleteUser(r.data.user!.id);
+    } finally {
+      await admin.from('app_config').update({ value: true }).eq('key', 'school_email_only');
+    }
+    // the config itself stays unreadable
+    expect((await anon.from('app_config').select('*')).data).toEqual([]);
+  });
+
   it('gives everyone a handle, a school domain and private sharing', async () => {
     const { data } = await admin.from('profiles').select('*').eq('id', a.id).single();
     expect(data).toMatchObject({ handle: 'alice', school_domain: 'ucsd.edu', share_level: 'off' });

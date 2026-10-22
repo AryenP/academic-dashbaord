@@ -27,6 +27,17 @@ export function dbStore(db: SupabaseClient): Store {
           .eq('source_id', sourceId)
           .limit(5000),
       ) as EventRow[],
+    userEvents: async (userId) =>
+      must(
+        await db
+          .from('events')
+          .select(
+            'id, uid, recurrence_id, hash, title, start_at, end_at, all_day, location, kind, course_code, confidence, override, ai_hash, ai_kind, ai_course_code, plan_item_id, deleted_at, source_id',
+          )
+          .eq('user_id', userId)
+          .is('deleted_at', null)
+          .limit(5000),
+      ) as (EventRow & { source_id: string })[],
     upsertEvents: async (rows) => {
       if (!rows.length) return [];
       const out: string[] = [];

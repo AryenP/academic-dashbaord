@@ -21,13 +21,13 @@ const must = <T>({ data, error }: { data: T; error: unknown }): T => {
   return data;
 };
 
-type Pending = EventRow & { source_id: string; source_kind: Source['kind'] };
+type Pending = EventRow & { source_id: string; source_kind: Source['kind']; calendar: string | null };
 
 async function pendingFor(db: SupabaseClient, userId: string, all: boolean): Promise<Pending[]> {
   let q = db
     .from('events')
     .select(
-      'id, uid, recurrence_id, hash, title, start_at, end_at, all_day, location, kind, course_code, confidence, override, ai_hash, ai_kind, ai_course_code, plan_item_id, deleted_at, source_id, calendar_sources(kind)',
+      'id, uid, recurrence_id, hash, title, start_at, end_at, all_day, location, kind, course_code, confidence, override, ai_hash, ai_kind, ai_course_code, plan_item_id, deleted_at, source_id, calendar_sources(kind, label)',
     )
     .eq('user_id', userId)
     .is('deleted_at', null)
@@ -37,11 +37,15 @@ async function pendingFor(db: SupabaseClient, userId: string, all: boolean): Pro
   if (!all) q = q.lt('confidence', UNSURE_BELOW);
   const rows = must(await q) as unknown as (EventRow & {
     source_id: string;
-    calendar_sources: { kind: Source['kind'] } | null;
+    calendar_sources: { kind: Source['kind']; label: string } | null;
   })[];
   return rows
     .filter((r) => all || r.ai_hash !== r.hash)
-    .map((r) => ({ ...r, source_kind: r.calendar_sources?.kind ?? 'ical' }));
+    .map((r) => ({
+      ...r,
+      source_kind: r.calendar_sources?.kind ?? 'ical',
+      calendar: r.calendar_sources?.label ?? null,
+    }));
 }
 
 /** Reads one person's pending events. Returns what was read and spent. */
@@ -89,7 +93,8 @@ async function readFor(db: SupabaseClient, userId: string, all: boolean, deadlin
       all_day: e.all_day,
       location: e.location,
       source_kind: e.source_kind,
-      rules: { kind: e.kind, course_code: e.course_code },
+      calendar: e.calendar ?? undefined,
+      rules: { kind: e.kind, course_code: e.course_code, confidence: Number(e.confidence) },
     }));
     const { readings, usage } = await classifyWithClaude(events, {
       model,

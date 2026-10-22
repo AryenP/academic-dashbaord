@@ -12,8 +12,10 @@ export interface AiEvent {
   all_day: boolean;
   location: string;
   source_kind: 'ical' | 'canvas' | 'ics_upload';
+  /** The calendar's name as the student labelled it ("Canvas", "School"). */
+  calendar?: string;
   /** What the rules thought, so the model can agree cheaply. */
-  rules: { kind: string; course_code: string | null };
+  rules: { kind: string; course_code: string | null; confidence?: number };
 }
 
 export interface AiReading {
@@ -60,7 +62,11 @@ For every event, decide its kind:
 - "commitment": fixed non-course time: a job or shift, research, internship, a club, a standing meeting, volunteering, rehearsal, TA or tutoring hours.
 - "personal": everything else: meals, friends, travel, appointments, holidays, "no class" days, reminders.
 
-Find the course: a code like "DSC 140A", "CSE 12", "MATH 20C", "COGS 1". Normalize to uppercase letters, a space, then the number ("dsc140a" -> "DSC 140A"). Canvas puts the course in square brackets at the end of the title; use the code from inside the brackets and put the course's long name in course_name. If an event clearly belongs to a course but the title only has the number ("Midterm 1 (140A)", "📚 140A practice"), pick the code from the student's known courses whose number matches. If the course can't be told, set course_code to null. Never invent a department.
+Time the student blocked to work on or hand in an assignment ("HW 2: finish + submit", "Project 2: work with team", "Lab 4: submit before the flight") is a deadline for that assignment, not study. A quiz that is a Canvas assignment (a reading quiz, an online quiz) is a deadline; a quiz sat in class is an exam.
+
+Each event says which calendar it came from (calendar) and what Runway's title rules read (rules, with their confidence). The rules place a course-less study block with the nearest upcoming exam at low confidence, and an untitled exam with the exam from another calendar at the same time; treat those as hints to check against the dates and the student's courses, not as answers. The student's known courses come with their long names so a title that uses a name or a topic ("data viz project", "stats HW") can be placed too.
+
+Find the course: a code like "DSC 140A", "CSE 12", "MATH 20C", "COGS 1". Normalize to uppercase letters, a space, then the number ("dsc140a" -> "DSC 140A"). Canvas puts the course in square brackets at the end of the title; use the code from inside the brackets and put the course's long name in course_name. If an event clearly belongs to a course but the title only has the number ("Midterm 1 (140A)", "📚 140A practice"), pick the code from the student's known courses whose number matches. A study block, exam or deadline with no course in its title usually belongs to the course whose exam or due date it sits closest to in the days around it: use the other events' dates and the known courses. An exam with no course is most likely for a known course that has no exam placed near that date yet (a student sits one midterm per course), and the course-less study blocks in the days before it prepare for it. If the course still can't be told, set course_code to null. Never invent a department.
 
 Weight: if the title or location states what fraction of the grade an exam is worth ("25%"), set weight to that number; else null.
 

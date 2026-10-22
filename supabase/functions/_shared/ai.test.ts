@@ -10,7 +10,8 @@ const EVENTS: AiEvent[] = [
     all_day: false,
     location: '',
     source_kind: 'ical',
-    rules: { kind: 'study', course_code: null },
+    calendar: 'School',
+    rules: { kind: 'study', course_code: null, confidence: 0.6 },
   },
   {
     id: 'e2',
@@ -102,6 +103,9 @@ Deno.test('sends the stable prompt cached, the events after it, and asks for the
     sent.events.map((e: AiEvent) => e.id),
     ['e1', 'e2'],
   );
+  // The calendar's name and the rules' confidence travel with each event.
+  assertEquals(sent.events[0].calendar, 'School');
+  assertEquals(sent.events[0].rules, { kind: 'study', course_code: null, confidence: 0.6 });
   assertEquals(api.calls[0].headers.get('x-api-key'), 'sk-test');
   // Readings come back normalized.
   assertEquals(readings[0].course_code, 'DSC 140A');

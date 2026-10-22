@@ -53,7 +53,11 @@ export function cleanTitle(title: string): string {
   return title.replace(BRACKET_RE, '').trim() || title.trim();
 }
 
-const EXAM = /\b(midterm|final exam|finals?|exam|quiz|test)\b/i;
+// "Final project", "final draft": the word says when, not what.
+const NOT_AN_EXAM =
+  '(?!\\s+(project|paper|report|draft|proposal|presentation|essay|portfolio|version|submission|code|deliverable|poster|demo|showcase|reflection))';
+const EXAM = new RegExp(`\\b(midterm|final exam|finals?${NOT_AN_EXAM}|exam|quiz|test)\\b`, 'i');
+const MIDTERM_OR_FINAL = new RegExp(`\\b(midterm|final)${NOT_AN_EXAM}\\b`, 'i');
 const STUDY =
   /^(📚|📖|✏️|🧠)|\b(study|review|practice|revise|revision|cheat sheet|prep|flashcards?|problems)\b/i;
 const CLASS = /\b(lecture|discussion|section|lab|seminar|tutorial|office hours|recitation|studio|class)\b/i;
@@ -86,7 +90,7 @@ export function classify(input: ClassifyInput): Reading {
   // A study block with no department ("📚 140A practice"): Phase 2's AI groups it; keep it visible.
   if (/^(📚|📖|✏️|🧠)/.test(raw) && !course) return { kind: 'study', course: null, confidence: 0.6 };
   if (canvasAssignment) {
-    if (/\b(midterm|final)\b/i.test(body)) return { kind: 'exam', course, confidence: 0.85 };
+    if (MIDTERM_OR_FINAL.test(body)) return { kind: 'exam', course, confidence: 0.85 };
     return { kind: 'deadline', course: course ?? (bracket ? bracket.trim() : null), confidence: 0.9 };
   }
   if (EXAM.test(body) && !/\b(review|prep|practice|study)\b/i.test(body)) {
@@ -105,6 +109,9 @@ export function classify(input: ClassifyInput): Reading {
   if (course) return { kind: input.allDay ? 'deadline' : 'class', course, confidence: 0.5 };
   if (input.sourceKind === 'canvas' && bracket)
     return { kind: CLASS.test(body) ? 'class' : 'deadline', course: bracket.trim(), confidence: 0.6 };
+  // A course feed's own calendar events ("Discussion section"): the course comes from the feed.
+  if (input.sourceKind === 'canvas' && CLASS.test(body))
+    return { kind: 'class', course: null, confidence: 0.5 };
   // "Lab 4 due", "HW due": a deadline with no course yet; the AI or the person places it.
   if (
     /\b(due|submit|deadline)\b/i.test(body) ||
@@ -113,4 +120,78 @@ export function classify(input: ClassifyInput): Reading {
     return { kind: 'deadline', course: null, confidence: 0.5 };
   if (COMMITMENT.test(body) && !input.allDay) return { kind: 'commitment', course: null, confidence: 0.6 };
   return { kind: 'personal', course: null, confidence: 0.5 };
+}
+
+// ---- Context: what the events around one say about its course ----------------------------------
+
+/** An event as the context pass sees it: its current reading plus where and when it is. */
+export interface ContextEvent {
+  key: string;
+  start: string; // ISO
+  kind: string;
+  course: string | null;
+  confidence: number;
+  sourceId?: string;
+  sourceKind?: 'ical' | 'canvas' | 'ics_upload';
+}
+
+const DAY = 864e5;
+/** A study block with no course goes to the nearest known exam this many days ahead at most. */
+export const EXAM_WINDOW_DAYS = 7;
+const SAME_TIME_MS = 5 * 60_000;
+const ACADEMIC = new Set(['study', 'deadline', 'exam', 'class']);
+
+/**
+ * Places events whose title doesn't say the course, from what sits around them. Only fills a
+ * missing course, never changes one, and never invents a code. Three rules, in order:
+ * 1. a Canvas feed whose events name exactly one course is that course's feed: its course-less
+ *    academic events belong to it;
+ * 2. an exam or deadline at the same time as a known one of the same kind is the same thing
+ *    ("Midterm" in Google next to "Midterm [DSC 102 …]" from Canvas);
+ * 3. a study block most likely prepares for the nearest known exam in the next 7 days, marked low
+ *    confidence so the AI still reviews it.
+ * Returns the new readings by key, for the events that changed.
+ */
+export function placeByContext(events: ContextEvent[]): Map<string, Reading> {
+  const out = new Map<string, Reading>();
+  const cur = (e: ContextEvent): Reading =>
+    out.get(e.key) ?? { kind: e.kind as EventKind, course: e.course, confidence: e.confidence };
+
+  const bySource = new Map<string, ContextEvent[]>();
+  for (const e of events) {
+    if (e.sourceKind !== 'canvas' || !e.sourceId) continue;
+    bySource.set(e.sourceId, [...(bySource.get(e.sourceId) ?? []), e]);
+  }
+  for (const list of bySource.values()) {
+    const codes = new Set(list.map((e) => e.course).filter((c): c is string => !!c));
+    if (codes.size !== 1) continue;
+    const [code] = codes;
+    for (const e of list)
+      if (!e.course && ACADEMIC.has(e.kind))
+        out.set(e.key, { kind: e.kind as EventKind, course: code, confidence: Math.min(e.confidence, 0.6) });
+  }
+
+  const known = (kind: string) =>
+    events.map((e) => ({ t: Date.parse(e.start), r: cur(e) })).filter((x) => x.r.kind === kind && x.r.course);
+  for (const kind of ['exam', 'deadline'] as const) {
+    const anchors = known(kind);
+    if (!anchors.length) continue;
+    for (const e of events) {
+      const r = cur(e);
+      if (r.kind !== kind || r.course) continue;
+      const t = Date.parse(e.start);
+      const hits = new Set(anchors.filter((a) => Math.abs(a.t - t) <= SAME_TIME_MS).map((a) => a.r.course));
+      if (hits.size === 1) out.set(e.key, { kind, course: [...hits][0]!, confidence: 0.7 });
+    }
+  }
+
+  const exams = known('exam').sort((a, b) => a.t - b.t);
+  for (const e of events) {
+    const r = cur(e);
+    if (r.kind !== 'study' || r.course) continue;
+    const t = Date.parse(e.start);
+    const next = exams.find((x) => x.t >= t && x.t - t <= EXAM_WINDOW_DAYS * DAY);
+    if (next) out.set(e.key, { kind: 'study', course: next.r.course, confidence: 0.4 });
+  }
+  return out;
 }

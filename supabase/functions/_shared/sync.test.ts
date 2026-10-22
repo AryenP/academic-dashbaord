@@ -30,6 +30,7 @@ function fakeStore(url: string | null = 'https://calendar.example/secret.ics') {
     sourceUrl: async () => url,
     timezone: async () => 'America/Los_Angeles',
     events: async (sourceId) => [...events.values()].filter((e) => e.source_id === sourceId),
+    userEvents: async (userId) => [...events.values()].filter((e) => e.user_id === userId && !e.deleted_at),
     upsertEvents: async (rows) =>
       rows.map((r) => {
         const k = key(r);
@@ -205,6 +206,25 @@ Deno.test('the same deadline from Canvas and Google becomes one plan item', asyn
   assertEquals(hw.length, 1);
   const linked = [...f.events.values()].filter((e) => e.plan_item_id === hw[0].id && !e.deleted_at);
   assertEquals(linked.length, 3);
+});
+
+Deno.test('a study block with no course is placed by an exam from another calendar', async () => {
+  const f = fakeStore();
+  await syncSource(f.store, { ...SRC, kind: 'canvas' }, { now: NOW, fetchImpl: serve(canvas) });
+  // Google: the midterm loses its course and the study block its number; Canvas has DSC 102's
+  // midterm on Oct 28, six days after the block.
+  const g = google
+    .replace('SUMMARY:DSC 140A Midterm 1', 'SUMMARY:Midterm 1')
+    .replace('SUMMARY:📚 140A practice problems + cheat sheet #1', 'SUMMARY:📚 final review');
+  await syncSource(f.store, { ...SRC, id: 's2' }, { now: NOW, fetchImpl: serve(g) });
+  const study = [...f.events.values()].find((e) => e.title === '📚 final review')!;
+  assertEquals(study.course_code, 'DSC 102');
+  assertEquals(study.confidence, 0.4);
+  const item = f.plans.get(study.plan_item_id!)!;
+  assertEquals(f.courses.find((c) => c.id === item.course_id)?.code, 'DSC 102');
+  // The exam itself has nothing at its time in Canvas: left for the AI.
+  const mt = [...f.events.values()].find((e) => e.title === 'Midterm 1')!;
+  assertEquals(mt.course_code, null);
 });
 
 Deno.test('errors are recorded in plain words and nothing else changes', async () => {

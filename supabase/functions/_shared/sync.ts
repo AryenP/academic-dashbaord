@@ -4,7 +4,7 @@
 // What an event *is* (kind, course) comes from, in order: the person's override, the AI reading
 // (when it was made for the current version of the event), the title rules. `materialize` turns
 // that into plan items and is shared by the sync and by the AI pass.
-import { classify, cleanTitle, type EventKind } from './classify.ts';
+import { classify, cleanTitle, placeByContext, type ContextEvent, type EventKind } from './classify.ts';
 import { occurrenceHash, parseFeed } from './ical.ts';
 import { checkUrl, fetchFeed, HttpError, NotACalendarLike, TooLarge } from './net.ts';
 import { effective } from '../../../src/lib/reading.ts';
@@ -75,6 +75,8 @@ export interface Store {
   timezone(userId: string): Promise<string>;
   /** Every event row of the source, deleted ones included. */
   events(sourceId: string): Promise<EventRow[]>;
+  /** The person's live events across all their sources, for reading one feed in the light of the others. */
+  userEvents(userId: string): Promise<(EventRow & { source_id: string })[]>;
   /** Upserts by (source_id, uid, recurrence_id) and returns ids in order. */
   upsertEvents(rows: EventWrite[]): Promise<string[]>;
   linkEvents(links: { id: string; plan_item_id: string | null }[]): Promise<void>;
@@ -307,6 +309,30 @@ export async function syncSource(
         deleted_at: null,
       });
       prevs.push(prev);
+    }
+    // What the title doesn't say, the other events might: the same exam from Canvas, the exam a
+    // study block prepares for. Only fills a missing course; the AI reviews anything placed this way.
+    const others = (await store.userEvents(src.user_id)).filter((e) => e.source_id !== src.id);
+    const ctx: ContextEvent[] = [
+      ...writes.map((w, i) => ({
+        key: `w${i}`,
+        start: w.start_at,
+        kind: w.kind,
+        course: w.course_code,
+        confidence: w.confidence,
+        sourceId: src.id,
+        sourceKind: src.kind,
+      })),
+      ...others.map((e) => {
+        const eff = effective(e);
+        return { key: `o${e.id}`, start: e.start_at, kind: eff.kind, course: eff.course, confidence: 1 };
+      }),
+    ];
+    for (const [key, r] of placeByContext(ctx)) {
+      if (!key.startsWith('w')) continue;
+      const w = writes[Number(key.slice(1))];
+      w.course_code = r.course;
+      w.confidence = r.confidence;
     }
     const ids = await store.upsertEvents(writes);
 

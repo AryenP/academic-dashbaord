@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 import { assertEquals } from 'jsr:@std/assert@1';
 import { parseHTML } from 'npm:linkedom@0.18.12';
-import { parseDue, parsePage, parseScore } from '../parsers.js';
+import { parseDue, parseGradescopeDashboard, parsePage, parseScore } from '../parsers.js';
 
 const dom = (html: string) => (parseHTML(html) as unknown as { document: Document }).document;
 
@@ -75,3 +75,34 @@ Deno.test('other pages read nothing', () => {
   assertEquals(parsePage(document, 'https://www.gradescope.com/', NOW), []);
   assertEquals(parsePage(document, 'https://canvas.ucsd.edu/courses/555/grades', NOW), []);
 });
+
+Deno.test(
+  'the Gradescope dashboard: courses by term, the first term is current, the add card is skipped',
+  () => {
+    const document = dom(read('gradescope-dashboard.html'));
+    const courses = parseGradescopeDashboard(document);
+    assertEquals(courses, [
+      {
+        course: 'CSE151A_FA26_001',
+        name: 'CSE 151A - ML: Learning Algorithms - Shang [FA26]',
+        path: '/courses/1151',
+        term: 'Fall 2026',
+        current: true,
+      },
+      {
+        course: 'DSC106_FA26_001',
+        name: 'DSC 106 - Intro to Data Visualization - Liao [FA26]',
+        path: '/courses/1106',
+        term: 'Fall 2026',
+        current: true,
+      },
+      {
+        course: 'DSC 40BR',
+        name: 'Theoretical Foundations of Data Science II [S226]',
+        path: '/courses/1040',
+        term: 'Summer 2026',
+        current: false,
+      },
+    ]);
+  },
+);

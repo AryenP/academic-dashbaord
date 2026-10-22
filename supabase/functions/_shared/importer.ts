@@ -4,7 +4,8 @@ import { findCourse, matchKnown } from './classify.ts';
 
 export interface Incoming {
   source: 'gradescope' | 'canvas';
-  course: string | null; // as the page shows it: "DSC 140A" or "Probabilistic Modeling (Fall 2026)"
+  course: string | null; // as the page shows it: "DSC 140A", "DSC106_FA26_001" or "Probabilistic Modeling (Fall 2026)"
+  course_name?: string | null; // the long name when the page has one: "DSC 106 - Intro to Data Visualization - Liao [FA26]"
   title: string;
   due: string | null; // ISO
   status: 'submitted' | 'open' | null;
@@ -47,26 +48,54 @@ const norm = (s: string) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
-/** Matches "Probabilistic Modeling" against a course's long name, or finds a code in the text. */
+// Gradescope names a course like "DSC106_FA26_001" and Canvas like "CSE151A_FA26_A00": the code with
+// no space, then a term. The title rules want a space, so this reads the glued form too. Term
+// tokens ("FA26", "WI27") and ordinary words never pass.
+const GLUED_RE = /\b([A-Z]{2,5})(\d{1,3}[A-Z]{0,2})(?=[_\s-]|$)/;
+const TERMS = new Set(['FA', 'WI', 'SP', 'SU', 'SS', 'FALL', 'WNTR', 'SPR', 'SUM']);
+export function gluedCode(text: string): string | null {
+  const m = text.toUpperCase().match(GLUED_RE);
+  if (!m || TERMS.has(m[1])) return null;
+  return `${m[1]} ${m[2]}`;
+}
+
+/** "DSC 106 - Intro to Data Visualization - Liao [FA26]" → "Intro to Data Visualization". */
+export function cleanName(name: string | null | undefined, code: string | null): string | null {
+  if (!name) return null;
+  let n = name.replace(/\s*\[[^\]]*\]\s*$/, '').trim();
+  if (code) {
+    const glued = code.replace(' ', '');
+    n = n.replace(new RegExp(`^(${code}|${glued})\\s*[-–:]?\\s*`, 'i'), '');
+  }
+  const parts = n.split(/\s+[-–]\s+/).filter(Boolean);
+  // "Intro to Data Visualization - Liao": the last part is usually the instructor; keep the first.
+  n = (parts.length > 1 ? parts[0] : n).trim();
+  return n.length >= 3 ? n.slice(0, 120) : null;
+}
+
+/** Finds a code in the page's course text or long name, else matches a known course by name. */
 function resolveCourse(
   text: string | null,
+  longName: string | null | undefined,
   courses: { id: string; code: string; name: string | null }[],
 ): { id: string; code: string } | { code: string | null; name: string | null } {
-  if (!text) return { code: null, name: null };
+  if (!text && !longName) return { code: null, name: null };
+  const codes = courses.map((c) => c.code);
   const code =
-    findCourse(text) ??
-    matchKnown(
-      text,
-      courses.map((c) => c.code),
-    );
+    (text && (findCourse(text) ?? gluedCode(text) ?? matchKnown(text, codes))) ||
+    (longName && (findCourse(longName) ?? gluedCode(longName) ?? matchKnown(longName, codes))) ||
+    null;
   if (code) {
     const c = courses.find((x) => x.code === code);
-    return c ? { id: c.id, code: c.code } : { code, name: null };
+    return c ? { id: c.id, code: c.code } : { code, name: cleanName(longName, code) };
   }
-  const n = norm(text);
-  const byName = courses.find((c) => c.name && (n.includes(norm(c.name)) || norm(c.name).includes(n)));
-  if (byName) return { id: byName.id, code: byName.code };
-  return { code: null, name: text.trim().slice(0, 80) };
+  for (const t of [text, longName]) {
+    if (!t) continue;
+    const n = norm(t);
+    const byName = courses.find((c) => c.name && (n.includes(norm(c.name)) || norm(c.name).includes(n)));
+    if (byName) return { id: byName.id, code: byName.code };
+  }
+  return { code: null, name: (text ?? longName ?? '').trim().slice(0, 80) };
 }
 
 export interface ImportResult {
@@ -93,7 +122,7 @@ export async function importItems(
       res.skipped++;
       continue;
     }
-    const course = resolveCourse(it.course, courses);
+    const course = resolveCourse(it.course, it.course_name, courses);
     let courseId: string | null = 'id' in course ? course.id : null;
     if (!courseId && course.code) {
       const used = new Set(courses.map((c) => c.color));
@@ -103,7 +132,7 @@ export async function importItems(
           color = n;
           break;
         }
-      const c = await store.addCourse(userId, course.code, null, color);
+      const c = await store.addCourse(userId, course.code, 'name' in course ? course.name : null, color);
       courses.push(c);
       courseId = c.id;
     }

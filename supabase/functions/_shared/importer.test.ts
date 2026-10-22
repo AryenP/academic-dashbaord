@@ -1,5 +1,5 @@
 import { assert, assertEquals } from 'jsr:@std/assert@1';
-import { importItems, type ExistingItem, type ImportStore } from './importer.ts';
+import { cleanName, gluedCode, importItems, type ExistingItem, type ImportStore } from './importer.ts';
 
 const NOW = new Date('2026-10-21T18:00:00Z');
 
@@ -187,5 +187,62 @@ Deno.test(
     );
     assertEquals(r2.updated, 0);
     assertEquals(r2.skipped, 1);
+  },
+);
+
+Deno.test(
+  'Gradescope course names: the glued code is read, the term is not, the long name is kept',
+  async () => {
+    assertEquals(gluedCode('DSC106_FA26_001'), 'DSC 106');
+    assertEquals(gluedCode('CSE151A_FA26_A00'), 'CSE 151A');
+    assertEquals(gluedCode('FA26_001'), null);
+    assertEquals(gluedCode('Theoretical Foundations'), null);
+    assertEquals(
+      cleanName('DSC 106 - Intro to Data Visualization - Liao [FA26]', 'DSC 106'),
+      'Intro to Data Visualization',
+    );
+    assertEquals(
+      cleanName('Theoretical Foundations of Data Science II [S226]', 'DSC 40BR'),
+      'Theoretical Foundations of Data Science II',
+    );
+    assertEquals(cleanName(null, 'DSC 106'), null);
+
+    const f = fake([], []);
+    const r = await importItems(
+      f.store,
+      'u1',
+      [
+        {
+          source: 'gradescope',
+          course: 'DSC106_FA26_001',
+          course_name: 'DSC 106 - Intro to Data Visualization - Liao [FA26]',
+          title: 'Lab 4',
+          due: '2026-10-25T06:59:00.000Z',
+          status: 'submitted',
+          score: null,
+          max_score: null,
+          url: null,
+        },
+        {
+          source: 'gradescope',
+          course: 'DSC106_FA26_001',
+          course_name: null,
+          title: 'Lab 5',
+          due: '2026-11-01T06:59:00.000Z',
+          status: 'open',
+          score: null,
+          max_score: null,
+          url: null,
+        },
+      ],
+      NOW,
+    );
+    assertEquals(r.created, 2);
+    assertEquals(r.unmatched_courses, []);
+    assertEquals(
+      f.courses.map((c) => [c.code, c.name]),
+      [['DSC 106', 'Intro to Data Visualization']],
+    );
+    assert(f.inserted.every((row) => row.course_id === 'c1'));
   },
 );

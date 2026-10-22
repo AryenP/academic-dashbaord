@@ -81,14 +81,25 @@ export function parseGradescopeCourse(doc, url, now = new Date()) {
   return rows;
 }
 
-/** Gradescope dashboard: the course cards, so the course list can be shown in the popup. */
+/** Gradescope dashboard: the course cards by term. The first term on the page is the current one.
+ * Each card: the short name ("DSC106_FA26_001"), the long name, and the course page path. */
 export function parseGradescopeDashboard(doc) {
   const out = [];
-  for (const a of doc.querySelectorAll('a.courseBox')) {
-    const name = text(a.querySelector('.courseBox--shortname')) || text(a.querySelector('.courseBox--name'));
-    const href = a.getAttribute('href');
-    if (name && href) out.push({ course: name, path: href });
-  }
+  const groups = doc.querySelectorAll('.courseList--coursesForTerm');
+  const scopes = groups.length ? [...groups] : [doc];
+  scopes.forEach((scope, i) => {
+    const termEl = scope.previousElementSibling;
+    const term = termEl && /courseList--term/.test(termEl.className || '') ? text(termEl) : null;
+    for (const a of scope.querySelectorAll('a.courseBox')) {
+      const course =
+        text(a.querySelector('.courseBox--shortname')) || text(a.querySelector('.courseBox--name'));
+      const name = text(a.querySelector('.courseBox--name')) || null;
+      const href = a.getAttribute('href');
+      // The add-a-course card links to /courses/new; real courses have a number.
+      if (course && href && /\/courses\/\d+/.test(href))
+        out.push({ course, name, path: href, term, current: i === 0 });
+    }
+  });
   return out;
 }
 

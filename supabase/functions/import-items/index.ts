@@ -107,6 +107,7 @@ Deno.serve(async (req) => {
     .map((i) => ({
       source: i.source,
       course: typeof i.course === 'string' ? i.course.slice(0, 200) : null,
+      course_name: typeof i.course_name === 'string' ? i.course_name.slice(0, 200) : null,
       title: i.title.slice(0, 200),
       due:
         typeof i.due === 'string' && Number.isFinite(Date.parse(i.due))

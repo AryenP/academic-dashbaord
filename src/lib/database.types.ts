@@ -673,6 +673,37 @@ export type Database = {
           },
         ];
       };
+      signals: {
+        Row: {
+          day: string;
+          kind: string;
+          label: string | null;
+          source: string;
+          updated_at: string;
+          user_id: string;
+          value: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          day: string;
+          kind: string;
+          label?: string | null;
+          source?: string;
+          updated_at?: string;
+          user_id?: string;
+          value?: number | null;
+        };
+        Update: {
+          day?: string;
+          kind?: string;
+          label?: string | null;
+          source?: string;
+          updated_at?: string;
+          user_id?: string;
+          value?: number | null;
+        };
+        Relationships: [];
+      };
       weekly_reviews: {
         Row: {
           created_at: string;

@@ -287,6 +287,7 @@ describe('deleting an account', () => {
     const c = await signedIn('carol@ucsd.edu');
     await c.db.from('courses').insert({ code: 'CSE 12', color: 2 });
     await c.db.from('sessions').insert({ course: 'CSE 12', mode: 'flow', note: 'secret' });
+    await c.db.from('signals').insert({ day: '2026-10-20', kind: 'sleep_h', value: 7 });
     const r = await c.db.rpc('delete_my_account');
     expect(r.error).toBeNull();
     const users = await admin.auth.admin.listUsers();
@@ -294,6 +295,7 @@ describe('deleting an account', () => {
     expect((await admin.from('courses').select('*').eq('user_id', c.id)).data).toEqual([]);
     expect((await admin.from('sessions').select('*').eq('user_id', c.id)).data).toEqual([]);
     expect((await admin.from('profiles').select('*').eq('id', c.id)).data).toEqual([]);
+    expect((await admin.from('signals').select('*').eq('user_id', c.id)).data).toEqual([]);
   });
 
   it('anonymous callers cannot delete anything', async () => {
@@ -848,5 +850,44 @@ describe('weekly reviews', () => {
           .insert({ user_id: a.id, week: '2026-10-26', text: 'x', model: 'm' } as never)
       ).error,
     ).not.toBeNull();
+  });
+});
+
+describe('signals', () => {
+  it("are private: user B can't see, change or delete user A's", async () => {
+    const r = await a.db.from('signals').insert([
+      { day: '2026-10-20', kind: 'sleep_h', value: 6.5 },
+      { day: '2026-10-20', kind: 'place', label: 'Library' },
+    ]);
+    expect(r.error).toBeNull();
+    expect((await a.db.from('signals').select('kind').order('kind')).data).toEqual([
+      { kind: 'place' },
+      { kind: 'sleep_h' },
+    ]);
+    expect((await b.db.from('signals').select('*')).data).toEqual([]);
+    expect((await anon.from('signals').select('*')).data ?? []).toEqual([]);
+    await b.db.from('signals').update({ value: 12 }).eq('user_id', a.id);
+    await b.db.from('signals').delete().eq('user_id', a.id);
+    expect(
+      (await admin.from('signals').select('value').eq('user_id', a.id).eq('kind', 'sleep_h')).data,
+    ).toEqual([{ value: 6.5 }]);
+    expect(
+      (await b.db.from('signals').insert({ user_id: a.id, day: '2026-10-21', kind: 'steps', value: 1 }))
+        .error,
+    ).not.toBeNull();
+  });
+
+  it('one row per day per kind, with coarse ranges enforced', async () => {
+    const dup = await a.db.from('signals').insert({ day: '2026-10-20', kind: 'sleep_h', value: 8 });
+    expect(dup.error).not.toBeNull();
+    const bad = [
+      { day: '2026-10-21', kind: 'sleep_h', value: 25 },
+      { day: '2026-10-21', kind: 'exercise_min', value: -1 },
+      { day: '2026-10-21', kind: 'steps', value: 12.5 },
+      { day: '2026-10-21', kind: 'steps', value: 200001 },
+      { day: '2026-10-21', kind: 'place' },
+      { day: '2026-10-21', kind: 'heart_rate', value: 60 },
+    ];
+    for (const row of bad) expect((await a.db.from('signals').insert(row as never)).error).not.toBeNull();
   });
 });

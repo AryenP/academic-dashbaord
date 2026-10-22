@@ -5,7 +5,6 @@ written so that one item is one sitting. Tick items with `[x]` and date them und
 deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). House rules: `CLAUDE.md`.
 
 ## High priority
-- [ ] Phase 5 schema: migration `0012_signals.sql` with `signals(user_id, day, kind ∈ {sleep_h, exercise_min, steps, place}, value numeric, label text, source text)`, own-rows RLS, cascade on account delete, a "user B can't see user A" test in `supabase/tests/rls.test.ts`, then `npm run types`.
 - [ ] `signals` Edge Function: POST one coarse summary row with a per-user token (same lookup as `import-items`, `token_owner`); validates kinds and ranges, upserts per day; Deno tests; header listed in the shared CORS allow-list.
 - [ ] Connect guide for the iPhone Shortcut ("Runway nightly"): a card under Connect that explains, step by step with SVG diagrams like `src/connect/guides.tsx`, how to build the Shortcut with *Find Health Samples* and a *Get Contents of URL* POST to the signals function; the token comes from Settings → Extension. Screenshots at 390×844 and 1440×900, light and dark.
 - [ ] Stats "Patterns": plain-words correlations between signals and session focus % / hours ("focus after 11 PM tends to average 40 %", "mornings after a workout tend to run 20 points higher"); a SQL function `signal_patterns(p_user)` with a minimum of 7 days of data before a sentence appears; wording always "tends to", never "because"; unit tests for the sentence builder.
@@ -40,3 +39,4 @@ deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). Ho
 - Live project ref `uhqurcspebdxtkalbduc`; pushing `main` deploys. Apply migrations (`supabase db push`) before pushing code that needs them.
 - Function log tables are missing on this project: debug Edge Functions locally (`supabase functions serve`) or with the `diag` function.
 - Dashboard saves take about a minute to reach the auth server. Never run `supabase config push` without `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` in the shell.
+- [x] 2026-10-22 · Phase 5 schema: `signals` table (migration 0012) with own-rows RLS, range checks, cascade on account delete and RLS tests.

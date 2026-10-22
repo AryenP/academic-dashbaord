@@ -6,7 +6,7 @@ export function PrivacyText({ home = '#/' }: { home?: string }) {
   return (
     <>
       <h1 className="page-h">Privacy</h1>
-      <p className="muted">Last changed October 21, 2026.</p>
+      <p className="muted">Last changed October 22, 2026.</p>
 
       <h2 className="mc-h2">What Runway reads</h2>
       <p>
@@ -43,8 +43,9 @@ export function PrivacyText({ home = '#/' }: { home?: string }) {
 
       <h2 className="mc-h2">Deleting everything</h2>
       <p>
-        Settings → Delete my account removes your account and every row tied to it, at once. There's no
-        waiting period and nothing kept.
+        Settings → Account → Download my data saves everything Runway holds about you as one JSON file, to
+        read or to take elsewhere. Settings → Delete my account removes your account and every row tied to it,
+        at once. There's no waiting period and nothing kept.
       </p>
 
       <h2 className="mc-h2">Questions</h2>

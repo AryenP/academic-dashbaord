@@ -7,6 +7,7 @@ import { SpotifySettings } from '../components/SpotifySettings';
 import { useAuth } from '../lib/auth';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { collectMyData, exportFilename, saveJson } from '../lib/export';
 import { MODES, type Mode } from '../lib/timer';
 
 export function Settings() {
@@ -118,7 +119,39 @@ function Account() {
         </label>
       </div>
       {error && <p className="form-error">{error}</p>}
+      <DownloadMyData />
     </section>
+  );
+}
+
+/** Everything Runway holds about the person, as one JSON file, read under RLS in the browser. */
+function DownloadMyData() {
+  const { user, profile } = useAuth();
+  const [state, setState] = useState<{ busy?: boolean; saved?: string; error?: string }>({});
+  const download = async () => {
+    setState({ busy: true });
+    try {
+      const data = await collectMyData(supabase!, user!.id);
+      const name = exportFilename(profile?.handle);
+      saveJson(name, data);
+      setState({ saved: name });
+    } catch (e) {
+      setState({ error: e instanceof Error ? e.message : 'Could not read your data.' });
+    }
+  };
+  return (
+    <div className="form-row">
+      <p className="grow mc-note">
+        Your data is yours: one JSON file with your profile, courses, plan, sessions, breaks, phone events,
+        signals, weekly reviews, friends, calendars (without their addresses) and tokens (without their
+        secrets).
+        {state.saved && <span className="field-hint"> Saved as {state.saved}.</span>}
+      </p>
+      <button className="btn btn-quiet" onClick={download} disabled={state.busy}>
+        {state.busy ? 'Reading…' : 'Download my data'}
+      </button>
+      {state.error && <p className="form-error">{state.error}</p>}
+    </div>
   );
 }
 

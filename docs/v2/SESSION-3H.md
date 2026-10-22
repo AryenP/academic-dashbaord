@@ -214,3 +214,19 @@ about which dream you built and which you only wrote down.
 For each item, including the dream builds: done / partly / skipped, the commit hash, what was verified (which suites, which
 screenshots), and anything Aryen must do or decide. Then three lines at most on what you'd do
 next. No praise, no summary of the rules.
+
+## Report
+
+Written 2026-10-22 evening, Pacific. Every suite green at the end of items 1–8: `npm run check` (19 public browser tests), `npm run test:db` (46), `npm run test:fn` (68), `npm run test:e2e:db` (39). All pushed to `main`.
+
+1. **Classification: done** (`3e3f5f9`). Before: rules kind 100 %, course 29.2 %; Opus kind 89.6 %, course 50.0 % (48 events, 8.5 ¢). After: rules course 66.7 % (kind 100 %), Opus course 98.0 % (kind 100 %) over 51 events (3 added for the Canvas-feed rule), 10.8 ¢ a run. The context pass (`placeByContext`) fills a missing course from a single-course Canvas feed, from a same-time known exam or deadline, or from the nearest known exam within 7 days (confidence 0.4). The model also gets the calendar's name, the rules' confidence, course long names, and two definitions it kept missing. "Final project proposal" no longer reads as an exam. Verified: Deno (classify, sync, ai tests), both evals. Deployed `sync-sources` and `classify-events`. One deviation to note: the plan said day-of or day-before; the week is what Aryen's own set shows, and the AI reviews it either way. For Aryen: nothing.
+2. **Download my data: done** (`bfb9198`). Settings → Account, client-side, under RLS, `runway-<handle>-<date>.json`; privacy page sentence. Verified: `tests/e2e-db/export.spec.ts` (second person's rows absent, no hashes), unit test for the filename, axe suite. For Aryen: nothing.
+3. **Deletion cascade: done** (`2a700be`). The new RLS test seeds twelve tables for a person and a second person, deletes the first, finds nothing left and the second untouched. Every table already cascaded; no migration 0016. For Aryen: nothing.
+4. **Settings on a phone: done** (`1531a85`). One CSS rule: text beside buttons keeps a 16 rem basis so it takes the row at 390 px. Verified: `screens.spec.ts` mobile light and dark (Phone, Account, Spotify rows looked at). For Aryen: nothing.
+5. **Landing page: done** (`07b0149`). "or continue with Google" in both calls to action when `VITE_GOOGLE_SIGNIN` is set (through `src/lib/flags.ts` so the prerender sees it); a fourth step for the phone signals. Looking at the 390 px screenshot found the page scrolling sideways (the hero's grid items took the demo runway's width); fixed with `min-width: 0` and a smoke test at 375 px. Verified: public suite with Google on and off, screenshots 390/1440 light/dark. For Aryen: nothing.
+6. **README: done** (`f94c69d`). "What it does" rewritten in product order, first person; runway and stats screenshots from today's suite; "Run it yourself" with the full command set. For Aryen: read it once; it speaks as you.
+7. **Planner good hours: done** (`964c6e5`). `preferred_hours` sent to the model when there is history, one prompt rule, Deno test extended, `draft-plan` deployed. For Aryen: nothing.
+8. **Close out: done.** All suites green, pushed, backlog block added, this report.
+9. **Dream phase:** see below, appended as it happens.
+
+Next, in three lines: run the AI eval on Haiku once to see if the cheaper model now clears 95 % with the new context; the one AI miss left ("HW due" a day after Canvas's HW 2) wants a "same title family, nearest due date" rule; the Canvas per-course feed rule has no real feed behind it yet, so connect one and watch a sync.

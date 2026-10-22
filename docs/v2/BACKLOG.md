@@ -21,6 +21,17 @@ deviation from the spec still gets a line in [DECISIONS.md](../DECISIONS.md). Ho
 - [x] 2026-10-22 · Share page: at the readiness level study blocks show without titles (migration 0015), covered by the share-level RLS test.
 - [x] 2026-10-22 · Courses: the per-course color picker was already there; swatches now have spoken color names.
 
+## Session 2026-10-22 evening
+Worked from [SESSION-3H.md](./SESSION-3H.md); the report is at the end of that file.
+- [x] Classification from context: rules course 29.2 % → 66.7 %, Opus 50.0 % → 98.0 % (`3e3f5f9`).
+- [x] Download my data as one JSON file, under RLS, e2e-tested (`bfb9198`).
+- [x] Account deletion checked against every table since v1; nothing survived, no migration needed (`2a700be`).
+- [x] Settings rows stack on a phone (`1531a85`).
+- [x] Landing page: Google in the call to action, a Phase 5 step, no sideways scroll at 390 px (`07b0149`).
+- [x] README for v2 with fresh screenshots (`f94c69d`).
+- [x] The model planner gets the student's good hours (`964c6e5`).
+- [ ] Dream phase: see [IDEAS.md](./IDEAS.md); what was built is listed in the report.
+
 ## Needs Aryen (accounts, money, or sign-off)
 - [ ] Turn the school-email rule back on before launch: `update app_config set value = 'true' where key = 'school_email_only'`.
 - [ ] SMTP provider in Supabase Auth so magic-link emails stop hitting the built-in cap.

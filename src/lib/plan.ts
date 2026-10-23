@@ -1,6 +1,6 @@
 // Plan data: what the runway draws (built from plan_items by src/lib/planBuild.ts) and date helpers over it.
 
-import type { CourseInfo } from './courses';
+import type { CourseInfo } from './courses.ts';
 
 // Study, Deadline and Exam come from v1. Class and Commitment (work, research, a club) are fixed
 // time the planner works around; they draw as neutral blocks and never count as study.

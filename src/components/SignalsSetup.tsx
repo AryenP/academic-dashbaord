@@ -130,6 +130,17 @@ export function SignalsSetup({ where }: { where: 'connect' | 'settings' }) {
         </p>
       )}
       {error && <p className="form-error">{error}</p>}
+      {ENDPOINT && (
+        <div className="sig-glance">
+          <Heading className="mc-h3">The same token answers a glance</Heading>
+          <p className="field-hint">
+            A second Shortcut with <b>Get Contents of URL</b> (GET, the same header) and{' '}
+            <b>Show Notification</b> puts one line on your lock screen or watch: what is on now, what is next,
+            and the next exam. Run it from a tap, a widget or a time of day.
+          </p>
+          <CopyField label="The address for the glance" value={ENDPOINT.replace(/\/signals$/, '/glance')} />
+        </div>
+      )}
       <div className="sig-check">
         <div className="row">
           <Heading className="mc-h3">Received from your phone</Heading>

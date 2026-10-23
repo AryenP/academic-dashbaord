@@ -2,12 +2,12 @@
 // formatted in the person's timezone as ISO strings with an offset, the same shape v1's calendar
 // sync produced, so every component keeps reading wall-clock time straight from the string.
 
-import type { CourseInfo } from './courses';
-import type { ExamPrep, Kind, PlanData, PlanItem } from './plan';
-import { round1 } from './plan';
-import { localIso } from './tz';
+import type { CourseInfo } from './courses.ts';
+import type { ExamPrep, Kind, PlanData, PlanItem } from './plan.ts';
+import { round1 } from './plan.ts';
+import { localIso } from './tz.ts';
 
-export { localIso, todayIn } from './tz';
+export { localIso, todayIn } from './tz.ts';
 
 export interface ItemRow {
   id: string;

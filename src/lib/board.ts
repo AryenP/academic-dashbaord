@@ -1,6 +1,6 @@
 // The second screen: what is happening now, what comes next, and the next exam, from the plan the
 // runway already draws. Pure, so the kiosk page is a thin view over it.
-import { daysUntil, isNow, isPast, type ExamPrep, type PlanItem } from './plan';
+import { daysUntil, isNow, isPast, type ExamPrep, type PlanItem } from './plan.ts';
 
 export interface Board {
   /** The block happening now, study first if two overlap. */

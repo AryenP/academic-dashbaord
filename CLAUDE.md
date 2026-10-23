@@ -11,6 +11,7 @@ Runway is a study app anyone with a school email can sign up for: connect a cale
 - AI calls run server-side only (Supabase Edge Functions); the key lives in Supabase secrets. The user confirms before anything the AI proposes becomes a plan.
 - Every screen works at 375px wide, light and dark, keyboard-reachable, axe-clean. Keep the runway identity: Big Shoulders Display numerals, course colors with ink/on variants, red hatched exams, a calm focus screen. Inline SVG icons, never emoji.
 - Don't break v1: sessions, breaks, phone focus, Spotify, offline queue and their tests keep passing.
+- A browser module that an Edge Function imports (`src/lib/plan.ts`, `board.ts`, `planBuild.ts`, `tz.ts`, `reading.ts`, `focus.ts`) stays free of React and uses explicit `.ts` imports: Deno's bundler needs them, Vite accepts them.
 - Commit messages: short, imperative, conventional prefix (`feat:`, `fix:`, `docs:`, `chore:`). Pushing to `main` deploys; apply database changes (`supabase db push`) before pushing code that needs them.
 
 ## Plan data

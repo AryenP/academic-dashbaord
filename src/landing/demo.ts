@@ -1,9 +1,9 @@
 // The landing page's demo runway: four made-up courses and three exams, laid out relative to today
 // so the countdowns are always live. Nothing here is anyone's real schedule.
 
-import type { CourseInfo } from '../lib/courses';
-import type { PlanData } from '../lib/plan';
-import { buildPlan, localIso, type ItemRow } from '../lib/planBuild';
+import type { CourseInfo } from '../lib/courses.ts';
+import type { PlanData } from '../lib/plan.ts';
+import { buildPlan, localIso, type ItemRow } from '../lib/planBuild.ts';
 
 export const DEMO_COURSES: CourseInfo[] = [
   { id: 'c1', code: 'MATH 20C', name: 'Calculus III', color: 1, hidden: false },

@@ -342,3 +342,41 @@ Written now because the glance made it concrete: `docs/ANDROID.md` says what wor
 site, sessions, the plan feed in Google Calendar), how Tasker or MacroDroid put the glance on the
 lock screen and send the nightly numbers through Health Connect plugins, and what Runway will not
 do on Android. Honest about the plugin dependence; nothing faked.
+
+## 6:00 PM · First review
+
+Built: 1 (pace), 2 (footprint), 3 (headline), 4 (overfull), 5 (glance), 8 (Android). Each
+pushed on its own, each green. The live site shows tonight's landing text and the live glance
+refuses a bad token with the right sentence; the CI runs for the last pushes are in progress.
+What I can't do from here is sign in to the live site: there is no password flow, only the magic
+link and Google, so the signed-in path is proved by the local browser suite, which signs in by
+placing a real session. I'll say that plainly in the report.
+
+Is the ranking still right? Mostly. Two changes:
+
+- The agenda table clipping at 375 px (seen while looking at the checkpoint screenshot) moves
+  above "hour three". A clipped "Submitted" tick on a phone is a real bug in a core screen; the
+  hour-three line is a nicety.
+- The runbook (7) matters more than I ranked it, having just watched a deploy fail to bundle
+  with an error that took a debug flag to read. It goes right after the stale-sync warning.
+
+Order from here: 6 (stale sync), 7 (runbook + preflight test), the agenda clip, 9 (hour three)
+if there is time, then VISION.md and the close.
+
+## 6:08 PM · Building 6 · the stale-sync warning
+
+Twenty lines and a test, which is what "boring to run" mostly looks like. The one decision was
+whether an erroring source should also count as silence; no: Settings already names it, and two
+warnings for one problem is how people learn to ignore both.
+
+## 6:12 PM · Building 7 · the runbook and the preflight test
+
+The runbook is the document I wanted at 5:58 PM when the deploy said "failed to bundle function:
+exit 1" and nothing else. Eight sections, each a thing that has actually happened, with the one
+command that tells you which it is. The preflight test is two assertions; its value is that the
+list of headers the clients send is now written down next to the list the server allows.
+
+A change of mind: the "agenda clip" I added to the list at the first review is not a bug. The
+table sits in a scroll region that takes keyboard focus (there is a comment in the code saying
+so); the full-page screenshot just shows its right edge. I looked before fixing, which is the
+rule, and I'm dropping it.

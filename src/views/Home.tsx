@@ -12,7 +12,8 @@ import { useAuth } from '../lib/auth';
 import { colorOf } from '../lib/courses';
 import { useHistory, type DayCourseMinutes } from '../lib/history';
 import { useLiveSession } from '../lib/liveSession';
-import { daysUntil, isNow, isPast, type ExamPrep, type PlanData } from '../lib/plan';
+import { type ExamPrep, type PlanData } from '../lib/plan';
+import { headline } from '../lib/headline';
 import { narrate } from '../lib/narrate';
 import { pace, paceWords } from '../lib/pace';
 import { forecast } from '../lib/weather';
@@ -20,27 +21,11 @@ import type { Session } from '../lib/supabase';
 import { ago, useSources } from '../lib/sources';
 import { useNow, usePlan } from '../lib/usePlan';
 
-function Lede({ exams, now }: { exams: ExamPrep[]; now: number }) {
-  const next = exams.find((x) => !isPast(x, now));
-  if (!next)
-    return (
-      <p className="mc-lede">
-        {exams.length ? 'Every exam on the runway is behind you.' : 'No exams on the runway yet.'}
-      </p>
-    );
-  const n = daysUntil(next.day, new Date(now));
-  const lead = isNow(next, now)
-    ? 'Happening now: '
-    : n <= 0
-      ? 'Today: '
-      : n === 1
-        ? 'Tomorrow: '
-        : `${n} days until `;
+function Lede({ plan, exams, now }: { plan: PlanData['plan']; exams: ExamPrep[]; now: number }) {
+  const parts = useMemo(() => headline(plan, exams, now), [plan, exams, now]);
   return (
     <p className="mc-lede">
-      {lead}
-      <b>{next.course}</b> <b>{next.title}</b>, <span>{next.when}</span>. You have <b>{next.prep_hours}</b>{' '}
-      hours of prep on the calendar for it.
+      {parts.map((p, i) => (p.b ? <b key={i}>{p.t}</b> : <span key={i}>{p.t}</span>))}
     </p>
   );
 }
@@ -133,7 +118,7 @@ export function RunwayPage({
       <div className="mc">
         <header className="mc-head" id="overview">
           <h1 className="mc-title">{title}</h1>
-          <Lede exams={data.exam_prep} now={now} />
+          <Lede plan={data.plan} exams={data.exam_prep} now={now} />
           {t && data.plan.length > 0 && (
             <p className="mc-sub">
               <b>{t.study_hours}</b> study hours across <b>{t.study_blocks}</b> blocks, with{' '}

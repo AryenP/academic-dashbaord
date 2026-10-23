@@ -294,3 +294,14 @@ Account keeps the sign-out and the fields.
 
 Noticed on the way, from the mobile screenshot: the agenda table at 375 px clips its last column
 ("Submitted" shows as "Submitte"). Pre-existing. Added to the list after the glance.
+
+## 8:50 PM · Building 3 · the headline that knows the hour
+
+Migration 0016 went live before the panel's code was pushed, in the right order. Build 2 is in.
+
+The headline took one wrong turn: my first tests built the demo plan from each test's clock, so
+"Sunday 8 AM" was a different Sunday every time and nothing matched. The plan has to be held fixed
+and only the clock moves; that is also the only honest way to test "what does the runway say at 11
+PM". Six states: day, morning, night (something left / nothing left), exam day (before / during),
+and the term over. I resisted a seventh for "the day after an exam": the day state already says
+the next exam, and silence about the one that passed is the point.

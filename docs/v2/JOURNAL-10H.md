@@ -380,3 +380,11 @@ A change of mind: the "agenda clip" I added to the list at the first review is n
 table sits in a scroll region that takes keyboard focus (there is a comment in the code saying
 so); the full-page screenshot just shows its right edge. I looked before fixing, which is the
 rule, and I'm dropping it.
+
+## 6:18 PM · Building 9 · hour three
+
+Smaller than I feared: the focus screen already has a row for a nudge; this is a sentence under
+the phone meter. The pattern needs three sessions on each side and a five-point gap, the same
+bar Patterns uses, and it speaks in both directions: if a student's long sessions hold up, it says
+so. The browser test taught me the end screen is kept for the tab until a reload, which is the
+right behaviour for the student and a small trap for a test.

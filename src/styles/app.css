@@ -386,7 +386,13 @@ textarea {
   padding-top: clamp(8px, 4vh, 40px);
 }
 .fx-start .btn-big,
-.fx-end .fx-controls {
+.fx-end .fx-hour3 {
+  margin: var(--gap-md) auto 0;
+  max-width: 34ch;
+  color: var(--color-fg-muted);
+  font-size: var(--fs-body);
+}
+.fx-controls {
   align-self: flex-start;
 }
 .fx-planned {

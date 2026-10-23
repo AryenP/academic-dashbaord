@@ -6,7 +6,9 @@ import { FocusFormula, PhoneMeter } from '../components/PhoneMeter';
 import { SignInNeeded } from '../components/SignInNeeded';
 import { useAuth } from '../lib/auth';
 import { courseVars, inkOf } from '../lib/courses';
+import { focusSeconds, useHistory } from '../lib/history';
 import { useLiveSession } from '../lib/liveSession';
+import { hourThree } from '../lib/longSessions';
 import { currentOrNextStudy, dayKey, timePart, type PlanItem } from '../lib/plan';
 import type { Session } from '../lib/supabase';
 import {
@@ -115,6 +117,7 @@ function PlannedNow({ block, now }: { block: PlanItem; now: number }) {
 
 function Running() {
   const live = useLiveSession();
+  const history = useHistory();
   const { settings } = useAuth();
   const s = live.session!;
   const now = useNow(1000) + live.skewMs;
@@ -148,6 +151,11 @@ function Running() {
   if (st.phase === 'break') return <BreakScreen st={st} />;
 
   const showNudge = st.breakDue && snoozed !== st.breaksTaken;
+  // Hour three: one line, from the person's own sessions when there are enough of them.
+  const third = hourThree(
+    st.focusSec,
+    history.sessions.map((x) => ({ focusSec: focusSeconds(x), focusPct: x.focus_pct })),
+  );
   const breakLen = plan.breakSec(st.nextBreak) / 60;
   const main = plan.timed ? Math.max(0, st.toBreakSec ?? 0) : st.focusSec;
 
@@ -188,6 +196,12 @@ function Running() {
       </p>
 
       <PhoneMeter session={s} breaks={live.breaks} now={now} />
+
+      {third && (
+        <p className="fx-hour3" role="status">
+          {third}
+        </p>
+      )}
 
       {showNudge && (
         <div className="fx-nudge" role="status">

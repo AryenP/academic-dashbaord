@@ -14,6 +14,7 @@ import { useHistory, type DayCourseMinutes } from '../lib/history';
 import { useLiveSession } from '../lib/liveSession';
 import { daysUntil, isNow, isPast, type ExamPrep, type PlanData } from '../lib/plan';
 import { narrate } from '../lib/narrate';
+import { pace, paceWords } from '../lib/pace';
 import { forecast } from '../lib/weather';
 import type { Session } from '../lib/supabase';
 import { ago, useSources } from '../lib/sources';
@@ -104,6 +105,16 @@ export function RunwayPage({
   const now = useNow();
   const t = data.totals[0];
   const shape = useMemo(() => forecast(data.plan, now), [data.plan, now]);
+  // The honest readiness, for the person themself: where the last week's pace lands by exam day.
+  const paces = useMemo(() => {
+    if (!self) return undefined;
+    const m = new Map<string, string>();
+    for (const x of data.exam_prep) {
+      const p = pace(x, data.plan, sessions, now);
+      if (p) m.set(x.id, paceWords(p, x, now));
+    }
+    return m;
+  }, [self, data.exam_prep, data.plan, sessions, now]);
   const actuals = useMemo(() => buildActuals(sessions, totals, live, now), [sessions, totals, live, now]);
   const ready = useMemo(
     () =>
@@ -149,7 +160,7 @@ export function RunwayPage({
                 <p className="mc-note">
                   Each bar is that course's study blocks. A segment fills in once its time has passed.
                 </p>
-                <Checkpoints exams={data.exam_prep} plan={data.plan} now={now} ready={ready} />
+                <Checkpoints exams={data.exam_prep} plan={data.plan} now={now} ready={ready} pace={paces} />
               </div>
               <Today plan={data.plan} now={now} self={self} />
             </section>

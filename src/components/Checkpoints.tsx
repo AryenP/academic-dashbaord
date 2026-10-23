@@ -9,9 +9,11 @@ interface Props {
   now: number;
   /** Actual prep vs planned, per exam id. Absent when nothing has been logged or there's no backend. */
   ready?: Map<string, Readiness>;
+  /** The pace sentence per exam id, for the person themself only. */
+  pace?: Map<string, string>;
 }
 
-export function Checkpoints({ exams, plan, now, ready }: Props) {
+export function Checkpoints({ exams, plan, now, ready, pace }: Props) {
   return (
     <div className="cp-list">
       {exams.map((x) => {
@@ -72,6 +74,7 @@ export function Checkpoints({ exams, plan, now, ready }: Props) {
                   </span>
                 </div>
               )}
+              {pace?.get(x.id) && <p className="cp-pace">{pace.get(x.id)}</p>}
             </div>
           </div>
         );

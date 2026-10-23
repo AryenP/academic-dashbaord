@@ -684,6 +684,12 @@ textarea {
   height: 100%;
   background: var(--color-fg);
 }
+.cp-pace {
+  margin: 6px 0 0;
+  font-size: var(--fs-caption);
+  color: var(--color-fg-muted);
+  max-width: 48ch;
+}
 
 /* ── log ────────────────────────────────────────────────────────────────── */
 .log-day {

@@ -23,4 +23,7 @@ test('the second screen shows the block, the countdown and the next exam, withou
   await page.getByText('The week in words').click();
   await expect(page.locator('.mc-words dt').first()).toHaveText('Today');
   await expect(page.locator('.mc-words dd').first()).toContainText('MATH 20C');
+  // The pace line on the first checkpoint, in the person's own numbers.
+  await expect(page.locator('.cp-pace').first()).toContainText('Nothing logged for MATH 20C yet');
+  await expect(page.locator('.cp-pace').first()).toContainText('h of blocks still ahead');
 });

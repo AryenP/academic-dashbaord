@@ -1,5 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { admin, resetDb, seedPlan, seedSession, signIn } from './helpers';
+import { atWallTime, localIso } from '../../src/lib/tz';
+
+const TZ = 'America/Los_Angeles';
 
 // The planner (the plain allocator here, since the AI isn't set up in tests), proposals on the
 // runway, accepting them, ticking deadlines, and the plan as a calendar feed.
@@ -80,15 +83,16 @@ test('draft a plan: proposals are drawn dashed with a reason, accept all puts th
 });
 
 test('ticking a deadline marks it submitted everywhere, and the week counts it', async ({ page }) => {
-  // A deadline due tonight.
-  const tonight = new Date();
-  tonight.setHours(23, 0, 0, 0);
+  // A deadline due tonight, in the person's day (Pacific), not the test runner's: on a UTC runner
+  // after 4 PM Pacific, "tonight" by the runner's clock is already tomorrow on the runway.
+  const today = localIso(Date.now(), TZ).slice(0, 10);
+  const tonight = Date.parse(atWallTime(today, 23, 0, TZ));
   await admin.from('plan_items').insert({
     user_id: userId,
     kind: 'deadline',
     title: 'Lab 9 due',
-    start_at: tonight.toISOString(),
-    end_at: new Date(tonight.getTime() + 59 * 60_000).toISOString(),
+    start_at: new Date(tonight).toISOString(),
+    end_at: new Date(tonight + 59 * 60_000).toISOString(),
   });
   await signIn(page);
   await page.goto('./');

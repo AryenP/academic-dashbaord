@@ -174,7 +174,7 @@ refuse to build even though it would obviously grow the thing?
 
 ## Report
 
-Written 2026-10-22, 6:40 PM Pacific. Thinking in `JOURNAL-10H.md`; the page in `VISION.md`. Every suite green at the close: `npm run check` (21 public browser tests), `npm run test:db` (47), `npm run test:fn` (76), `npm run test:e2e:db` (47). All pushed to `main`; migration 0016 and the `glance` function are live.
+Written 2026-10-22, 6:40 PM Pacific. Thinking in `JOURNAL-10H.md`; the page in `VISION.md`. Every suite green at the close: `npm run check` (21 public browser tests), `npm run test:db` (47), `npm run test:fn` (76), `npm run test:e2e:db` (46). All pushed to `main`; migration 0016 and the `glance` function are live. After the close, CI's Check workflow turned out to have been red since 4 PM Pacific on a pre-existing clock bug in `planning.spec.ts` (a UTC runner's "tonight" is tomorrow in Pacific); fixed in the last commit, with the same fix applied to the new overfull-day test.
 
 1. **The pace line: done** (`74c9c04`). Under each exam checkpoint, for the person only: hours logged for the course, the last seven days' pace carried to exam day, the hours of blocks still ahead. Verified: 4 unit tests on the demo plan, `now.spec.ts`, mobile screenshot light and dark. For Aryen: nothing.
 2. **What Runway holds about you: done** (`725a688`). `my_footprint()` (migration 0016, security invoker) and a Settings panel with the download and delete links beside the numbers. Verified: RLS test (B's numbers are zero, anon refused), 2 unit tests for the sentences, `footprint.spec.ts`, axe, screenshots light and dark; `supabase db push` ran before the code was pushed. For Aryen: nothing.
@@ -187,7 +187,7 @@ Written 2026-10-22, 6:40 PM Pacific. Thinking in `JOURNAL-10H.md`; the page in `
 9. **Hour three: done** (`c93c66b`). One line on the focus screen after three focused hours, from the person's own sessions when there are enough, "tends to" in either direction. Verified: 4 unit tests, `hourthree.spec.ts`, axe. For Aryen: nothing.
 10. **Paper: done** (`551fefe`). A print stylesheet: chrome hidden, the week in words opened on `beforeprint`, the strip at page width, the intro animation's end state forced (the first print was an empty strip). Verified: `print.spec.ts` under emulated print, the screenshot looked at. For Aryen: nothing.
 
-Not verified: the live signed-in path, because there is no password flow on the live site; the local browser suite signs in with a real session and covers every screen. Nothing was cut.
+Not verified: the live signed-in path, because there is no password flow on the live site; the local browser suite signs in with a real session and covers every screen. Nothing was cut. The last Check run after the clock fix is the one to look at; the eight before it failed on that test alone.
 
 If I had one minute with Aryen:
 - The honest features were the short ones. Keep writing the sentence before the code.

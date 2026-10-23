@@ -418,3 +418,14 @@ picture said so.
 
 The machine's clock says the whole session took about an hour. The plan budgeted ten. I have
 written the times as they were.
+
+## 6:50 PM · After the close: CI was red
+
+Checking the Actions page before stopping: Deploy green on every push, Check red on every push
+since the ten-hour prompt was committed, a docs-only change. A docs commit can't break a test, so
+it was the clock. The runner is UTC, the browser is Pacific, and a test seeded "tonight at 11 PM"
+with the runner's `setHours`, which after 4 PM Pacific is tomorrow. My own overfull-day test had
+the same shape and would have failed the same way in a week. Both now use the timezone helpers.
+Reproduced with `TZ=UTC` before the fix, green after. Local suites never showed it because this
+Mac is in Pacific. One more for the runbook's spirit: the thing that looks like a flake is a
+clock.

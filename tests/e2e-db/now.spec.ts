@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { admin, resetDb, seedPlan, signIn } from './helpers';
+import { iso, utc } from '../../src/lib/plan';
+import { atWallTime, localIso } from '../../src/lib/tz';
 
 // The second screen: no navigation, a countdown to or through the block, the next exam, a way back.
 
@@ -31,16 +33,18 @@ test('the second screen shows the block, the countdown and the next exam, withou
 test('a day with more study than room says so, in the forecast and in the words', async ({ page }) => {
   const userId = await resetDb();
   await seedPlan(userId);
-  // A 9-to-5 shift this Saturday and a short evening window: Saturday's 4 h of study won't fit.
-  const sat = new Date();
-  sat.setDate(sat.getDate() + ((6 - sat.getDay() + 7) % 7 || 7));
-  const day = sat.toISOString().slice(0, 10);
+  // A 9-to-5 shift this Saturday (in the person's day, Pacific) and a short evening window:
+  // Saturday's 4 h of study won't fit.
+  const TZ = 'America/Los_Angeles';
+  const today = localIso(Date.now(), TZ).slice(0, 10);
+  const dow = new Date(utc(today)).getUTCDay();
+  const day = iso(utc(today) + ((6 - dow + 7) % 7 || 7) * 864e5);
   await admin.from('plan_items').insert({
     user_id: userId,
     kind: 'commitment',
     title: 'Work shift',
-    start_at: `${day}T09:00:00-07:00`,
-    end_at: `${day}T17:00:00-07:00`,
+    start_at: atWallTime(day, 9, 0, TZ),
+    end_at: atWallTime(day, 17, 0, TZ),
   });
   await admin
     .from('profiles')

@@ -1,9 +1,11 @@
 # Runway — ten hours, a journal
 
-Thursday 22 October 2026, from 5:40 PM Pacific. Written as I go, in my own words. The plan is
-`SESSION-10H.md`; the previous session's report is at the end of `SESSION-3H.md`.
+Thursday 22 October 2026, from 5:38 PM Pacific. Written as I go, in my own words, with the
+machine's clock, which runs faster than the plan's hours: the plan's "hour 1" was a budget, not a
+duration, and I spent it as thinking, not waiting. The plan is `SESSION-10H.md`; the previous
+session's report is at the end of `SESSION-3H.md`.
 
-## 5:40 PM · Where I start
+## 5:38 PM · Where I start
 
 The repo is green as of an hour ago (check 21, db 46, deno 68, e2e-db 39), and I am running the
 suites again on a fresh database before anything else. What the last session left me: a rules
@@ -14,7 +16,7 @@ The temptation is to open the ideas file and start on the top "build later". I'm
 The ideas file was written in ten minutes by someone (me, earlier) who had just built the obvious
 things. The horizons ask harder questions. One at a time.
 
-## 5:45 PM · 1 · Time
+## 5:39 PM · 1 · Time
 
 Why two weeks? Because that is how far a student can see. Beyond that the plan is the planner's
 guess, not theirs. Why a strip? Because the thing a student wants to know is "what is between me
@@ -40,7 +42,7 @@ problem and I will come back to it.
 Midterm 1, 5 PM, Center Hall 115. 11 of 12 hours done. Nothing else before it." These are variants
 of one component with a pure function behind them, which means tests.
 
-## 5:55 PM · 2 · Ready
+## 5:39 PM · 2 · Ready
 
 Hours done over hours planned is a proxy and everyone knows it. It has one virtue: it is honest
 about being a proxy. The checkpoint says "2 of 12 prep hours done" and the student can argue with
@@ -64,7 +66,7 @@ should say the arithmetic, not the adjective: "9 of 12 at this pace; one more bl
 **What I'd build:** the pace line on every exam checkpoint, for the person themself only (never on
 share pages). Pure function, unit tests on the demo plan with seeded sessions, a browser check.
 
-## 6:05 PM · 3 · The AI
+## 5:40 PM · 3 · The AI
 
 What should it be? A quiet secretary. It reads the calendar so the student doesn't have to type
 it; it drafts so the student doesn't face a blank runway; it reads the syllabus so nobody retypes
@@ -93,7 +95,7 @@ the block, and no model was involved. I'll take the "oh" and skip the model.
 
 **What I'd build:** overfull days in the forecast line and in the week in words.
 
-## 6:15 PM · 4 · Others
+## 5:40 PM · 4 · Others
 
 The right amount of other people is: as many as you asked for, and none you didn't. Runway has
 that right by construction: nobody appears unless both sides opted in per course; counts, not
@@ -111,7 +113,7 @@ classmate's calendar, ever. The proposal would carry a slot, not a schedule.
 
 **What I'd build:** nothing tonight. Written down.
 
-## 6:20 PM · 5 · The body
+## 5:40 PM · 5 · The body
 
 The coarse signals are the right size. Sleep in hours, exercise in minutes, steps as a count, a
 place as a word. The patterns section says "tends to" and stays silent below the thresholds. That
@@ -128,7 +130,7 @@ person's own sessions, only "tends to". It is small and it is cosmetic. Lower on
 
 **What I'd build:** maybe the hour-three line, late, if there is time.
 
-## 6:30 PM · 6 · The first hour and the last day
+## 5:41 PM · 6 · The first hour and the last day
 
 The first sixty seconds are the landing page and sign-in; the first hour is Connect, the courses
 check, a draft, and the first session. I looked at the new-user test's screenshots this evening and
@@ -149,7 +151,7 @@ keeps the sources; when the new term's events arrive, the runway fills itself. N
 one thing to verify: that a source with no events in the window does not go to "error". It
 doesn't; the sync reports 0 events and keeps the schedule.
 
-## 6:40 PM · 7 · Beyond the browser
+## 5:41 PM · 7 · Beyond the browser
 
 Where attention actually lives: the lock screen, the watch, the menu bar, the desk. Runway reaches
 the home screen (installed), the calendar (the plan feed), the Shortcut (signals in), the extension
@@ -169,7 +171,7 @@ wall. Voice is the narration already written, through speech synthesis, later.
 
 **What I'd build:** the `glance` function, and the line in the Shortcut guide.
 
-## 6:50 PM · 8 · Trust
+## 5:41 PM · 8 · Trust
 
 The promise is true and invisible. The privacy page says it; nothing in the app shows it. A
 careful student would trust Runway more if Settings had a panel that said, in their own numbers:
@@ -189,7 +191,7 @@ counts above include them). The third would need a log table and I would not add
 **What I'd build:** "What Runway holds about you" in Settings, from a `my_footprint()` function with
 an RLS test that user B's numbers never include user A.
 
-## 7:00 PM · 9 · The machine
+## 5:42 PM · 9 · The machine
 
 Boring to run means: nothing silent. The sync can stop silently today: if the GitHub cron stops
 (the workflow is disabled after 60 days of no pushes, or a secret rotates), every source keeps its
@@ -210,7 +212,7 @@ fallback; is it tested? I'll look), the CORS header (a Deno test asserting the p
 
 **What I'd build:** the stale-sync warning; the runbook; the CORS preflight test.
 
-## 7:10 PM · 10 · Everyone
+## 5:42 PM · 10 · Everyone
 
 A school Runway doesn't know: works, the school row is only for the Canvas deep link. Semester: the
 180-day window covers it; nothing assumes ten weeks. Not English: everything is English; the
@@ -225,7 +227,7 @@ glance function gives Android a reason to have the recipe.
 
 **What I'd build:** `docs/ANDROID.md`, the recipe, with the glance address in it.
 
-## 7:15 PM · 11 · The far edge
+## 5:42 PM · 11 · The far edge
 
 Five years, everything goes right: Runway is in the App Store, reads HealthKit, has every LMS, a
 million students, and a company behind it that needs the data to be worth something. Five years,
@@ -236,7 +238,7 @@ never show you the count of what it holds. What I'd refuse even though it would 
 leaderboard, a feed, a "share your readiness" card that posts to a social network, an analytics
 script, any AI that writes without a confirm.
 
-## 7:20 PM · The ranked list
+## 5:43 PM · The ranked list
 
 Each line: why it matters on a Tuesday night, and what finished means.
 
@@ -268,9 +270,9 @@ Each line: why it matters on a Tuesday night, and what finished means.
 Not building, written down: study together from free time; your term, wrapped; sound; push;
 the forecast you can drag. All in IDEAS.md already, and still right.
 
-Order of work: 1, 2, 3, 4, 5, 6, 7, 8, 9. Review at 9:30 PM and 11:30 PM.
+Order of work: 1, 2, 3, 4, 5, 6, 7, 8, 9. A review after every three builds, and at the end.
 
-## 7:35 PM · Building 1 · the pace line
+## 5:44 PM · Building 1 · the pace line
 
 Ground check on a fresh database: check 21, db 46, deno 68; the browser suite is running. The
 pace function was twenty lines; the words took longer than the arithmetic, which is the right
@@ -279,7 +281,7 @@ ratio. Two things I decided while writing it: a block that is running still coun
 it is. The first test expectation was wrong about the running block and I changed the test, not
 the rule.
 
-## 8:15 PM · Building 2 · what Runway holds about you
+## 5:46 PM · Building 2 · what Runway holds about you
 
 The function is one `jsonb_build_object` with sixteen subselects, and it runs as the caller on
 purpose: a definer would have been shorter and would have made the panel's claim ("through the
@@ -295,7 +297,7 @@ Account keeps the sign-out and the fields.
 Noticed on the way, from the mobile screenshot: the agenda table at 375 px clips its last column
 ("Submitted" shows as "Submitte"). Pre-existing. Added to the list after the glance.
 
-## 8:50 PM · Building 3 · the headline that knows the hour
+## 5:49 PM · Building 3 · the headline that knows the hour
 
 Migration 0016 went live before the panel's code was pushed, in the right order. Build 2 is in.
 
@@ -306,10 +308,37 @@ PM". Six states: day, morning, night (something left / nothing left), exam day (
 and the term over. I resisted a seventh for "the day after an exam": the day state already says
 the next exam, and silence about the one that passed is the point.
 
-## 9:20 PM · Building 4 · overfull days
+## 5:51 PM · Building 4 · overfull days
 
 The "oh". It needed no model, which was the point of writing it down in hour one. My first test
 expected a 9-to-5 shift to make Saturday overfull with the default window; it doesn't (13 hours
 minus 8 leaves 5, and the day holds 4). The function was right and I was wrong, twice tonight in
 the same direction: I keep expecting the arithmetic to be harsher than it is. Good sign for the
 wording.
+
+## 5:58 PM · Building 5 · the glance
+
+Deno can import the browser's `board.ts`, `plan.ts` and `planBuild.ts` directly (none of them
+touch React), so the sentence on the lock screen is computed by the same code as the second
+screen. One trap: `daysUntil` reads the server's local day, and the Edge runtime is UTC, so "in 3
+days" at 11 PM Pacific would have said "in 2 days". The handler takes the day from the person's
+timezone instead; the test pins that at 11:59 PM.
+
+I gave the token two homes, the header and `?t=`, because a watch face or a Tasker task often can't
+set headers. A token in a URL is a token in a history; the plan feed already made that trade for
+the same reason and the token can be replaced in one tap.
+
+One trap in the build, worth its own line: the first deploy of `glance` failed to bundle because
+`plan.ts`, `board.ts` and `planBuild.ts` import each other without `.ts` extensions, which Vite
+accepts and Deno's bundler does not. Until tonight the only browser files the functions shared were
+ones with no imports at all (`reading.ts`, `tz.ts`, `focus.ts`), and that was the unwritten rule.
+The fix was extensions on four files (`tsconfig` already allowed it), and the rule is now written:
+a browser module an Edge Function imports uses explicit `.ts` imports. Local `deno test` had hidden
+the problem by resolving them anyway.
+
+## 6:05 PM · Building 8, early · the Android recipe
+
+Written now because the glance made it concrete: `docs/ANDROID.md` says what works as is (the
+site, sessions, the plan feed in Google Calendar), how Tasker or MacroDroid put the glance on the
+lock screen and send the nightly numbers through Health Connect plugins, and what Runway will not
+do on Android. Honest about the plugin dependence; nothing faked.

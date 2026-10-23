@@ -32,6 +32,22 @@ Worked from [SESSION-3H.md](./SESSION-3H.md); the report is at the end of that f
 - [x] The model planner gets the student's good hours (`964c6e5`).
 - [x] Dream phase: `#/now` second screen, the week in words, the forecast line (`7fc86b5`); the rest in [IDEAS.md](./IDEAS.md).
 
+## Session 2026-10-22 night
+Worked from [SESSION-10H.md](./SESSION-10H.md); the thinking is in [JOURNAL-10H.md](./JOURNAL-10H.md), the one page in [VISION.md](./VISION.md), the report at the end of the plan file.
+- [x] The pace line under each exam checkpoint (`74c9c04`).
+- [x] "What Runway holds about you" in Settings, migration 0016 live (`725a688`).
+- [x] The runway's first sentence knows the hour (`242d077`).
+- [x] Overfull days in the forecast and the week in words (`0f17b2c`).
+- [x] The `glance` Edge Function, deployed; the Shortcut guide says so; shared plan modules use `.ts` imports (`42abed7`).
+- [x] `docs/ANDROID.md` (`fea8d8b`).
+- [x] The stale-sync footer with "Read them now" (`842d12a`).
+- [x] `docs/RUNBOOK.md` and the CORS preflight test (`1eaf560`).
+- [x] Hour three on the focus screen (`c93c66b`).
+- [x] The runway prints (`551fefe`).
+- Cut: nothing from the ranked list. Dropped after looking: the agenda "clip" at 375 px is a keyboard-focusable scroll region, not a bug.
+- Next (see VISION.md): study together from free time; the last day ("your term, wrapped"); a sync that reports its own silence to Aryen and a deploy that checks the live functions first.
+- Needs Aryen: nothing new; the existing items below (SMTP, the school-email switch, the store listing) matter more now that the first minute is good.
+
 ## Needs Aryen (accounts, money, or sign-off)
 - [ ] Turn the school-email rule back on before launch: `update app_config set value = 'true' where key = 'school_email_only'`.
 - [ ] SMTP provider in Supabase Auth so magic-link emails stop hitting the built-in cap.

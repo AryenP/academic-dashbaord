@@ -171,3 +171,29 @@ refuse to build even though it would obviously grow the thing?
   cut, the commit, what was verified and how (which suites, which screenshots), and what Aryen
   must do or decide. Then, in at most ten lines, what you'd tell Aryen in person if you had one
   minute. No praise, no restating the rules.
+
+## Report
+
+Written 2026-10-22, 6:40 PM Pacific. Thinking in `JOURNAL-10H.md`; the page in `VISION.md`. Every suite green at the close: `npm run check` (21 public browser tests), `npm run test:db` (47), `npm run test:fn` (76), `npm run test:e2e:db` (47). All pushed to `main`; migration 0016 and the `glance` function are live.
+
+1. **The pace line: done** (`74c9c04`). Under each exam checkpoint, for the person only: hours logged for the course, the last seven days' pace carried to exam day, the hours of blocks still ahead. Verified: 4 unit tests on the demo plan, `now.spec.ts`, mobile screenshot light and dark. For Aryen: nothing.
+2. **What Runway holds about you: done** (`725a688`). `my_footprint()` (migration 0016, security invoker) and a Settings panel with the download and delete links beside the numbers. Verified: RLS test (B's numbers are zero, anon refused), 2 unit tests for the sentences, `footprint.spec.ts`, axe, screenshots light and dark; `supabase db push` ran before the code was pushed. For Aryen: nothing.
+3. **The headline that knows the hour: done** (`242d077`). Six states (day, morning, night with and without something left, exam day before and during, term over). Verified: 5 unit tests with the demo plan held fixed and the clock moved, `now.spec.ts`, the runway suites. For Aryen: nothing.
+4. **Overfull days: done** (`0f17b2c`). The study window from Settings minus the day's fixed items, against the study on the calendar; said in the forecast line and the week in words. Verified: unit tests, a browser test that seeds a shift and a narrow window. For Aryen: nothing.
+5. **The glance: done** (`42abed7`). A GET Edge Function answering one line of plain text (or JSON) with the shortcut token, deployed; the Shortcut guide shows the address. The first deploy failed to bundle because the shared plan modules used extension-less imports; fixed with `.ts` imports and a line in `CLAUDE.md`. Verified: 6 Deno tests, `glance.spec.ts` against the local runtime, the live function refuses a bad token with 401. For Aryen: nothing; a watch face or Tasker can use `?t=`.
+6. **The stale-sync footer: done** (`842d12a`). After two hours without a read the runway says so in the warning colour, with "Read them now". Verified: 3 unit tests, `stale.spec.ts` with a backdated source. For Aryen: nothing.
+7. **The runbook and the preflight test: done** (`1eaf560`). `docs/RUNBOOK.md`, eight sections of things that have happened; `auth.test.ts` asserts the preflight allows every header the clients send. For Aryen: read the runbook once; file the support ticket draft if the 503 spells return.
+8. **Android: done** (`fea8d8b`). `docs/ANDROID.md`: what works as is, the glance and the signals through Tasker or MacroDroid, what Runway will not do. For Aryen: nothing.
+9. **Hour three: done** (`c93c66b`). One line on the focus screen after three focused hours, from the person's own sessions when there are enough, "tends to" in either direction. Verified: 4 unit tests, `hourthree.spec.ts`, axe. For Aryen: nothing.
+10. **Paper: done** (`551fefe`). A print stylesheet: chrome hidden, the week in words opened on `beforeprint`, the strip at page width, the intro animation's end state forced (the first print was an empty strip). Verified: `print.spec.ts` under emulated print, the screenshot looked at. For Aryen: nothing.
+
+Not verified: the live signed-in path, because there is no password flow on the live site; the local browser suite signs in with a real session and covers every screen. Nothing was cut.
+
+If I had one minute with Aryen:
+- The honest features were the short ones. Keep writing the sentence before the code.
+- Migration 0016 is live and only adds a function; `glance` is deployed and takes the shortcut token.
+- The three things that need you haven't changed: SMTP for sign-in emails, the school-email switch back on before launch, the extension in the store.
+- Study together from free time is the one social thing worth building; nothing else social is.
+- The last day of the term is the gap; the runway says "the term is over" now, and should hand over the term in the student's own numbers.
+- Make the sync report its own silence to you (a failed Actions run already emails you; a run that succeeds with `done 0` for a day should too).
+- `docs/RUNBOOK.md` is for 2 AM; `docs/v2/VISION.md` is for five minutes; the journal is for when you want to argue with me.

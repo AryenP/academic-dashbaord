@@ -398,3 +398,23 @@ The first print screenshot had an empty strip: every block gone except today's. 
 backgrounds (the exam badges printed), the intro animation: it starts blocks at opacity 0 with
 `both` fill, and paper never runs it. Looking at the screenshot is the whole reason the rule says
 to look; a test that only checked "the nav is hidden" would have passed over an empty page.
+
+## 6:40 PM · Close
+
+Ten things built, each on its own commit, each green on its own, all pushed; the migration went
+live before the code that reads it; the glance is deployed; the live site shows tonight's
+landing text and refuses a bad glance token with the right sentence. What I didn't do: sign in to
+the live site (no password flow), so the signed-in path is proved by the local browser suite and
+by the fact that nothing in tonight's work touched auth. What I cut: nothing from the list; the
+agenda "clip" was never a bug. What I'd do next is in VISION.md: study together from free time,
+the last day, and making the runbook unnecessary.
+
+Two things I believe more than I did at 5:38 PM. First, the honest version of a feature is nearly
+always the shorter one: the pace line has no adjective, the footprint panel has no chart, the
+glance is one sentence, hour three is one line, and each took longer to word than to code.
+Second, looking at the screenshot is not optional. Twice tonight a passing test sat on top of a
+wrong page (the landing overflow last session, the empty printed strip this one), and only the
+picture said so.
+
+The machine's clock says the whole session took about an hour. The plan budgeted ten. I have
+written the times as they were.

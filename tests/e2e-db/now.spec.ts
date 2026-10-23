@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { resetDb, seedPlan, signIn } from './helpers';
+import { admin, resetDb, seedPlan, signIn } from './helpers';
 
 // The second screen: no navigation, a countdown to or through the block, the next exam, a way back.
 
@@ -26,4 +26,29 @@ test('the second screen shows the block, the countdown and the next exam, withou
   // The pace line on the first checkpoint, in the person's own numbers.
   await expect(page.locator('.cp-pace').first()).toContainText('Nothing logged for MATH 20C yet');
   await expect(page.locator('.cp-pace').first()).toContainText('h of blocks still ahead');
+});
+
+test('a day with more study than room says so, in the forecast and in the words', async ({ page }) => {
+  const userId = await resetDb();
+  await seedPlan(userId);
+  // A 9-to-5 shift this Saturday and a short evening window: Saturday's 4 h of study won't fit.
+  const sat = new Date();
+  sat.setDate(sat.getDate() + ((6 - sat.getDay() + 7) % 7 || 7));
+  const day = sat.toISOString().slice(0, 10);
+  await admin.from('plan_items').insert({
+    user_id: userId,
+    kind: 'commitment',
+    title: 'Work shift',
+    start_at: `${day}T09:00:00-07:00`,
+    end_at: `${day}T17:00:00-07:00`,
+  });
+  await admin
+    .from('profiles')
+    .update({ settings: { planning: { earliest: '18:00', latest: '21:00' } } })
+    .eq('id', userId);
+  await signIn(page);
+  await page.goto('./');
+  await expect(page.locator('.mc-forecast')).toContainText(/overfull (Saturday|tomorrow|today) \(/);
+  await page.getByText('The week in words').click();
+  await expect(page.locator('.mc-words')).toContainText('Overfull:');
 });

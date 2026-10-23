@@ -305,3 +305,11 @@ and only the clock moves; that is also the only honest way to test "what does th
 PM". Six states: day, morning, night (something left / nothing left), exam day (before / during),
 and the term over. I resisted a seventh for "the day after an exam": the day state already says
 the next exam, and silence about the one that passed is the point.
+
+## 9:20 PM · Building 4 · overfull days
+
+The "oh". It needed no model, which was the point of writing it down in hour one. My first test
+expected a 9-to-5 shift to make Saturday overfull with the default window; it doesn't (13 hours
+minus 8 leaves 5, and the day holds 4). The function was right and I was wrong, twice tonight in
+the same direction: I keep expecting the arithmetic to be harsher than it is. Good sign for the
+wording.

@@ -37,4 +37,10 @@ describe('the runway in words', () => {
     ]);
     expect(week[1].text).toContain('one class: HIST 10 2 PM–3:18 PM');
   });
+
+  it('appends a note to a day when given one', () => {
+    const notes = new Map([['2026-10-22', 'Overfull: 5 h of study in 3 free.']]);
+    expect(narrate(data.plan, NOW, 2, notes)[0].text).toMatch(/\. Overfull: 5 h of study in 3 free\.$/);
+    expect(narrate(data.plan, NOW, 2, notes)[1].text).not.toContain('Overfull');
+  });
 });

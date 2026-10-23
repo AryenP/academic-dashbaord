@@ -16,7 +16,7 @@ import { type ExamPrep, type PlanData } from '../lib/plan';
 import { headline } from '../lib/headline';
 import { narrate } from '../lib/narrate';
 import { pace, paceWords } from '../lib/pace';
-import { forecast } from '../lib/weather';
+import { forecast, overfull } from '../lib/weather';
 import type { Session } from '../lib/supabase';
 import { ago, useSources } from '../lib/sources';
 import { useNow, usePlan } from '../lib/usePlan';
@@ -89,7 +89,15 @@ export function RunwayPage({
 }: RunwayPageProps) {
   const now = useNow();
   const t = data.totals[0];
-  const shape = useMemo(() => forecast(data.plan, now), [data.plan, now]);
+  const { settings } = useAuth();
+  const planning = settings.planning;
+  const shape = useMemo(() => forecast(data.plan, now, planning), [data.plan, now, planning]);
+  const dayNotes = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const o of overfull(data.plan, now, planning))
+      m.set(o.day, `Overfull: ${o.planned} h of study in ${o.free} free.`);
+    return m;
+  }, [data.plan, now, planning]);
   // The honest readiness, for the person themself: where the last week's pace lands by exam day.
   const paces = useMemo(() => {
     if (!self) return undefined;
@@ -136,7 +144,7 @@ export function RunwayPage({
             <section className="mc-runway-wrap" id="runway">
               <Runway plan={data.plan} now={now} actuals={actuals} />
               <Key courses={data.courses} actual={actuals.spans.size > 0 || actuals.dayMinutes.size > 0} />
-              <WeekInWords plan={data.plan} now={now} />
+              <WeekInWords plan={data.plan} now={now} notes={dayNotes} />
             </section>
 
             <section className="mc-panels">
@@ -160,8 +168,16 @@ export function RunwayPage({
 }
 
 /** The same week as sentences, for screen readers and for anyone who would rather read. */
-function WeekInWords({ plan, now }: { plan: PlanData['plan']; now: number }) {
-  const days = useMemo(() => narrate(plan, now), [plan, now]);
+function WeekInWords({
+  plan,
+  now,
+  notes,
+}: {
+  plan: PlanData['plan'];
+  now: number;
+  notes?: Map<string, string>;
+}) {
+  const days = useMemo(() => narrate(plan, now, 7, notes), [plan, now, notes]);
   return (
     <details className="mc-words">
       <summary>The week in words</summary>

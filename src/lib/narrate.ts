@@ -45,13 +45,14 @@ export function dayWords(items: PlanItem[]): string {
 }
 
 /** The next `days` days from today, each as a heading and a sentence. */
-export function narrate(plan: PlanItem[], now: number, days = 7): DayWords[] {
+export function narrate(plan: PlanItem[], now: number, days = 7, notes?: Map<string, string>): DayWords[] {
   const today = dayKey(new Date(now));
   const out: DayWords[] = [];
   for (let i = 0; i < days; i++) {
     const day = iso(utc(today) + i * 864e5);
     const items = plan.filter((r) => r.day === day).sort((a, b) => (a.start < b.start ? -1 : 1));
-    out.push({ day, heading: dayName(day, new Date(now)), text: dayWords(items) });
+    const note = notes?.get(day);
+    out.push({ day, heading: dayName(day, new Date(now)), text: dayWords(items) + (note ? ` ${note}` : '') });
   }
   return out;
 }

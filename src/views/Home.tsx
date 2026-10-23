@@ -16,6 +16,7 @@ import { type ExamPrep, type PlanData } from '../lib/plan';
 import { headline } from '../lib/headline';
 import { narrate } from '../lib/narrate';
 import { pace, paceWords } from '../lib/pace';
+import { silence, staleness } from '../lib/stale';
 import { forecast, overfull } from '../lib/weather';
 import type { Session } from '../lib/supabase';
 import { ago, useSources } from '../lib/sources';
@@ -226,22 +227,39 @@ function EmptyRunway({ hasSources }: { hasSources: boolean }) {
 }
 
 function SourcesFoot() {
-  const { sources } = useSources();
+  const { sources, sync } = useSources();
   const now = useNow(30_000);
+  const [busy, setBusy] = useState(false);
   if (!sources?.length) return <AddItemFoot />;
   const bad = sources.find((s) => s.status === 'error');
-  const synced = sources.filter((s) => s.kind !== 'ics_upload' && s.last_synced_at);
-  const latest =
-    synced
-      .map((s) => s.last_synced_at!)
-      .sort()
-      .at(-1) ?? null;
+  const st = staleness(sources, now);
+  const syncNow = async () => {
+    setBusy(true);
+    try {
+      for (const s of st.scheduled) await sync(s.id);
+    } catch {
+      // Settings → Calendars shows what went wrong on the source itself.
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (st.stale)
+    return (
+      <span className="mc-foot-warn" role="status">
+        Your calendars haven't been read {st.latest ? `for ${silence(st.latest, now)}` : 'yet'}; the sync that
+        runs every 15 minutes may have stopped.{' '}
+        <button className="btn btn-link" onClick={syncNow} disabled={busy}>
+          {busy ? 'Reading…' : 'Read them now'}
+        </button>{' '}
+        · <Link to="/settings">Calendars</Link>
+      </span>
+    );
   return (
     <>
       {bad
         ? `${bad.label} couldn't sync. `
-        : latest
-          ? `Synced from ${sources.map((s) => s.label).join(' and ')} ${ago(latest, now)}. Updates about every 15 minutes. `
+        : st.latest
+          ? `Synced from ${sources.map((s) => s.label).join(' and ')} ${ago(st.latest, now)}. Updates about every 15 minutes. `
           : `${sources.map((s) => s.label).join(' and ')} connected. `}
       <Link to="/settings">Calendars</Link> · <AddItemFoot />
     </>

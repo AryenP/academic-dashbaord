@@ -597,6 +597,18 @@ textarea {
   }
 }
 
+/* a sync that went quiet changes the footer's voice */
+.mc-foot-warn {
+  color: var(--color-warn);
+}
+.mc-foot-warn .btn-link {
+  color: inherit;
+  text-decoration: underline;
+}
+.mc-foot-warn a {
+  color: inherit;
+}
+
 /* what Runway holds about you */
 .fp-list {
   margin: 0 0 var(--gap-md);

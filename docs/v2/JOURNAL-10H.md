@@ -388,3 +388,13 @@ the phone meter. The pattern needs three sessions on each side and a five-point 
 bar Patterns uses, and it speaks in both directions: if a student's long sessions hold up, it says
 so. The browser test taught me the end screen is kept for the tab until a reload, which is the
 right behaviour for the student and a small trap for a test.
+
+## 6:30 PM · Building 10 · paper
+
+Off the list, from the ideas file, because the week in words made it cheap: a print stylesheet
+that opens the words before printing and compresses the strip. Twenty minutes, one test, and the
+runway can go on a fridge. The ranking said "finished and small"; this is both.
+The first print screenshot had an empty strip: every block gone except today's. Not the
+backgrounds (the exam badges printed), the intro animation: it starts blocks at opacity 0 with
+`both` fill, and paper never runs it. Looking at the screenshot is the whole reason the rule says
+to look; a test that only checked "the nav is hidden" would have passed over an empty page.

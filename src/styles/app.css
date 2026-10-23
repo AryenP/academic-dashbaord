@@ -2285,3 +2285,63 @@ kbd {
   gap: 0.5rem;
   line-height: 1.5;
 }
+
+/* ── paper ──────────────────────────────────────────────────────────────── */
+/* One page for the fridge: the headline, the strip compressed to the page, the week in words
+   open, the checkpoints and today. Nothing to click. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .top,
+  .pb,
+  .mc-foot,
+  .mc-words summary,
+  .td-tick,
+  .fx-controls,
+  .btn,
+  button {
+    display: none !important;
+  }
+  .mc-words {
+    display: block;
+    color: #000;
+  }
+  .mc-words dl {
+    display: grid;
+  }
+  /* Paper doesn't run the intro animation, which starts blocks invisible: show the end state. */
+  .mc-runway .rw-block,
+  .mc-runway .rw-now {
+    animation: none !important;
+    opacity: var(--o, 1);
+    transform: none;
+  }
+  /* Browsers drop backgrounds on paper by default; the blocks are backgrounds. */
+  .mc *,
+  .mc-key i {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .rw-scroll {
+    overflow: visible;
+    padding-bottom: 0;
+  }
+  .rw-grid {
+    min-width: 0;
+    grid-template-columns: 2.6rem repeat(var(--n), 1fr);
+  }
+  .mc-panels,
+  .mc-runway-wrap,
+  .cp {
+    break-inside: avoid;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+}

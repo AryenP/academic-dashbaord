@@ -179,8 +179,15 @@ function WeekInWords({
   notes?: Map<string, string>;
 }) {
   const days = useMemo(() => narrate(plan, now, 7, notes), [plan, now, notes]);
+  // On paper the words are open: the strip is too wide to read at page width.
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const before = () => setOpen(true);
+    window.addEventListener('beforeprint', before);
+    return () => window.removeEventListener('beforeprint', before);
+  }, []);
   return (
-    <details className="mc-words">
+    <details className="mc-words" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
       <summary>The week in words</summary>
       <dl>
         {days.map((d) => (

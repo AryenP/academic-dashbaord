@@ -931,6 +931,7 @@ export type Database = {
           cents: number;
         }[];
       };
+      my_footprint: { Args: Record<PropertyKey, never>; Returns: Json };
       pause_session: {
         Args: { p_at?: string; p_session: string };
         Returns: {

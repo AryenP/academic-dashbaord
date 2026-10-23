@@ -278,3 +278,19 @@ ratio. Two things I decided while writing it: a block that is running still coun
 (it hasn't ended), and the projection rounds to the half hour so it never looks more exact than
 it is. The first test expectation was wrong about the running block and I changed the test, not
 the rule.
+
+## 8:15 PM · Building 2 · what Runway holds about you
+
+The function is one `jsonb_build_object` with sixteen subselects, and it runs as the caller on
+purpose: a definer would have been shorter and would have made the panel's claim ("through the
+same rules that keep every row yours") a lie. The words were again the slow part. I wrote "the
+model was sent 48 event titles with times and places, and nothing else" and then checked that it
+is true: `classify-events` sends title, start, end, all-day, location, the calendar's label and
+the rules' reading. "Nothing else" holds.
+
+Moving the download button into the panel broke the export test (two buttons with the same name)
+and that was the right failure: there should be one place that says "yours" and it is this one.
+Account keeps the sign-out and the fields.
+
+Noticed on the way, from the mobile screenshot: the agenda table at 375 px clips its last column
+("Submitted" shows as "Submitte"). Pre-existing. Added to the list after the glance.

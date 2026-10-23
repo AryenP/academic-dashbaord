@@ -8,6 +8,7 @@ import { useAuth } from '../lib/auth';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { collectMyData, exportFilename, saveJson } from '../lib/export';
+import { FootprintPanel } from '../components/Footprint';
 import { MODES, type Mode } from '../lib/timer';
 
 export function Settings() {
@@ -23,6 +24,7 @@ export function Settings() {
       ) : (
         <>
           <Account />
+          <FootprintPanel download={<DownloadMyData />} />
           <SourcesSettings />
           <PlanningSettings />
           <FeedSettings />
@@ -119,7 +121,6 @@ function Account() {
         </label>
       </div>
       {error && <p className="form-error">{error}</p>}
-      <DownloadMyData />
     </section>
   );
 }

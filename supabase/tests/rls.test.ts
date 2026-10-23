@@ -708,6 +708,33 @@ describe('AI reading and budget', () => {
   });
 });
 
+describe('what Runway holds about you', () => {
+  it('counts only the caller’s own rows, through RLS, and nothing for an anonymous caller', async () => {
+    await admin.from('courses').insert({ user_id: a.id, code: 'FOOT 1', color: 1 });
+    await admin.from('signals').insert({ user_id: a.id, day: '2026-10-19', kind: 'steps', value: 100 });
+    await admin
+      .from('access_tokens')
+      .insert({ user_id: a.id, purpose: 'shortcut', token_hash: 'f'.repeat(64) });
+    const mine = (await a.db.rpc('my_footprint')).data as Record<string, unknown>;
+    expect(mine.courses).toBeGreaterThanOrEqual(1);
+    expect(mine.signals).toBeGreaterThanOrEqual(1);
+    expect(mine.tokens).toEqual(['shortcut']);
+    expect(mine.share_level).toBe('off');
+    expect(typeof mine.since).toBe('string');
+    const theirs = (await b.db.rpc('my_footprint')).data as Record<string, unknown>;
+    expect(theirs.courses).toBe(0);
+    expect(theirs.signals).toBe(0);
+    expect(theirs.tokens).toEqual([]);
+    // Nothing of A's leaks into B's numbers even as a total: B's events and sessions are B's alone.
+    expect(theirs.events).toBe(0);
+    const anonCall = await anon.rpc('my_footprint');
+    expect(anonCall.error).not.toBeNull();
+    await admin.from('courses').delete().eq('code', 'FOOT 1');
+    await admin.from('signals').delete().eq('user_id', a.id);
+    await admin.from('access_tokens').delete().eq('user_id', a.id).eq('purpose', 'shortcut');
+  });
+});
+
 describe('app secrets', () => {
   it('only the service role can set or read them, and they live in Vault', async () => {
     expect((await a.db.rpc('set_app_secret', { p_name: 'SYNC_KEY', p_value: 'x' })).error).not.toBeNull();

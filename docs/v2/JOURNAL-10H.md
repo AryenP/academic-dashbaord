@@ -507,3 +507,20 @@ including the old function's answer without the field, which must stay green.
 
 The one silence I can't fix from here is GitHub turning the schedule off after 60 days without a
 push. GitHub mails the owner before it does; the runway's footer tells the student after two hours.
+
+## Close, 2026-10-23
+
+Three commits, each the thing VISION.md named, each green on its own: study together, the term,
+and loud failures. The live workflow ran once by hand and passed against the new function; the
+deploy's smoke job passed on its first real run.
+
+One process note for whoever works here next. Two of today's builds touched the same two files
+(the runway view and the stylesheet) before the first was committed, and separating them took a
+stash, a conflict and a careful restore. Nothing was lost, and the stash was checked file by file
+against the working tree before it was dropped, but the lesson is the one the house rules already
+imply: finish and commit one thing before opening the next, even when waiting on Docker makes it
+tempting to start the second.
+
+VISION.md now names the next three: the first minute, learning from the planner's discards, and a
+forecast you can drag. The first one matters most; a student who never gets past Connect never
+sees any of the rest.

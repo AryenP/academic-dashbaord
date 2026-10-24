@@ -48,6 +48,13 @@ Worked from [SESSION-10H.md](./SESSION-10H.md); the thinking is in [JOURNAL-10H.
 - Next (see VISION.md): study together from free time; the last day ("your term, wrapped"); a sync that reports its own silence to Aryen and a deploy that checks the live functions first.
 - Needs Aryen: nothing new; the existing items below (SMTP, the school-email switch, the store listing) matter more now that the first minute is good.
 
+## Session 2026-10-23
+Continued from the ten-hour session, taking VISION.md's three next things in order. Report: the "Continued" section at the end of [SESSION-10H.md](./SESSION-10H.md).
+- [x] Study together from shared free time, migration 0017 live (`8ad8eaa`).
+- [x] The term in the student's own numbers at `#/term` (`e0cdf31`).
+- [x] The sync fails its run when calendars are overdue; a smoke job after each deploy; `sync-sources` deployed (`86fd714`).
+- Next (VISION.md): the first minute (read a calendar before the account exists), learn from the planner's discards, a forecast you can drag.
+
 ## Needs Aryen (accounts, money, or sign-off)
 - [ ] Turn the school-email rule back on before launch: `update app_config set value = 'true' where key = 'school_email_only'`.
 - [ ] SMTP provider in Supabase Auth so magic-link emails stop hitting the built-in cap.

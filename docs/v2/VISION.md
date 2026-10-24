@@ -1,6 +1,6 @@
 # Runway, in one page
 
-_Written 2026-10-22, at the end of a ten-hour session. For Aryen in five minutes, for a stranger in ten._
+_Written 2026-10-22 at the end of a ten-hour session, updated 2026-10-23. For Aryen in five minutes, for a stranger in ten._
 
 ## What it is
 
@@ -38,30 +38,35 @@ trusted.
 - Need an account, a key or money the student has to give it. It is free while it is small, and
   the budget caps are in the open.
 
-## Where it stands tonight
+## Where it stands
 
 Phases 0–5 of the v2 spec are live: multi-user with RLS, calendar sources in Vault with a
 15-minute sync, the AI reading with a confirm, the planner with proposals and a feed, the
 extension for submissions and grades, classmates and friends, syllabus reading, the weekly review,
-phone signals and patterns, sharing levels, download and delete. Tonight added the pace line, the
-panel of what Runway holds, a headline that knows the hour, overfull days, the glance for the lock
-screen, a stale-sync warning, a runbook, the Android recipe and the hour-three line. Every suite
-is green; the live site has it all.
+phone signals and patterns, sharing levels, download and delete. The night of October 22 added the
+pace line, the panel of what Runway holds, a headline that knows the hour, overfull days, the
+glance for the lock screen, a stale-sync warning, a runbook, the Android recipe, the hour-three
+line and a printable runway. The next day added the three things this page used to list as next:
+studying together from shared free time (both opted in, nothing on either runway until the other
+says yes), the term in the student's own numbers when the last exam has passed, and a sync and a
+deploy that fail loudly instead of quietly.
 
 ## The three things that matter most next
 
-1. **Study together, from free time.** Two students in the same course, both opted in, see
-   "you're both free Tuesday 3–5 for DSC 140A; propose it?" and nothing until both agree. Free
-   slots are already computed server-side; what is missing is a proposals table with RLS both
-   ways and a quiet UI. It is the one social thing that is companionship and not comparison.
-2. **The last day.** When the last exam has passed, Runway should hand the student their term in
-   their own numbers (hours, the exam they turned around, the week that went best, what tended to
-   go with their best sessions), in the runway's style, theirs to keep or share. It is what they
-   would show a friend, and it is why they would come back next term.
-3. **Boring to run.** The runbook exists; the next step is that none of its sections is ever
-   needed: a sync that reports its own silence to Aryen, not just to the student; a deploy that
-   checks the live functions answer before the site switches; and the three things only Aryen can
-   do (SMTP for sign-in emails, the school-email switch back on, the extension in the store).
+1. **The first minute.** A nervous first-year meets the landing page, sign-in and Connect, and
+   those three screens are the whole product for them. Let a calendar address be pasted and read
+   before the account exists, so the first thing they see after the magic link is their own
+   runway, not a form.
+2. **Learn from the drops.** The planner proposes and the student discards some blocks. Which ones
+   (mornings, blocks over two hours, Fridays) is the clearest signal Runway gets about a person,
+   and it is thrown away today. A small log of discards and a tie-break in the allocator, said in
+   the block's reason, is the honest version.
+3. **A forecast you can drag.** The pace line says where this pace lands; the next step is "add one
+   more block on Saturday and you reach 11 of 12", shown while the block is being placed, so the
+   plan is argued with in numbers instead of guilt.
 
-Everything else that was thought of tonight is in `IDEAS.md` with a verdict, and the reasons for
+Still only Aryen's: SMTP for sign-in emails, the school-email switch back on before launch, the
+extension in the store, and VAPID keys if push notifications are ever wanted.
+
+Everything else that was thought of is in `IDEAS.md` with a verdict, and the reasons for
 every choice are in `DECISIONS.md`.

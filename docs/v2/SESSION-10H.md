@@ -197,3 +197,15 @@ If I had one minute with Aryen:
 - The last day of the term is the gap; the runway says "the term is over" now, and should hand over the term in the student's own numbers.
 - Make the sync report its own silence to you (a failed Actions run already emails you; a run that succeeds with `done 0` for a day should too).
 - `docs/RUNBOOK.md` is for 2 AM; `docs/v2/VISION.md` is for five minutes; the journal is for when you want to argue with me.
+
+### Continued, 2026-10-23
+
+Aryen said "keep going"; I took VISION.md's three next things in its order, each designed in the journal before it was built.
+
+1. **Study together, from free time: done** (`8ad8eaa`). Migration 0017 (live before the code): a second per-course opt-in, `shared_free_time` answering only windows, invitations through `propose_study` / `respond_study` / `cancel_study`, blocks on both runways only after acceptance, cascades from both accounts. Verified: 6 RLS tests (every refusal, the accept, the cancel, the deletion cascade), `together.spec.ts` with two browsers (propose → accept → both runways → call off; nobody offered who didn't opt in), axe on the runway and the card, keyboard accept, screenshots at 375 px light and dark looked at (the free-time list was ragged; fixed). The browser test found a real bug: the second switch didn't refetch the classmate list. For Aryen: nothing; it is off for everyone until each student turns it on.
+2. **The last day: done** (`e0cdf31`). `#/term`: the term found from a three-week gap in activity, focused hours, measured focus, the week that went best, hours by course, each exam's prep against its plan and score, Patterns. Linked from the runway when the term is over and from Stats any time. Verified: 3 unit tests, `term.spec.ts` (the link, the numbers, axe, 375 px light and dark, the Stats link), screenshots looked at. For Aryen: nothing.
+3. **Loud failures: done** (`86fd714`). The scheduled sync reports `overdue` and the workflow fails when it isn't zero; a `smoke` job after each Pages deploy checks the live landing and privacy pages. `sync-sources` deployed (version 11). Verified: the report script on three answers including the old function's, the local function, and a hand-run of the live workflow ("due 1 done 1 overdue 0", green). For Aryen: a red "Sync calendars" run now means something; the runbook says what.
+
+Suites at the end: `npm run check` (21 public browser tests), `npm run test:db` (53), `npm run test:fn` (76), `npm run test:e2e:db` (54). CI (check and backend jobs) green on `86fd714`; the deploy and its new smoke job green on their first run.
+
+What I'd tell Aryen in one more minute: study together is the first feature where one student's data touches another's runway, and every path through it is a definer function with a test that it refuses; read migration 0017 once before telling anyone about it. Next is the first minute, not more features.

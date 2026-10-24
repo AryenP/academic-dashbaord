@@ -11,6 +11,8 @@ export interface CourseInfo {
   hidden: boolean;
   /** Shown to classmates in this course (opt-in). */
   visible?: boolean;
+  /** Classmates who also opted in can find a time to study with you (a second opt-in). */
+  study_together?: boolean;
 }
 
 export const SLOTS = 6;

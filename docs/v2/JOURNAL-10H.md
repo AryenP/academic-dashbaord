@@ -429,3 +429,55 @@ the same shape and would have failed the same way in a week. Both now use the ti
 Reproduced with `TZ=UTC` before the fix, green after. Local suites never showed it because this
 Mac is in Pacific. One more for the runbook's spirit: the thing that looks like a flake is a
 clock.
+
+## Friday 23 October · Continuing: study together, designed before built
+
+Aryen said "keep going", so I take VISION.md's three next things in its order. The first is the
+one social feature I said was worth building: two students in the same course, both opted in,
+find a time they are both free and study then. The design, written before any code:
+
+- **A second opt-in, per course.** Being visible to classmates is not the same as letting them
+  find your free time. A new switch under "Show me to classmates", off by default: "Let classmates
+  who also turn this on find a time with me". The classmate list says "Find a time" only when both
+  of you have it on, which reveals the setting only to someone who made the same choice.
+- **The schedule never leaves the database.** `shared_free_time(handle, course)` is a definer
+  function that answers windows, not calendars: half-hour steps over the next seven days inside
+  both people's study windows (Settings → Planning) where neither has anything accepted, padded 15
+  minutes, the same rule as the planner. Windows under an hour are dropped; at most six come back.
+  Someone who isn't a mutual opt-in gets an empty answer, not an error, so the function can't be
+  used to learn who opted in.
+- **An invitation, not a booking.** `propose_study` writes a row the other person sees; nothing
+  touches either runway until they accept. Proposals must sit inside a shared window (no spam at
+  3 AM), and there can be at most three open ones from you to the same person.
+- **Accepting puts a block on both runways.** "Study with Sam", a study block in each person's own
+  copy of the course, linked to the invitation. Cancelling (either side) removes both blocks.
+  Declining tells the proposer "not this time", nothing more.
+- **Deletion.** Invitations cascade from both accounts; the blocks cascade from the invitation, so
+  when one person deletes their account the other's "Study with" block goes too. A block with a
+  person who no longer exists would be a small lie.
+- **What's impossible by construction:** seeing a classmate's calendar; proposing to someone who
+  didn't opt in to that course; a third person seeing an invitation. Each gets an RLS test.
+
+"Done" means: migration 0017 live before the code, RLS tests for every refusal, the Courses card
+and the runway both work at 375 px in light and dark, axe clean, a two-browser test that goes
+propose → accept → both runways, a DECISIONS line, a commit, a push.
+
+### Building it
+
+Migration 0017 first, its six RLS tests next, both green before any UI; the migration went live
+before the code. Three things the tests taught me:
+
+- New accounts get a display name from the email, so the block says "Study with eli", not
+  "@eli". The function was right; the test's guess was wrong.
+- Turning on the second switch didn't refetch the classmate list, so "Find a time" only appeared
+  after a reload. A real bug the browser test found and the unit level couldn't.
+- The first screenshot seed put an invitation at 1 PM on a day with a 2 PM class; accepting it was
+  refused with "That time isn't free for both of you any more." Exactly right, and the reason the
+  accept re-checks instead of trusting the proposal.
+
+The free-time list was ragged on a phone (buttons beside some times, under others); a two-column
+grid fixed it. Looked at in light and dark at 375 px; axe clean on the runway and the card; the
+invitation's buttons work from the keyboard.
+
+The local Supabase took twenty minutes to come back this morning because Docker had to pull newer
+images; the runbook's "first look" doesn't need a line for that, but the journal does.

@@ -16,6 +16,7 @@ export const EXPORT_KEYS = [
   'signals',
   'weekly_reviews',
   'friends',
+  'study_invites',
   'access_tokens',
   'ai_usage',
 ] as const;
@@ -65,6 +66,10 @@ export async function collectMyData(db: Db, userId: string): Promise<Export> {
     signals: await all('signals'),
     weekly_reviews: await all('weekly_reviews'),
     friends: await all('friends', 'user_id, friend_id, status, created_at'),
+    study_invites: await all(
+      'study_invites',
+      'id, from_user, to_user, course_code, start_at, end_at, status, created_at, responded_at',
+    ),
     access_tokens: await all('access_tokens', 'purpose, created_at, last_used_at'),
     ai_usage: await all('ai_usage'),
   };

@@ -15,6 +15,8 @@ export interface Classmate {
   exam_at: string | null;
   studied_min: number | null;
   planned_min: number | null;
+  /** Both of you turned on studying together in this course. */
+  study_together?: boolean;
 }
 
 export interface Friend {
@@ -86,3 +88,70 @@ export function usePulse(): number {
 }
 
 export const name = (p: { display_name: string | null; handle: string }) => p.display_name || p.handle;
+
+// ── Study together ──────────────────────────────────────────────────────────────
+// Free-time windows are computed in the database from both runways; only the windows come back.
+
+export interface FreeWindow {
+  start_at: string;
+  end_at: string;
+}
+
+export interface StudyInvite {
+  id: string;
+  direction: 'sent' | 'received';
+  handle: string;
+  display_name: string | null;
+  course_code: string;
+  start_at: string;
+  end_at: string;
+  status: 'proposed' | 'accepted' | 'declined';
+}
+
+export async function sharedFreeTime(handle: string, code: string): Promise<FreeWindow[]> {
+  if (!supabase) return [];
+  return (
+    (must(await supabase.rpc('shared_free_time', { p_handle: handle, p_code: code })) as FreeWindow[]) ?? []
+  );
+}
+
+export const proposeStudy = async (handle: string, code: string, start: string, end: string) => {
+  if (!supabase) return;
+  must(await supabase.rpc('propose_study', { p_handle: handle, p_code: code, p_start: start, p_end: end }));
+};
+export const respondStudy = async (id: string, accept: boolean) => {
+  if (!supabase) return;
+  must(await supabase.rpc('respond_study', { p_id: id, p_accept: accept }));
+};
+export const cancelStudy = async (id: string) => {
+  if (!supabase) return;
+  must(await supabase.rpc('cancel_study', { p_id: id }));
+};
+
+export function useStudyInvites() {
+  const { user } = useAuth();
+  const [invites, setInvites] = useState<StudyInvite[]>([]);
+  const refresh = useCallback(async () => {
+    if (!supabase || !user) return;
+    const { data } = await supabase.rpc('my_study_invites');
+    setInvites((data as StudyInvite[] | null) ?? []);
+  }, [user]);
+  useEffect(() => {
+    if (!user || !supabase) return;
+    let alive = true;
+    supabase
+      .rpc('my_study_invites')
+      .then(({ data }) => alive && setInvites((data as StudyInvite[] | null) ?? []));
+    return () => {
+      alive = false;
+    };
+  }, [user]);
+  return { invites, refresh };
+}
+
+/** One hour from the start of a window, or the whole window when it is shorter. */
+export function hourFrom(w: FreeWindow): FreeWindow {
+  const a = Date.parse(w.start_at);
+  const b = Math.min(Date.parse(w.end_at), a + 3_600_000);
+  return { start_at: new Date(a).toISOString(), end_at: new Date(b).toISOString() };
+}

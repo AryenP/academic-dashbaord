@@ -615,6 +615,28 @@ textarea {
   color: inherit;
 }
 
+/* study together */
+.si {
+  margin-top: var(--gap-sm);
+}
+.cm-time {
+  flex-basis: 100%;
+  margin: 4px 0 0;
+}
+.cm-windows {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.cm-windows li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+
 /* what Runway holds about you */
 .fp-list {
   margin: 0 0 var(--gap-md);

@@ -164,6 +164,7 @@ export type Database = {
           hidden: boolean;
           id: string;
           name: string | null;
+          study_together: boolean;
           user_id: string;
           visible: boolean;
         };
@@ -175,6 +176,7 @@ export type Database = {
           hidden?: boolean;
           id?: string;
           name?: string | null;
+          study_together?: boolean;
           user_id?: string;
           visible?: boolean;
         };
@@ -185,6 +187,7 @@ export type Database = {
           hidden?: boolean;
           id?: string;
           name?: string | null;
+          study_together?: boolean;
           user_id?: string;
           visible?: boolean;
         };
@@ -389,6 +392,7 @@ export type Database = {
           source_id: string | null;
           start_at: string;
           status: string;
+          study_invite_id: string | null;
           submitted_at: string | null;
           submitted_by: string | null;
           take_home: boolean;
@@ -415,6 +419,7 @@ export type Database = {
           source_id?: string | null;
           start_at: string;
           status?: string;
+          study_invite_id?: string | null;
           submitted_at?: string | null;
           submitted_by?: string | null;
           take_home?: boolean;
@@ -440,6 +445,7 @@ export type Database = {
           source_id?: string | null;
           start_at?: string;
           status?: string;
+          study_invite_id?: string | null;
           submitted_at?: string | null;
           submitted_by?: string | null;
           take_home?: boolean;
@@ -468,6 +474,13 @@ export type Database = {
             columns: ['source_id'];
             isOneToOne: false;
             referencedRelation: 'calendar_sources';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'plan_items_study_invite_id_fkey';
+            columns: ['study_invite_id'];
+            isOneToOne: false;
+            referencedRelation: 'study_invites';
             referencedColumns: ['id'];
           },
         ];
@@ -704,6 +717,43 @@ export type Database = {
         };
         Relationships: [];
       };
+      study_invites: {
+        Row: {
+          course_code: string;
+          created_at: string;
+          end_at: string;
+          from_user: string;
+          id: string;
+          responded_at: string | null;
+          start_at: string;
+          status: string;
+          to_user: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          course_code: string;
+          created_at?: string;
+          end_at: string;
+          from_user: string;
+          id?: string;
+          responded_at?: string | null;
+          start_at: string;
+          status?: string;
+          to_user: string;
+        };
+        Update: {
+          course_code?: string;
+          created_at?: string;
+          end_at?: string;
+          from_user?: string;
+          id?: string;
+          responded_at?: string | null;
+          start_at?: string;
+          status?: string;
+          to_user?: string;
+        };
+        Relationships: [];
+      };
       weekly_reviews: {
         Row: {
           created_at: string;
@@ -773,6 +823,8 @@ export type Database = {
         Returns: undefined;
       };
       app_secret: { Args: { p_name: string }; Returns: string };
+      busy_between: { Args: { a: string; b: string; p_user: string }; Returns: boolean };
+      cancel_study: { Args: { p_id: string }; Returns: undefined };
       classmate_pulse: { Args: Record<PropertyKey, never>; Returns: number };
       classmates: {
         Args: { p_code: string };
@@ -786,6 +838,7 @@ export type Database = {
           share_level: string;
           streak: number;
           studied_min: number;
+          study_together: boolean;
           week_minutes: number;
         }[];
       };
@@ -919,6 +972,7 @@ export type Database = {
           week_minutes: number;
         }[];
       };
+      in_study_window: { Args: { a: string; b: string; p_user: string }; Returns: boolean };
       is_feed_url: { Args: { u: string }; Returns: boolean };
       is_school_email: { Args: { e: string }; Returns: boolean };
       make_access_token: { Args: { p_purpose: string }; Returns: string };
@@ -932,6 +986,19 @@ export type Database = {
         }[];
       };
       my_footprint: { Args: Record<PropertyKey, never>; Returns: Json };
+      my_study_invites: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          course_code: string;
+          direction: string;
+          display_name: string;
+          end_at: string;
+          handle: string;
+          id: string;
+          start_at: string;
+          status: string;
+        }[];
+      };
       pause_session: {
         Args: { p_at?: string; p_session: string };
         Returns: {
@@ -968,6 +1035,10 @@ export type Database = {
           hours: number;
         }[];
       };
+      propose_study: {
+        Args: { p_code: string; p_end: string; p_handle: string; p_start: string };
+        Returns: string;
+      };
       public_daily_totals: {
         Args: { days?: number; p_handle: string };
         Returns: {
@@ -988,6 +1059,7 @@ export type Database = {
       request_friend: { Args: { p_handle: string }; Returns: undefined };
       request_sync: { Args: { p_source: string }; Returns: undefined };
       respond_friend: { Args: { p_accept: boolean; p_handle: string }; Returns: undefined };
+      respond_study: { Args: { p_accept: boolean; p_id: string }; Returns: undefined };
       resume_session: {
         Args: { p_at?: string; p_session: string };
         Returns: {
@@ -1041,6 +1113,13 @@ export type Database = {
           timezone: string;
         }[];
       };
+      shared_free_time: {
+        Args: { p_code: string; p_handle: string };
+        Returns: {
+          end_at: string;
+          start_at: string;
+        }[];
+      };
       signal_patterns: { Args: { p_user: string }; Returns: Json };
       signup_policy: { Args: Record<PropertyKey, never>; Returns: Json };
       source_url: { Args: { p_source: string }; Returns: string };
@@ -1062,6 +1141,7 @@ export type Database = {
         };
       };
       streak_days: { Args: { p_user: string }; Returns: number };
+      study_partner: { Args: { p_code: string; p_handle: string; p_me: string }; Returns: string };
       token_owner: { Args: { p_purpose: string; p_token_hash: string }; Returns: string };
       week_minutes: { Args: { p_user: string }; Returns: number };
     };

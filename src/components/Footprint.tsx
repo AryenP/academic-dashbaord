@@ -24,6 +24,7 @@ export interface Footprint {
   signals: number;
   weekly_reviews: number;
   friends: number;
+  study_invites?: number;
   tokens: string[];
   phone_tracking: boolean;
   ai_calls_month: number;
@@ -66,7 +67,9 @@ export function footprintLines(f: Footprint, now: number): string[] {
   lines.push(
     `${n(f.phone_events, 'phone event')} and ${n(f.signals, 'phone signal')}${f.phone_tracking ? ', phone tracking on' : ', phone tracking off'}.`,
   );
-  lines.push(`${n(f.weekly_reviews, 'weekly review')} kept; ${n(f.friends, 'friend')}.`);
+  lines.push(
+    `${n(f.weekly_reviews, 'weekly review')} kept; ${n(f.friends, 'friend')}${f.study_invites ? `; ${n(f.study_invites, 'study invitation')}` : ''}.`,
+  );
   lines.push(
     f.tokens.length
       ? `Tokens for ${f.tokens.map((t) => TOKEN_NAMES[t] ?? t).join(', ')}; only their hashes are stored.`

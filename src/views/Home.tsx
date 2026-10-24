@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AddItem } from '../components/AddItem';
 import { PlanBar } from '../components/PlanBar';
+import { StudyInvites } from '../components/StudyInvites';
 import { Agenda } from '../components/Agenda';
 import { Checkpoints } from '../components/Checkpoints';
 import { Runway } from '../components/Runway';
@@ -142,6 +143,7 @@ export function RunwayPage({
         ) : (
           <>
             {self && <PlanBar />}
+            {self && <StudyInvites />}
             <section className="mc-runway-wrap" id="runway">
               <Runway plan={data.plan} now={now} actuals={actuals} />
               <Key courses={data.courses} actual={actuals.spans.size > 0 || actuals.dayMinutes.size > 0} />

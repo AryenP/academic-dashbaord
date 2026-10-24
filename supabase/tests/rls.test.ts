@@ -985,6 +985,221 @@ describe('classmates and friends', () => {
   });
 });
 
+describe('study together', () => {
+  // Fresh people so the suites around this one are untouched: two partners at one school, one
+  // classmate there who opted in to being seen but not to studying together, one at another school.
+  const CODE = 'STDY 1';
+  const handleOf = async (id: string) =>
+    (await admin.from('profiles').select('handle').eq('id', id).single()).data!.handle as string;
+  const join = async (who: { db: DB; id: string }, together: boolean) => {
+    const c = await who.db.from('courses').insert({ code: CODE, color: 1 }).select('id').single();
+    await who.db.from('courses').update({ visible: true, study_together: together }).eq('id', c.data!.id);
+    // A recent item in the course, so the classmate list includes them.
+    await who.db.from('plan_items').insert({
+      course_id: c.data!.id,
+      kind: 'deadline',
+      title: 'Problem set',
+      start_at: new Date(Date.now() + 20 * 864e5).toISOString(),
+      end_at: new Date(Date.now() + 20 * 864e5 + 3_600_000).toISOString(),
+    });
+    return c.data!.id;
+  };
+  const free = async (who: { db: DB }, handle: string) =>
+    ((await who.db.rpc('shared_free_time', { p_handle: handle, p_code: CODE })).data ?? []) as {
+      start_at: string;
+      end_at: string;
+    }[];
+
+  let p: { db: DB; id: string };
+  let q: { db: DB; id: string };
+  let pH: string;
+  let qH: string;
+  beforeAll(async () => {
+    p = await signedIn('dana@ucsd.edu');
+    q = await signedIn('eli@ucsd.edu');
+    pH = await handleOf(p.id);
+    qH = await handleOf(q.id);
+  });
+
+  it('finds shared free time only when both opted in, and answers windows that avoid both runways', async () => {
+    await join(p, true);
+    const qCourse = await join(q, false);
+    expect(await free(p, qH)).toEqual([]); // Eli is visible but hasn't opted in to studying together
+    await q.db.from('courses').update({ study_together: true }).eq('id', qCourse);
+    // Dana is busy tomorrow 10 AM–12 PM Pacific; no window may come within 15 minutes of it.
+    const day = new Date(Date.now() + 864e5).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+    const busyA = Date.parse(`${day}T10:00:00-07:00`);
+    await p.db.from('plan_items').insert({
+      kind: 'class',
+      title: 'Lecture',
+      start_at: new Date(busyA).toISOString(),
+      end_at: new Date(busyA + 2 * 3_600_000).toISOString(),
+    });
+    const w = await free(p, qH);
+    expect(w.length).toBeGreaterThan(0);
+    expect(w.length).toBeLessThanOrEqual(6);
+    for (const x of w) {
+      const a = Date.parse(x.start_at);
+      const b = Date.parse(x.end_at);
+      expect(b - a).toBeGreaterThanOrEqual(3_600_000);
+      expect(a).toBeGreaterThan(Date.now() + 30 * 60_000);
+      expect(a).toBeLessThan(Date.now() + 7 * 864e5);
+      expect(a < busyA + 2 * 3_600_000 + 15 * 60_000 && b > busyA - 15 * 60_000).toBe(false);
+      // Inside the default study window, 9 AM–10 PM Pacific.
+      const h = (t: number) =>
+        Number(new Date(t).toLocaleTimeString('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit' }));
+      expect(h(a)).toBeGreaterThanOrEqual(9);
+      expect(h(b - 1000)).toBeLessThan(22);
+    }
+    // The same answer from the other side.
+    expect(await free(q, pH)).toEqual(w);
+    // The classmate list says so, to people who opted in too.
+    const seen = (await p.db.rpc('classmates', { p_code: CODE })).data!;
+    expect(seen.find((c) => c.handle === qH)?.study_together).toBe(true);
+  });
+
+  it('is impossible with someone who didn’t opt in, or at another school, or signed out', async () => {
+    const f = await signedIn('fay@ucsd.edu');
+    await join(f, false); // visible, not studying together
+    const g = await signedIn('gus@berkeley.edu');
+    await join(g, true);
+    const fH = await handleOf(f.id);
+    const gH = await handleOf(g.id);
+    expect(await free(p, fH)).toEqual([]);
+    expect(await free(f, pH)).toEqual([]);
+    expect(await free(p, gH)).toEqual([]);
+    expect(await free(g, pH)).toEqual([]);
+    expect(
+      (await p.db.rpc('classmates', { p_code: CODE })).data!.find((c) => c.handle === fH)?.study_together,
+    ).toBe(false);
+    expect((await anon.rpc('shared_free_time', { p_handle: pH, p_code: CODE })).error).not.toBeNull();
+    const start = new Date(Date.now() + 2 * 864e5).toISOString();
+    const end = new Date(Date.now() + 2 * 864e5 + 3_600_000).toISOString();
+    expect(
+      (await p.db.rpc('propose_study', { p_handle: fH, p_code: CODE, p_start: start, p_end: end })).error
+        ?.message,
+    ).toMatch(/also turned on studying together/);
+  });
+
+  it('an invitation is seen by the two people only, and nobody writes the table directly', async () => {
+    const [w] = await free(p, qH);
+    const start = w.start_at;
+    const end = new Date(Date.parse(w.start_at) + 3_600_000).toISOString();
+    // Outside every shared window (4 AM) is refused.
+    const day = new Date(Date.now() + 2 * 864e5).toLocaleDateString('en-CA', {
+      timeZone: 'America/Los_Angeles',
+    });
+    const night = (
+      await p.db.rpc('propose_study', {
+        p_handle: qH,
+        p_code: CODE,
+        p_start: `${day}T04:00:00-07:00`,
+        p_end: `${day}T05:00:00-07:00`,
+      })
+    ).error;
+    expect(night?.message).toMatch(/isn't free for both/);
+    const r = await p.db.rpc('propose_study', { p_handle: qH, p_code: CODE, p_start: start, p_end: end });
+    expect(r.error).toBeNull();
+    const id = r.data as string;
+    expect((await q.db.from('study_invites').select('id, status')).data).toEqual([
+      { id, status: 'proposed' },
+    ]);
+    const f = await signedIn('fay@ucsd.edu');
+    expect((await f.db.from('study_invites').select('*')).data).toEqual([]);
+    expect((await f.db.rpc('my_study_invites')).data).toEqual([]);
+    expect(
+      (
+        await p.db.from('study_invites').insert({
+          from_user: p.id,
+          to_user: q.id,
+          course_code: CODE,
+          start_at: start,
+          end_at: end,
+        } as never)
+      ).error,
+    ).not.toBeNull();
+    // Neither a third person nor the sender can accept it; nothing is on either runway yet.
+    expect((await f.db.rpc('respond_study', { p_id: id, p_accept: true })).error).not.toBeNull();
+    expect((await p.db.rpc('respond_study', { p_id: id, p_accept: true })).error).not.toBeNull();
+    expect((await admin.from('plan_items').select('id').eq('study_invite_id', id)).data).toEqual([]);
+    const theirs = (await q.db.rpc('my_study_invites')).data!;
+    expect(theirs).toEqual([
+      expect.objectContaining({
+        id,
+        direction: 'received',
+        handle: pH,
+        course_code: CODE,
+        status: 'proposed',
+      }),
+    ]);
+  });
+
+  it('accepting puts a block on both runways; cancelling takes both away', async () => {
+    const id = (await q.db.rpc('my_study_invites')).data![0].id;
+    expect((await q.db.rpc('respond_study', { p_id: id, p_accept: true })).error).toBeNull();
+    const blocks = (
+      await admin.from('plan_items').select('user_id, kind, title, course_id').eq('study_invite_id', id)
+    ).data!;
+    expect(blocks).toHaveLength(2);
+    expect(blocks.map((b) => b.user_id).sort()).toEqual([p.id, q.id].sort());
+    expect(blocks.every((b) => b.kind === 'study' && b.course_id)).toBe(true);
+    const qName = (await admin.from('profiles').select('display_name').eq('id', q.id).single()).data!
+      .display_name;
+    expect(blocks.find((b) => b.user_id === p.id)!.title).toBe(`Study with ${qName || `@${qH}`}`);
+    // Each sees only their own block.
+    expect((await p.db.from('plan_items').select('id').eq('study_invite_id', id)).data).toHaveLength(1);
+    expect((await p.db.rpc('my_study_invites')).data![0]).toMatchObject({
+      direction: 'sent',
+      status: 'accepted',
+    });
+    // Accepting twice doesn't double anything.
+    expect((await q.db.rpc('respond_study', { p_id: id, p_accept: true })).error).not.toBeNull();
+    expect((await p.db.rpc('cancel_study', { p_id: id })).error).toBeNull();
+    expect((await admin.from('plan_items').select('id').eq('study_invite_id', id)).data).toEqual([]);
+    expect((await p.db.rpc('my_study_invites')).data).toEqual([]);
+  });
+
+  it('declining tells the sender, and three open invitations are the limit', async () => {
+    const w = await free(p, qH);
+    const at = (i: number) => {
+      const a = Date.parse(w[i % w.length].start_at) + (i >= w.length ? 30 * 60_000 : 0);
+      return { p_start: new Date(a).toISOString(), p_end: new Date(a + 30 * 60_000).toISOString() };
+    };
+    const one = (await p.db.rpc('propose_study', { p_handle: qH, p_code: CODE, ...at(0) })).data as string;
+    await q.db.rpc('respond_study', { p_id: one, p_accept: false });
+    expect((await p.db.rpc('my_study_invites')).data!.find((x) => x.id === one)?.status).toBe('declined');
+    expect((await q.db.rpc('my_study_invites')).data!.find((x) => x.id === one)).toBeUndefined();
+    for (let i = 1; i <= 3; i++)
+      expect((await p.db.rpc('propose_study', { p_handle: qH, p_code: CODE, ...at(i) })).error).toBeNull();
+    expect(
+      (await p.db.rpc('propose_study', { p_handle: qH, p_code: CODE, ...at(4) })).error?.message,
+    ).toMatch(/three open invitations/);
+  });
+
+  it('deleting an account takes its invitations and the partner’s linked block with it', async () => {
+    const r = await signedIn('ross@ucsd.edu');
+    const s2 = await signedIn('sara@ucsd.edu');
+    await join(r, true);
+    await join(s2, true);
+    const sH = await handleOf(s2.id);
+    const [w] = await free(r, sH);
+    const id = (
+      await r.db.rpc('propose_study', {
+        p_handle: sH,
+        p_code: CODE,
+        p_start: w.start_at,
+        p_end: new Date(Date.parse(w.start_at) + 3_600_000).toISOString(),
+      })
+    ).data as string;
+    await s2.db.rpc('respond_study', { p_id: id, p_accept: true });
+    const before = (await admin.from('plan_items').select('id').eq('user_id', s2.id)).data!.length;
+    expect((await r.db.rpc('delete_my_account')).error).toBeNull();
+    expect((await admin.from('study_invites').select('id').eq('id', id)).data).toEqual([]);
+    expect((await admin.from('plan_items').select('id').eq('user_id', s2.id)).data).toHaveLength(before - 1);
+    expect((await admin.from('plan_items').select('id').eq('study_invite_id', id)).data).toEqual([]);
+  });
+});
+
 describe('weekly reviews', () => {
   it('are written by the function and read only by their owner', async () => {
     await admin

@@ -63,7 +63,10 @@ export function PlanProvider({ children }: { children: ReactNode }) {
         .gte('end_at', new Date(Date.now() - 45 * 864e5).toISOString())
         .order('start_at')
         .limit(3000),
-      supabase.from('courses').select('id, code, name, color, hidden, visible').order('created_at'),
+      supabase
+        .from('courses')
+        .select('id, code, name, color, hidden, visible, study_together')
+        .order('created_at'),
     ]);
     return { items: must(items) ?? [], courses: must(courses) ?? [] };
   }, [user]);

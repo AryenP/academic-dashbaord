@@ -14,7 +14,7 @@ import { colorOf } from '../lib/courses';
 import { useHistory, type DayCourseMinutes } from '../lib/history';
 import { useLiveSession } from '../lib/liveSession';
 import { type ExamPrep, type PlanData } from '../lib/plan';
-import { headline } from '../lib/headline';
+import { headline, plain } from '../lib/headline';
 import { narrate } from '../lib/narrate';
 import { pace, paceWords } from '../lib/pace';
 import { silence, staleness } from '../lib/stale';
@@ -25,9 +25,16 @@ import { useNow, usePlan } from '../lib/usePlan';
 
 function Lede({ plan, exams, now }: { plan: PlanData['plan']; exams: ExamPrep[]; now: number }) {
   const parts = useMemo(() => headline(plan, exams, now), [plan, exams, now]);
+  const over = plain(parts).startsWith('The term is over');
   return (
     <p className="mc-lede">
       {parts.map((p, i) => (p.b ? <b key={i}>{p.t}</b> : <span key={i}>{p.t}</span>))}
+      {over && (
+        <>
+          {' '}
+          <Link to="/term">See your term in numbers.</Link>
+        </>
+      )}
     </p>
   );
 }

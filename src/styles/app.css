@@ -615,6 +615,56 @@ textarea {
   color: inherit;
 }
 
+/* the term */
+.tm-courses,
+.tm-exams {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.tm-courses li {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr auto;
+  align-items: center;
+  gap: var(--gap-sm);
+}
+.tm-code {
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--c-ink, var(--c));
+}
+.tm-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-border-line);
+  overflow: hidden;
+}
+.tm-bar i {
+  display: block;
+  height: 100%;
+  background: var(--c);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.tm-h {
+  font-variant-numeric: tabular-nums;
+}
+.tm-exams li {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: 2px var(--gap-sm);
+}
+.tm-prep {
+  grid-column: 2;
+  color: var(--color-fg-muted);
+  font-size: var(--fs-caption);
+}
+.tm-foot {
+  margin-top: var(--gap-xl);
+}
+
 /* study together */
 .si {
   margin-top: var(--gap-sm);

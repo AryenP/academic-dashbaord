@@ -481,3 +481,17 @@ invitation's buttons work from the keyboard.
 
 The local Supabase took twenty minutes to come back this morning because Docker had to pull newer
 images; the runbook's "first look" doesn't need a line for that, but the journal does.
+
+## The last day
+
+The second thing in VISION.md. What a student keeps from a term is not a score; it's the shape:
+when it ran, how much went in, which week went best, where the hours went, and how each exam's
+prep compared with its plan. The interesting decision was what a "term" is without knowing the
+school's calendar. A three-week gap with nothing on the runway and no sessions is a break between
+terms at every school I can think of, and it needs no table. The page fetches its own 200 days of
+plan, since the runway only loads 45.
+
+I left out "the exam you turned around", which was in my own list last night: any rule for it
+(biggest jump in the last week? best readiness?) is a superlative I would have to defend, and the
+exam rows already show the same thing without ranking. My test expected 84 % focus; it's 83 %
+(705 over 8.5 hours). Third time this session the arithmetic was right and my guess wasn't.

@@ -23,6 +23,7 @@ const Connect = lazy(() => import('./views/Connect').then((m) => ({ default: m.C
 const Courses = lazy(() => import('./views/Courses').then((m) => ({ default: m.Courses })));
 const Friends = lazy(() => import('./views/Friends').then((m) => ({ default: m.Friends })));
 const Now = lazy(() => import('./views/Now').then((m) => ({ default: m.Now })));
+const Term = lazy(() => import('./views/Term').then((m) => ({ default: m.Term })));
 
 export function App() {
   return (
@@ -49,6 +50,7 @@ export function App() {
                       <Route path="/courses" element={<Courses />} />
                       <Route path="/friends" element={<Friends />} />
                       <Route path="/now" element={<Now />} />
+                      <Route path="/term" element={<Term />} />
                       <Route path="*" element={<Home />} />
                     </Routes>
                   </Suspense>

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useMemo, type CSSProperties } from 'react';
 import { FocusStats } from '../components/FocusStats';
 import { Patterns } from '../components/Patterns';
@@ -88,6 +89,9 @@ export function Stats() {
       </section>
       <FocusStats today={today} />
       <Patterns />
+      <p className="mc-note">
+        <Link to="/term">Your term so far</Link>: hours, the week that went best, each course and each exam.
+      </p>
     </div>
   );
 }

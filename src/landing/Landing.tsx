@@ -59,6 +59,9 @@ export function Landing({ static: isStatic = false }: { static?: boolean }) {
                   or continue with Google
                 </a>
               )}
+              <a href="#/try" className="ld-more">
+                See your own runway first
+              </a>
               <a href="#how" className="ld-more">
                 How it works
               </a>

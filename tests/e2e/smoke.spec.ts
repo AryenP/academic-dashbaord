@@ -72,3 +72,9 @@ test('the landing page does not scroll sideways on a phone', async ({ page }) =>
   const w = await page.evaluate(() => document.documentElement.scrollWidth);
   expect(w).toBe(375);
 });
+
+test('the landing page offers your own runway before signing up', async ({ page }) => {
+  await page.goto('./');
+  const link = page.getByRole('link', { name: 'See your own runway first' });
+  await expect(link).toHaveAttribute('href', '#/try');
+});

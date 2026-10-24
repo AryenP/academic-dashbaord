@@ -5,6 +5,7 @@ import { hasBackend, supabase } from '../lib/supabase';
 
 import { isSchoolEmail } from '../lib/email';
 import { clearCallbackError, readCallbackError } from '../lib/callbackError';
+import { loadPending } from '../lib/pending';
 
 const GOOGLE = import.meta.env.VITE_GOOGLE_SIGNIN === 'true';
 
@@ -23,6 +24,8 @@ export function SignIn() {
   const { user, ready, signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
+  // A calendar tried on #/try waits in this browser for the sign-in to finish.
+  const [waiting] = useState(() => !!loadPending());
   const [error, setError] = useState<string | null>(() => {
     const m = readCallbackError();
     return m && friendly(m);
@@ -68,6 +71,12 @@ export function SignIn() {
   return (
     <div className="page page-narrow">
       <h1 className="page-h">Sign in</h1>
+      {waiting && (
+        <p className="signin-waiting" role="status">
+          Your calendar is waiting. Sign in or sign up and it goes straight onto your runway. Open the sign-in
+          link in this browser; the address is kept here, not on Runway's side.
+        </p>
+      )}
       {!hasBackend ? (
         <p className="muted">
           The backend isn't connected on this copy of the site, so there's nothing to sign in to.

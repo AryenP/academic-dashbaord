@@ -6,7 +6,7 @@ export function PrivacyText({ home = '#/' }: { home?: string }) {
   return (
     <>
       <h1 className="page-h">Privacy</h1>
-      <p className="muted">Last changed October 22, 2026.</p>
+      <p className="muted">Last changed October 23, 2026.</p>
 
       <h2 className="mc-h2">What Runway reads</h2>
       <p>
@@ -31,7 +31,9 @@ export function PrivacyText({ home = '#/' }: { home?: string }) {
       <h2 className="mc-h2">What's stored where</h2>
       <p>
         Runway runs on Supabase (a hosted Postgres database) in the United States. Calendar addresses are
-        secrets, so they're stored encrypted and never sent back to your browser once saved. Runway sets no
+        secrets, so they're stored encrypted and never sent back to your browser once saved. If you try Runway
+        with your calendar before signing up, it reads the address once to draw the preview and stores
+        nothing; the address waits in your own browser, for a day at most, until you sign up. Runway sets no
         advertising cookies and uses no analytics service.
       </p>
 

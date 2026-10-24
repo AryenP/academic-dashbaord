@@ -17,6 +17,7 @@ import { type ExamPrep, type PlanData } from '../lib/plan';
 import { headline, plain } from '../lib/headline';
 import { narrate } from '../lib/narrate';
 import { pace, paceWords } from '../lib/pace';
+import { clearPending, loadPending, PENDING_ERROR_KEY } from '../lib/pending';
 import { silence, staleness } from '../lib/stale';
 import { forecast, overfull } from '../lib/weather';
 import type { Session } from '../lib/supabase';
@@ -82,6 +83,8 @@ export interface RunwayPageProps {
   title: string;
   foot?: ReactNode;
   empty?: ReactNode;
+  /** One line under the headline, for something that just happened. */
+  notice?: ReactNode;
 }
 
 /** The runway view: shared by the signed-in home and the share page. */
@@ -95,6 +98,7 @@ export function RunwayPage({
   title,
   foot,
   empty,
+  notice,
 }: RunwayPageProps) {
   const now = useNow();
   const t = data.totals[0];
@@ -143,6 +147,7 @@ export function RunwayPage({
               {t.exams === 1 ? 'exam' : 'exams'}.{shape && <span className="mc-forecast"> {shape}</span>}
             </p>
           )}
+          {notice}
         </header>
 
         {data.plan.length === 0 && empty ? (
@@ -282,30 +287,83 @@ function SourcesFoot() {
   );
 }
 
+// Started once per page load, so React's development double-run can't add the calendar twice.
+let joinStarted = false;
+
 export function Home() {
-  const { user, ready, profile } = useAuth();
+  const { user, ready, profile, updateProfile } = useAuth();
   const data = usePlan();
   const history = useHistory();
   const live = useLiveSession();
-  const { sources, loading: sourcesLoading } = useSources();
+  const { sources, loading: sourcesLoading, add } = useSources();
   const navigate = useNavigate();
+
+  // A calendar tried on #/try before the account existed: add it the way Connect would, once,
+  // then show the runway it makes. On failure, Connect takes over with the reason.
+  const [pendingAtStart] = useState(() => loadPending());
+  const [join, setJoin] = useState<'waiting' | 'busy' | 'done' | 'failed' | 'none'>(
+    pendingAtStart ? 'waiting' : 'none',
+  );
+  const [joinNote, setJoinNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (join !== 'waiting' || !user || !profile || !pendingAtStart || joinStarted) return;
+    joinStarted = true;
+    const run = async () => {
+      setJoin('busy');
+      try {
+        const { result } = await add(pendingAtStart.kind, pendingAtStart.label, pendingAtStart.url);
+        clearPending();
+        await updateProfile({
+          onboarding: { ...(profile.onboarding as object), connect_seen: true },
+        }).catch(() => {});
+        setJoinNote(
+          result.ok
+            ? null
+            : `${result.error ?? 'The first read did not finish.'} The calendar is saved; Runway reads it again every 15 minutes.`,
+        );
+        setJoin('done');
+      } catch (e) {
+        clearPending();
+        try {
+          sessionStorage.setItem(
+            PENDING_ERROR_KEY,
+            e instanceof Error ? e.message : 'Runway could not add the calendar you tried.',
+          );
+        } catch {
+          // no storage: Connect opens without the reason
+        }
+        setJoin('failed');
+      }
+    };
+    void run();
+  }, [join, user, profile, pendingAtStart, add, updateProfile]);
 
   // A brand-new account goes straight to the connect screen, once.
   const seen = !!(profile?.onboarding as { connect_seen?: boolean } | null)?.connect_seen;
+  const joining = join === 'waiting' || join === 'busy';
   const sendToConnect =
     !!user &&
     !!profile &&
+    !joining &&
     !data.loading &&
     !sourcesLoading &&
     data.plan.length === 0 &&
     !sources?.length &&
-    !seen;
+    (!seen || join === 'failed');
   useEffect(() => {
     if (sendToConnect) navigate('/connect', { replace: true });
   }, [sendToConnect, navigate]);
 
   if (!ready) return <div className="fx fx-loading" aria-busy="true" />;
   if (!user) return <Landing />;
+  if (joining)
+    return (
+      <div className="fx fx-loading" aria-busy="true">
+        <p className="fx-sub" role="status">
+          Reading your calendar into your account…
+        </p>
+      </div>
+    );
   if (data.loading || sendToConnect) return <div className="fx fx-loading" aria-busy="true" />;
   return (
     <RunwayPage
@@ -315,6 +373,15 @@ export function Home() {
       live={live.session}
       self
       title="Your runway"
+      notice={
+        join === 'done' ? (
+          <p className="mc-joined" role="status">
+            Your calendar is connected; this runway is yours now.{' '}
+            <Link to="/courses?read=1">Check how Runway read your courses</Link> before anything is planned.
+            {joinNote && <span className="form-error"> {joinNote}</span>}
+          </p>
+        ) : undefined
+      }
       empty={<EmptyRunway hasSources={!!sources?.length} />}
       foot={data.plan.length > 0 ? <SourcesFoot /> : undefined}
     />

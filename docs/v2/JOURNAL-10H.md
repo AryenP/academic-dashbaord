@@ -524,3 +524,54 @@ tempting to start the second.
 VISION.md now names the next three: the first minute, learning from the planner's discards, and a
 forecast you can drag. The first one matters most; a student who never gets past Connect never
 sees any of the rest.
+
+## The first minute, designed before built
+
+Today a new student reads the landing page, signs up, waits for an email, clicks it, and only then
+meets the Connect form. Every step before their own runway is a promise. The change: paste the
+calendar address first, see your own next two weeks drawn from it, and sign up to keep it.
+
+- **`#/try`, signed out.** The same guides as Connect (Canvas, Google, Apple, Outlook; not the file
+  upload, which would have to be held in the browser whole), the same paste box, and then the
+  runway itself: classes, exams, deadlines and study blocks from the student's own calendar, the
+  next exam's countdown, the courses found. Below it, "Keep this runway": sign up with the school
+  email or Google.
+- **The preview reads, it doesn't keep.** A new Edge Function, `preview-source`, the first one that
+  needs no account: it fetches the address once, reads it with the title rules and the context
+  pass (no AI: no account, no budget, no model), and answers the next three weeks of events. No row,
+  no log, no Vault secret. It is what `validate-source` already does for signed-in people, plus the
+  events.
+- **An open door gets a lock.** Anyone can call it, so: at most 6 previews a minute from one
+  address and 120 a minute in total (the existing `phone_rate` counter), https only, no private
+  hosts, and redirects followed by hand with the same checks at every hop (the signed-in fetch
+  follows them blindly; worth changing there too, later). It answers parsed events, never the raw
+  file, so it can't be used to download arbitrary things.
+- **Where the address waits.** In this browser's storage, for at most a day, until the sign-in
+  finishes; then it goes into the account exactly as Connect would put it (Vault), and leaves the
+  browser. A "Forget it" link clears it. The magic link opened on another device can't see it; that
+  person gets the normal Connect screen, and the sign-in page says to open the link in this browser.
+- **After the link, the runway.** The account adds the calendar on arrival, runs the first sync,
+  and shows the runway with one line: the calendar is connected, and Courses is where to check how
+  Runway read it (the AI reading and its confirm stay where they were).
+
+"Done" means: Deno tests for the function (rate limits, bad addresses, redirects to private hosts,
+the events it returns), unit tests for the waiting address, a browser test that goes landing → try
+→ preview → sign in → runway with the calendar connected and the address gone from storage, axe
+and 375 px light and dark on `#/try`, a privacy-page sentence, a DECISIONS line, deployed.
+
+### Building it
+
+The function and its eight Deno tests came first and passed after one fix to the test (seven
+calls from one address tripped the per-address limit, which is the limit working). The browser
+tests passed on their first run, and the screenshots showed they were testing too little: the
+preview's strip had day headers and no blocks (the runway's scale variable lives on `.mc`, which
+the try page doesn't have), and the midterm read 10 AM instead of 5 PM (my generated feed named a
+timezone without defining it, which real feeds don't do, and the parser reads as UTC). The test now
+asserts the time in the label and that the exam block has real height once the intro animation
+settles, which is what the screenshot told me and the first version of the test didn't.
+
+That's the fourth time across these sessions that a passing test sat on a wrong page and only the
+picture said so. The rule to look at every screenshot is the most valuable line in the plan.
+
+Live: `preview-source` refuses a private address with Connect's own words, and reads Google's
+public holidays calendar into four personal events and nothing drawn, which the page explains.

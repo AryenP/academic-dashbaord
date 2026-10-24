@@ -23,6 +23,7 @@ Aryen_ (an account, a key, money or a sign-off), _no_ (with the reason).
 - Weather: the week's shape in one line, "heavy Thursday, clear weekend, exam Sunday", next to the headline. _built_ (in the headline)
 - Study together from free time: classmates who both opted in see when they're both free this week and invite each other; nothing on either runway until the other says yes. _built 2026-10-23_ (migration 0017)
 - Your term, wrapped: hours, focus, the best week, each course, each exam against its plan, in the runway's style. _built 2026-10-23_ (`#/term`; "the exam you turned around" left out as a superlative)
+- The first minute: paste a calendar address on `#/try` before there's an account, see your own runway, keep it, and land on it after the sign-in link. _built 2026-10-23_ (`preview-source`)
 
 ## Build later
 
@@ -38,7 +39,6 @@ Aryen_ (an account, a key, money or a sign-off), _no_ (with the reason).
 - A command palette: Cmd-K to start a session, add a deadline, jump to a day, draft a plan. _build later_ (keyboard reach exists per screen; the palette is a day's work)
 - The runway narrated, spoken: the same sentences through speech synthesis. _build later_ (after the narration lands)
 - Android: Tasker or MacroDroid can POST the same JSON the Shortcut does; document the recipe, keep the receiving side. _build later_ (write the guide; nothing to build server-side)
-- The first minute: watch the new-user screenshots and cut a step. _build later_ (the Connect screen could accept a pasted address before sign-up and keep it for after)
 - A kiosk QR: the `#/now` page shows a code to open the same on a phone. _build later_ (after the second screen)
 - Exam-day mode: on the morning of an exam the runway shows only the room, the time and "you did N hours", nothing to do. _build later_ (a day's work, mostly design)
 - Hours by place: the Shortcut can send a place label; "library mornings tend to go better" is one line in Patterns. _build later_ (signals has `place`; Patterns already groups by it, needs the Shortcut recipe)

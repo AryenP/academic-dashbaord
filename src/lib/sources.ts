@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './auth';
+import type { PreviewResult } from './preview';
 import { supabase, type Tables } from './supabase';
 import { usePlan } from './usePlan';
 
@@ -265,3 +266,8 @@ export interface WeeklyResult {
 /** The AI's review of a week (a Monday); `again` rewrites it. */
 export const weeklyReview = (week: string, again = false) =>
   invoke<WeeklyResult>('weekly-review', { week, again });
+
+/** Signed out: read a calendar once and get back the next three weeks as the runway would draw
+ * them. Nothing is stored; see supabase/functions/preview-source. */
+export const previewSource = (url: string, kind: 'ical' | 'canvas', tz: string) =>
+  invoke<PreviewResult>('preview-source', { url, kind, tz }, 30_000);

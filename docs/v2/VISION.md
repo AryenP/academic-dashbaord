@@ -49,21 +49,20 @@ glance for the lock screen, a stale-sync warning, a runbook, the Android recipe,
 line and a printable runway. The next day added the three things this page used to list as next:
 studying together from shared free time (both opted in, nothing on either runway until the other
 says yes), the term in the student's own numbers when the last exam has passed, and a sync and a
-deploy that fail loudly instead of quietly.
+deploy that fail loudly instead of quietly. Then the first minute: a visitor can paste a calendar
+address before there is an account, see their own runway, and land on it after the sign-in link.
 
 ## The three things that matter most next
 
-1. **The first minute.** A nervous first-year meets the landing page, sign-in and Connect, and
-   those three screens are the whole product for them. Let a calendar address be pasted and read
-   before the account exists, so the first thing they see after the magic link is their own
-   runway, not a form.
-2. **Learn from the drops.** The planner proposes and the student discards some blocks. Which ones
+1. **Learn from the drops.** The planner proposes and the student discards some blocks. Which ones
    (mornings, blocks over two hours, Fridays) is the clearest signal Runway gets about a person,
    and it is thrown away today. A small log of discards and a tie-break in the allocator, said in
    the block's reason, is the honest version.
-3. **A forecast you can drag.** The pace line says where this pace lands; the next step is "add one
+2. **A forecast you can drag.** The pace line says where this pace lands; the next step is "add one
    more block on Saturday and you reach 11 of 12", shown while the block is being placed, so the
    plan is argued with in numbers instead of guilt.
+3. **Time zones a feed doesn't define.** A feed that names a zone without a VTIMEZONE block reads
+   as UTC today. Falling back to the runtime's own zones fixes the sync and the preview at once.
 
 Still only Aryen's: SMTP for sign-in emails, the school-email switch back on before launch, the
 extension in the store, and VAPID keys if push notifications are ever wanted.

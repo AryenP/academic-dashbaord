@@ -7,6 +7,7 @@ import { GUIDES, type Guide } from '../connect/guides';
 import { useAuth } from '../lib/auth';
 import { useSources, type Validation } from '../lib/sources';
 import { supabase } from '../lib/supabase';
+import { PENDING_ERROR_KEY } from '../lib/pending';
 
 // Connect a calendar: pick a source, follow three drawn steps, paste the address, see what Runway
 // found, add it. Skippable, and reachable again from Settings.
@@ -65,6 +66,8 @@ export function Connect() {
         </p>
       </header>
 
+      <PendingError />
+
       <div className="cn-pick" role="radiogroup" aria-label="Where is your calendar?">
         {GUIDES.map((g) => (
           <button
@@ -91,6 +94,25 @@ export function Connect() {
         <Link to="/">Skip for now</Link>. You can add things by hand, and come back to this from Settings.
       </p>
     </div>
+  );
+}
+
+/** The calendar tried before sign-up couldn't be added: say why, once, and let them paste again. */
+function PendingError() {
+  const [msg] = useState(() => {
+    try {
+      const m = sessionStorage.getItem(PENDING_ERROR_KEY);
+      sessionStorage.removeItem(PENDING_ERROR_KEY);
+      return m;
+    } catch {
+      return null;
+    }
+  });
+  if (!msg) return null;
+  return (
+    <p className="form-error" role="status">
+      The calendar you tried before signing up couldn't be added: {msg} Paste it again below.
+    </p>
   );
 }
 

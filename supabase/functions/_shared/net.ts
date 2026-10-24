@@ -32,10 +32,13 @@ export interface Fetched {
   contentType: string;
 }
 
+export const MAX_HOPS = 3;
+
 export async function fetchFeed(
   url: URL,
   cond: { etag?: string | null; lastModified?: string | null } = {},
   fetchImpl: typeof fetch = fetch,
+  opts: { checkHops?: boolean } = {},
 ): Promise<Fetched> {
   const headers: Record<string, string> = {
     'user-agent': 'Runway calendar sync (+https://aryenp.github.io/academic-dashbaord/)',
@@ -43,7 +46,21 @@ export async function fetchFeed(
   };
   if (cond.etag) headers['if-none-match'] = cond.etag;
   if (cond.lastModified) headers['if-modified-since'] = cond.lastModified;
-  const r = await fetchImpl(url, { headers, redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT_MS) });
+  const signal = AbortSignal.timeout(TIMEOUT_MS);
+  // With checkHops, redirects are followed by hand and every hop passes checkUrl, so a public
+  // address can't bounce the fetch to a private one. Anything anyone can call uses it.
+  let target = url;
+  let r: Response;
+  for (let hop = 0; ; hop++) {
+    r = await fetchImpl(target, { headers, redirect: opts.checkHops ? 'manual' : 'follow', signal });
+    if (!opts.checkHops || r.status < 300 || r.status >= 400 || r.status === 304) break;
+    const location = r.headers.get('location');
+    await r.body?.cancel();
+    if (!location || hop >= MAX_HOPS) throw new HttpError(r.status);
+    const next = checkUrl(new URL(location, target).toString());
+    if ('error' in next) throw new RedirectRefused(next.error);
+    target = next.url;
+  }
   const contentType = r.headers.get('content-type') ?? '';
   if (r.status === 304)
     return {
@@ -105,5 +122,10 @@ export class TooLarge extends Error {
 export class NotACalendarLike extends Error {
   constructor() {
     super('the address returned a web page, not a calendar');
+  }
+}
+export class RedirectRefused extends Error {
+  constructor(public reason: string) {
+    super(`a redirect went somewhere Runway won't fetch (${reason})`);
   }
 }

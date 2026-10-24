@@ -19,7 +19,7 @@ const VIEWS = [
   './#/review',
   './#/now',
 ];
-const PUBLIC = ['./', './#/signin', './#/privacy', `./#/u/${OWNER_HANDLE}`];
+const PUBLIC = ['./', './#/signin', './#/try', './#/privacy', `./#/u/${OWNER_HANDLE}`];
 
 for (const scheme of SCHEMES)
   test(`no WCAG A/AA violations, ${scheme}`, async ({ page }) => {

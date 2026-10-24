@@ -615,6 +615,36 @@ textarea {
   color: inherit;
 }
 
+/* the first minute */
+.mc-joined {
+  margin: var(--gap-sm) 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-panel);
+  max-width: 70ch;
+}
+.signin-waiting {
+  margin: 0 0 var(--gap-md);
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-panel);
+}
+.try-result {
+  display: grid;
+  gap: var(--gap-md);
+}
+/* The runway's scale and colors live on .mc in the signed-in view; the preview sets them itself. */
+.try-board {
+  --mc-display: var(--font-display);
+  --mc-hl: color-mix(in srgb, var(--color-warn) 14%, transparent);
+  --mc-red: var(--color-critical);
+  --mc-px: 19px;
+}
+.try-keep {
+  display: grid;
+  gap: var(--gap-sm);
+}
+
 /* the term */
 .tm-courses,
 .tm-exams {

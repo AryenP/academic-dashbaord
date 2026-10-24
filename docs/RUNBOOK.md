@@ -7,7 +7,8 @@ is GitHub Pages from `main`.
 ## First look, in order
 
 1. `https://aryenp.github.io/academic-dashbaord/` loads and shows the demo runway. If not: the last
-   Deploy run under Actions → Deploy.
+   Deploy run under Actions → Deploy; its `smoke` job fetches the live page after every deploy and
+   fails when the landing page or the privacy page doesn't come back.
 2. `curl -s -X OPTIONS https://uhqurcspebdxtkalbduc.supabase.co/functions/v1/phone-event -o /dev/null -w '%{http_code}'`
    answers `204`. A `503` with `{"message":"name resolution failed"}` is the gateway spell (below).
 3. The last run of Actions → "Sync calendars" is green and printed `due N done N`. If it has not
@@ -50,8 +51,10 @@ the `SYNC_KEY` repo secret is missing. The runway now says "Your calendars haven
 h" after two hours of silence, with a "Read them now" button that calls the function with the
 person's own session.
 
-- Check Actions → Sync calendars → the last run. "SYNC_KEY is not set; skipping" means the repo
-  secret; a red run with a curl error means the gateway (above).
+- Check Actions → Sync calendars → the last run. A warning "SYNC_KEY is not set" means the repo
+  secret; a red run with a curl error means the gateway (above); a red run that says "N
+  calendar(s) are more than 2 hours overdue" means the function answers but can't keep up or keeps
+  skipping sources (`scripts/sync-report.py` fails the run on purpose, so GitHub emails you).
 - Re-enable a disabled schedule from the workflow's page ("Enable workflow"), or push any commit.
 - One source on demand: Settings → Calendars → Sync now, or `POST /functions/v1/sync-sources`
   with the person's JWT and `{"source_id": "…"}`.

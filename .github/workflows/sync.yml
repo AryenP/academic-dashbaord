@@ -8,7 +8,8 @@ on:
     - cron: '*/15 * * * *' # GitHub may run it a few minutes late
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read # for the report script, nothing else
 
 concurrency:
   group: sync-calendars
@@ -19,17 +20,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts/sync-report.py
+          sparse-checkout-cone-mode: false
+      # Fails the run (and so emails the repo owner) when calendars are more than 2 hours overdue.
       - env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SYNC_KEY: ${{ secrets.SYNC_KEY }}
         run: |
           if [ -z "$SYNC_KEY" ]; then
-            echo "SYNC_KEY is not set; skipping."
+            echo "::warning::SYNC_KEY is not set; nothing is being synced."
             exit 0
           fi
+          set -o pipefail
           curl -fsS -m 90 -X POST "$SUPABASE_URL/functions/v1/sync-sources" \
             -H "x-sync-key: $SYNC_KEY" -H "Content-Type: application/json" -d '{}' \
-            | python3 -c 'import json,sys; d=json.load(sys.stdin); print("due", d.get("due"), "done", d.get("done")); [print(r) for r in d.get("results", []) if not r.get("ok")]'
+            | python3 -I scripts/sync-report.py
       # Once a day, around 09:17 UTC (2 AM Pacific), ask the AI to read what the rules were unsure about.
       - env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

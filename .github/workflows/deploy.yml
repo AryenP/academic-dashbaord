@@ -51,9 +51,31 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # The site that went live answers with the landing page and the privacy page. A failure here
+  # fails the run, so a broken deploy reaches a person instead of a student.
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - env:
+          URL: ${{ needs.deploy.outputs.page_url }}
+        run: |
+          base="${URL:-https://aryenp.github.io/academic-dashbaord/}"
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS "$base" | grep -q 'Your runway to every exam.' && curl -fsS -o /dev/null "${base}privacy.html"; then
+              echo "live: $base"; exit 0
+            fi
+            echo "not yet ($i), waiting for the CDN"; sleep 20
+          done
+          echo "::error::$base did not serve the landing page after a deploy. See docs/RUNBOOK.md."
+          exit 1

@@ -11,6 +11,7 @@ import { rebuildPlan, syncSource, type Source } from '../_shared/sync.ts';
 import { dbStore } from './store.ts';
 
 const BUDGET_MS = 50_000;
+const OVERDUE_MS = 2 * 3600_000;
 
 const must = <T>({ data, error }: { data: T; error: unknown }): T => {
   if (error) throw error;
@@ -34,7 +35,15 @@ Deno.serve(async (req) => {
       const r = await syncSource(store, src);
       results.push({ id: src.id, ...r });
     }
-    return json({ ok: true, due: due.length, done: results.length, results });
+    // Silence is the failure nobody sees: sources that should have been read two hours ago and
+    // weren't. The scheduler fails its run when this isn't zero, so the failure reaches a person.
+    const { count: overdue } = await service
+      .from('calendar_sources')
+      .select('id', { count: 'exact', head: true })
+      .neq('kind', 'ics_upload')
+      .in('status', ['ok', 'pending'])
+      .lt('next_sync_at', new Date(Date.now() - OVERDUE_MS).toISOString());
+    return json({ ok: true, due: due.length, done: results.length, overdue: overdue ?? 0, results });
   }
 
   // A person syncing their own source.

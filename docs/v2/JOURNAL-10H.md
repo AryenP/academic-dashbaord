@@ -495,3 +495,15 @@ I left out "the exam you turned around", which was in my own list last night: an
 (biggest jump in the last week? best readiness?) is a superlative I would have to defend, and the
 exam rows already show the same thing without ranking. My test expected 84 % focus; it's 83 %
 (705 over 8.5 hours). Third time this session the arithmetic was right and my guess wasn't.
+
+## Boring to run, one step
+
+The third thing. The runbook was written so somebody knows what to do; this step is so somebody
+knows something is wrong. Two silent failures become loud ones: a sync that answers but leaves
+calendars unread (the workflow now fails on `overdue > 0`) and a deploy that publishes a page that
+doesn't load (a smoke job after Pages). Both fail a GitHub run, which is the one channel that
+already reaches Aryen without an account or a key. The report script was tested on three answers,
+including the old function's answer without the field, which must stay green.
+
+The one silence I can't fix from here is GitHub turning the schedule off after 60 days without a
+push. GitHub mails the owner before it does; the runway's footer tells the student after two hours.

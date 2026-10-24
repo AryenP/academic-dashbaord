@@ -53,7 +53,8 @@ Continued from the ten-hour session, taking VISION.md's three next things in ord
 - [x] Study together from shared free time, migration 0017 live (`8ad8eaa`).
 - [x] The term in the student's own numbers at `#/term` (`e0cdf31`).
 - [x] The sync fails its run when calendars are overdue; a smoke job after each deploy; `sync-sources` deployed (`86fd714`).
-- Next (VISION.md): the first minute (read a calendar before the account exists), learn from the planner's discards, a forecast you can drag.
+- [x] The first minute: `#/try` and `preview-source`, your own runway before an account (`3b37bee`).
+- Next (VISION.md): learn from the planner's discards, a forecast you can drag, time zones a feed names but doesn't define.
 
 ## Needs Aryen (accounts, money, or sign-off)
 - [ ] Turn the school-email rule back on before launch: `update app_config set value = 'true' where key = 'school_email_only'`.
